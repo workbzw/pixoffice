@@ -1,8 +1,51 @@
-node_modules
-public/characters/
-dist
-.dev-server.log
+# Dependencies and package-manager caches
+node_modules/
+.npm/
+.pnpm-store/
+
+# Build output and tool caches
+dist/
+.vite/
+.cache/
+.eslintcache
 *.tsbuildinfo
-.character-staging/
-.character-backups/
-.character-preview/
+
+# Generated character atlases (keep sources in art/characters/)
+/public/characters/
+/.character-staging/
+/.character-backups/
+/.character-preview/
+
+# Local environment files (keep shareable templates)
+.env
+.env.*
+!.env.example
+!.env.*.example
+!.env.sample
+!.env.*.sample
+!.env.template
+!.env.*.template
+
+# Runtime logs and test reports
+/.dev-server.log
+/logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+/coverage/
+/.nyc_output/
+/playwright-report/
+/test-results/
+
+# Local editor files (shared editor configuration stays trackable)
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating-system metadata
+.DS_Store
+._*
+Thumbs.db
+Desktop.ini
