@@ -1,0 +1,5 @@
+Use case: precise-object-edit. This two-column sprite sheet is the EDIT TARGET. Preserve exactly the two complete seated back-view characters, framing, scale, pixel registration, hair, head, hoodie, torso, legs and feet. The seated man is operating a computer (not shown). Wrists are supported on the tabletop in front; do not lower them or change the elbow/forearm poses.
+Make ONLY these two tiny local hand edits:
+LEFT column: the viewer-left hand subtly bends its fingers down to press keyboard keys. Fingertips flex by about 3-5 pixels in the supplied 1536x1152 sheet; wrist stays fixed. The right hand remains unchanged.
+RIGHT column: the viewer-right hand subtly flexes its fingers for a mouse click, about 3-5 pixels. The left hand remains unchanged.
+These are restrained work animation poses, not waving. Keep the small skin-colored hands, not fists. No new arms, no hair or head movement, no body bobbing. Every other feature must remain the same as the reference. Keep TWO columns, full body and generous transparent gutters. True transparent alpha, no glow, no floor or shadow, no furniture, no text or lines.

@@ -1,0 +1,56 @@
+{
+  "pose": {
+    "scale": 0.1970323315613509,
+    "left": 26,
+    "top": 108,
+    "width": 202,
+    "height": 303,
+    "measured": {
+      "headWidth": 757,
+      "headHeight": 618,
+      "headArea": 324071,
+      "headCenter": 517,
+      "footY": 1366
+    }
+  },
+  "motion": [
+    {
+      "crop": {
+        "left": 0,
+        "top": 0,
+        "width": 724,
+        "height": 1086
+      },
+      "patch": {
+        "left": 49,
+        "top": 224,
+        "width": 24,
+        "height": 29
+      },
+      "scale": 0.35193185079150213,
+      "left": 0,
+      "top": 1,
+      "width": 255,
+      "height": 382
+    },
+    {
+      "crop": {
+        "left": 724,
+        "top": 0,
+        "width": 724,
+        "height": 1086
+      },
+      "patch": {
+        "left": 184,
+        "top": 224,
+        "width": 25,
+        "height": 29
+      },
+      "scale": 0.3517159574281151,
+      "left": 0,
+      "top": 1,
+      "width": 255,
+      "height": 382
+    }
+  ]
+}

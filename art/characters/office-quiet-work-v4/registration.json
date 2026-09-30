@@ -1,0 +1,11 @@
+{
+  "reference": "marvis",
+  "clip": "work.quiet-back",
+  "characters": [
+    {"id":"code-agent","neutralOutputId":"exec-0f37c35e-12dd-4154-a247-5659accc8e9b","neutral":{"headTop":150,"headBottom":814},"motion":{"outputId":"exec-5ab5d7ee-03af-4874-8ae3-1c7730467196","left":{"crop":{"left":0,"top":0,"width":724,"height":1086},"headTop":100,"headBottom":577},"right":{"crop":{"left":724,"top":0,"width":724,"height":1086},"headTop":100,"headBottom":577}}},
+    {"id":"file-agent","neutralOutputId":"exec-6e719025-cbd5-4d87-9a1c-1d04a4a82bc3","neutral":{"headTop":138,"headBottom":733},"motion":{"outputId":"exec-624da91e-7c6b-46a2-8fd7-2b92948334ed","left":{"crop":{"left":0,"top":0,"width":724,"height":1086},"headTop":94,"headBottom":521},"right":{"crop":{"left":724,"top":0,"width":724,"height":1086},"headTop":94,"headBottom":521}}},
+    {"id":"app-agent","neutralOutputId":"exec-a6d8e273-e20f-4327-a676-68cbef3f9634","neutral":{"headTop":240,"headBottom":850},"motion":{"outputId":"exec-1e7cddf7-b6ec-4546-be62-549405bbebb0","left":{"crop":{"left":0,"top":0,"width":724,"height":1086},"headTop":160,"headBottom":602},"right":{"crop":{"left":724,"top":0,"width":724,"height":1086},"headTop":160,"headBottom":602}}},
+    {"id":"review-agent","neutralOutputId":"exec-bde025ce-6938-4130-9d44-565d7a6fc8a0","neutral":{"headTop":135,"headBottom":769},"motion":{"outputId":"exec-0dbbe47f-ab9a-414d-aac6-cd8c36f824ea","left":{"crop":{"left":0,"top":0,"width":724,"height":1086},"headTop":90,"headBottom":543},"right":{"crop":{"left":724,"top":0,"width":724,"height":1086},"headTop":90,"headBottom":543}}},
+    {"id":"data-agent","neutralOutputId":"exec-7b2309b8-56b3-4388-83ab-b34482dd166f","neutral":{"headTop":266,"headBottom":837},"motion":{"outputId":"exec-825b9d9b-92d1-40ff-8eb7-ce803cf0d70d","left":{"crop":{"left":0,"top":0,"width":724,"height":1086},"headTop":180,"headBottom":591},"right":{"crop":{"left":724,"top":0,"width":724,"height":1086},"headTop":180,"headBottom":591}}}
+  ]
+}

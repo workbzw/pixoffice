@@ -1,0 +1,436 @@
+{
+  "schemaVersion": 1,
+  "id": "data-agent",
+  "label": "赵审",
+  "profile": "office",
+  "canvas": {
+    "width": 256,
+    "height": 384
+  },
+  "pivot": {
+    "x": 128,
+    "y": 344
+  },
+  "referenceHeight": 280,
+  "displayHeight": 84,
+  "portrait": "idle.front",
+  "mouth": {
+    "pivot": {
+      "x": 128,
+      "y": 192
+    },
+    "views": {
+      "front": {
+        "closed": "mouth.front-closed",
+        "speaking": "mouth.front-speaking"
+      },
+      "right": {
+        "closed": "mouth.right-closed",
+        "speaking": "mouth.right-speaking"
+      }
+    }
+  },
+  "clips": {
+    "idle.front": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "mouth": {
+            "x": 130,
+            "y": 177,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/idle/front/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "walk.front": {
+      "frames": [
+        {
+          "durationMs": 125,
+          "mouth": {
+            "x": 131,
+            "y": 177,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/front/001.png"
+        },
+        {
+          "durationMs": 125,
+          "mouth": {
+            "x": 130,
+            "y": 177,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/front/002.png"
+        },
+        {
+          "durationMs": 125,
+          "mouth": {
+            "x": 129,
+            "y": 177,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/front/003.png"
+        },
+        {
+          "durationMs": 125,
+          "mouth": {
+            "x": 130,
+            "y": 177,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/front/002.png"
+        }
+      ],
+      "loop": true
+    },
+    "idle.right": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "mouth": {
+            "x": 178,
+            "y": 176,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/idle/right/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "walk.right": {
+      "frames": [
+        {
+          "durationMs": 125,
+          "mouth": {
+            "x": 179,
+            "y": 178,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/right/001.png"
+        },
+        {
+          "durationMs": 125,
+          "mouth": {
+            "x": 178,
+            "y": 176,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/right/002.png"
+        },
+        {
+          "durationMs": 125,
+          "mouth": {
+            "x": 178,
+            "y": 177,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/right/003.png"
+        },
+        {
+          "durationMs": 125,
+          "mouth": {
+            "x": 178,
+            "y": 176,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/right/002.png"
+        }
+      ],
+      "loop": true
+    },
+    "idle.back": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "idle/back/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "idle.left": {
+      "alias": "idle.right",
+      "mirrorX": true
+    },
+    "walk.left": {
+      "alias": "walk.right",
+      "mirrorX": true
+    },
+    "walk.back": {
+      "frames": [
+        {
+          "durationMs": 250,
+          "file": "walk/back/001.png"
+        },
+        {
+          "durationMs": 250,
+          "file": "walk/back/002.png"
+        },
+        {
+          "durationMs": 250,
+          "file": "walk/back/003.png"
+        },
+        {
+          "durationMs": 250,
+          "file": "walk/back/004.png"
+        }
+      ],
+      "loop": true
+    },
+    "run.back": {
+      "frames": [
+        {
+          "durationMs": 200,
+          "file": "run/back/001.png"
+        },
+        {
+          "durationMs": 200,
+          "file": "run/back/002.png"
+        },
+        {
+          "durationMs": 200,
+          "file": "run/back/003.png"
+        },
+        {
+          "durationMs": 200,
+          "file": "run/back/004.png"
+        }
+      ],
+      "loop": true
+    },
+    "emote.wave": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "emote/wave/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "emote.thinking": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "emote/thinking/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "emote.surprised": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "emote/surprised/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "sit.back": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "sit/back/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "talk.seated-right": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "mouth": {
+            "x": 184,
+            "y": 239,
+            "view": "right",
+            "scale": 0.85,
+            "rotation": 0
+          },
+          "file": "body/talk/seated-right/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "talk.seated-left": {
+      "alias": "talk.seated-right",
+      "mirrorX": true
+    },
+    "pose.lean": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "pose/lean/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "pose.rise": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "pose/rise/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "stand-up.back": {
+      "frames": [
+        {
+          "durationMs": 52,
+          "file": "sit/back/001.png"
+        },
+        {
+          "durationMs": 182,
+          "file": "pose/lean/001.png"
+        },
+        {
+          "durationMs": 224,
+          "file": "pose/rise/001.png"
+        },
+        {
+          "durationMs": 62,
+          "file": "idle/back/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "sit-down.back": {
+      "frames": [
+        {
+          "durationMs": 62,
+          "file": "idle/back/001.png"
+        },
+        {
+          "durationMs": 224,
+          "file": "pose/rise/001.png"
+        },
+        {
+          "durationMs": 182,
+          "file": "pose/lean/001.png"
+        },
+        {
+          "durationMs": 52,
+          "file": "sit/back/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "speak.front": {
+      "alias": "idle.front",
+      "mirrorX": false
+    },
+    "speak.right": {
+      "alias": "idle.right",
+      "mirrorX": false
+    },
+    "speak.seated-right": {
+      "alias": "talk.seated-right",
+      "mirrorX": false
+    },
+    "speak.left": {
+      "alias": "idle.left",
+      "mirrorX": false
+    },
+    "speak.seated-left": {
+      "alias": "talk.seated-left",
+      "mirrorX": false
+    },
+    "mouth.front-closed": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "mouth/front/closed.png"
+        }
+      ],
+      "loop": false
+    },
+    "mouth.front-speaking": {
+      "frames": [
+        {
+          "durationMs": 110,
+          "file": "mouth/front/open-1.png"
+        },
+        {
+          "durationMs": 100,
+          "file": "mouth/front/open-2.png"
+        },
+        {
+          "durationMs": 100,
+          "file": "mouth/front/closed.png"
+        },
+        {
+          "durationMs": 120,
+          "file": "mouth/front/open-3.png"
+        },
+        {
+          "durationMs": 90,
+          "file": "mouth/front/open-2.png"
+        },
+        {
+          "durationMs": 210,
+          "file": "mouth/front/closed.png"
+        }
+      ],
+      "loop": true
+    },
+    "mouth.right-closed": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "mouth/right/closed.png"
+        }
+      ],
+      "loop": false
+    },
+    "mouth.right-speaking": {
+      "frames": [
+        {
+          "durationMs": 110,
+          "file": "mouth/right/open-1.png"
+        },
+        {
+          "durationMs": 100,
+          "file": "mouth/right/open-2.png"
+        },
+        {
+          "durationMs": 100,
+          "file": "mouth/right/closed.png"
+        },
+        {
+          "durationMs": 120,
+          "file": "mouth/right/open-3.png"
+        },
+        {
+          "durationMs": 90,
+          "file": "mouth/right/open-2.png"
+        },
+        {
+          "durationMs": 210,
+          "file": "mouth/right/closed.png"
+        }
+      ],
+      "loop": true
+    }
+  }
+}

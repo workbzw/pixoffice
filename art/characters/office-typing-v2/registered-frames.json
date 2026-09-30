@@ -1,0 +1,344 @@
+[
+  {
+    "id": "marvis",
+    "frames": [
+      {
+        "crop": {
+          "x": 100,
+          "y": 14,
+          "width": 144,
+          "height": 229
+        },
+        "headBottom": 133,
+        "file": "work/typing-back-v2/001.png",
+        "scale": 1.060404710000983,
+        "left": 52,
+        "top": 136
+      },
+      {
+        "crop": {
+          "x": 327,
+          "y": 14,
+          "width": 145,
+          "height": 229
+        },
+        "headBottom": 133,
+        "file": "work/typing-back-v2/002.png",
+        "scale": 1.060404710000983,
+        "left": 52,
+        "top": 136
+      },
+      {
+        "crop": {
+          "x": 559,
+          "y": 14,
+          "width": 144,
+          "height": 229
+        },
+        "headBottom": 133,
+        "file": "work/typing-back-v2/003.png",
+        "scale": 1.060404710000983,
+        "left": 53,
+        "top": 136
+      },
+      {
+        "crop": {
+          "x": 782,
+          "y": 14,
+          "width": 144,
+          "height": 229
+        },
+        "headBottom": 133,
+        "file": "work/typing-back-v2/004.png",
+        "scale": 1.060404710000983,
+        "left": 52,
+        "top": 136
+      }
+    ]
+  },
+  {
+    "id": "code-agent",
+    "frames": [
+      {
+        "crop": {
+          "x": 97,
+          "y": 253,
+          "width": 140,
+          "height": 237
+        },
+        "headBottom": 386,
+        "file": "work/typing-back-v2/001.png",
+        "scale": 1.0142247079094597,
+        "left": 58,
+        "top": 140
+      },
+      {
+        "crop": {
+          "x": 331,
+          "y": 253,
+          "width": 140,
+          "height": 237
+        },
+        "headBottom": 386,
+        "file": "work/typing-back-v2/002.png",
+        "scale": 1.0142247079094597,
+        "left": 58,
+        "top": 140
+      },
+      {
+        "crop": {
+          "x": 560,
+          "y": 253,
+          "width": 140,
+          "height": 237
+        },
+        "headBottom": 386,
+        "file": "work/typing-back-v2/003.png",
+        "scale": 1.0142247079094597,
+        "left": 58,
+        "top": 140
+      },
+      {
+        "crop": {
+          "x": 786,
+          "y": 253,
+          "width": 141,
+          "height": 237
+        },
+        "headBottom": 386,
+        "file": "work/typing-back-v2/004.png",
+        "scale": 1.0142247079094597,
+        "left": 57,
+        "top": 140
+      }
+    ]
+  },
+  {
+    "id": "file-agent",
+    "frames": [
+      {
+        "crop": {
+          "x": 96,
+          "y": 503,
+          "width": 151,
+          "height": 236
+        },
+        "headBottom": 628,
+        "file": "work/typing-back-v2/001.png",
+        "scale": 1.0160527920933258,
+        "left": 52,
+        "top": 139
+      },
+      {
+        "crop": {
+          "x": 326,
+          "y": 503,
+          "width": 154,
+          "height": 236
+        },
+        "headBottom": 628,
+        "file": "work/typing-back-v2/002.png",
+        "scale": 1.0160527920933258,
+        "left": 51,
+        "top": 139
+      },
+      {
+        "crop": {
+          "x": 555,
+          "y": 503,
+          "width": 152,
+          "height": 236
+        },
+        "headBottom": 628,
+        "file": "work/typing-back-v2/003.png",
+        "scale": 1.0160527920933258,
+        "left": 52,
+        "top": 139
+      },
+      {
+        "crop": {
+          "x": 783,
+          "y": 503,
+          "width": 151,
+          "height": 236
+        },
+        "headBottom": 628,
+        "file": "work/typing-back-v2/004.png",
+        "scale": 1.0160527920933258,
+        "left": 53,
+        "top": 139
+      }
+    ]
+  },
+  {
+    "id": "app-agent",
+    "frames": [
+      {
+        "crop": {
+          "x": 73,
+          "y": 756,
+          "width": 187,
+          "height": 247
+        },
+        "headBottom": 905,
+        "file": "work/typing-back-v2/001.png",
+        "scale": 1.0010779033016597,
+        "left": 35,
+        "top": 132
+      },
+      {
+        "crop": {
+          "x": 305,
+          "y": 756,
+          "width": 189,
+          "height": 247
+        },
+        "headBottom": 905,
+        "file": "work/typing-back-v2/002.png",
+        "scale": 1.0010779033016597,
+        "left": 34,
+        "top": 132
+      },
+      {
+        "crop": {
+          "x": 535,
+          "y": 756,
+          "width": 188,
+          "height": 247
+        },
+        "headBottom": 905,
+        "file": "work/typing-back-v2/003.png",
+        "scale": 1.0010779033016597,
+        "left": 34,
+        "top": 132
+      },
+      {
+        "crop": {
+          "x": 766,
+          "y": 756,
+          "width": 188,
+          "height": 247
+        },
+        "headBottom": 905,
+        "file": "work/typing-back-v2/004.png",
+        "scale": 1.0010779033016597,
+        "left": 35,
+        "top": 132
+      }
+    ]
+  },
+  {
+    "id": "review-agent",
+    "frames": [
+      {
+        "crop": {
+          "x": 97,
+          "y": 1011,
+          "width": 152,
+          "height": 246
+        },
+        "headBottom": 1140,
+        "file": "work/typing-back-v2/001.png",
+        "scale": 0.9959598066866249,
+        "left": 53,
+        "top": 134
+      },
+      {
+        "crop": {
+          "x": 325,
+          "y": 1011,
+          "width": 152,
+          "height": 246
+        },
+        "headBottom": 1140,
+        "file": "work/typing-back-v2/002.png",
+        "scale": 0.9959598066866249,
+        "left": 53,
+        "top": 134
+      },
+      {
+        "crop": {
+          "x": 556,
+          "y": 1011,
+          "width": 151,
+          "height": 246
+        },
+        "headBottom": 1140,
+        "file": "work/typing-back-v2/003.png",
+        "scale": 0.9959598066866249,
+        "left": 53,
+        "top": 134
+      },
+      {
+        "crop": {
+          "x": 784,
+          "y": 1011,
+          "width": 151,
+          "height": 246
+        },
+        "headBottom": 1140,
+        "file": "work/typing-back-v2/004.png",
+        "scale": 0.9959598066866249,
+        "left": 53,
+        "top": 134
+      }
+    ]
+  },
+  {
+    "id": "data-agent",
+    "frames": [
+      {
+        "crop": {
+          "x": 78,
+          "y": 1268,
+          "width": 179,
+          "height": 251
+        },
+        "headBottom": 1411,
+        "file": "work/typing-back-v2/001.png",
+        "scale": 0.9638396883038963,
+        "left": 41,
+        "top": 138
+      },
+      {
+        "crop": {
+          "x": 308,
+          "y": 1268,
+          "width": 183,
+          "height": 251
+        },
+        "headBottom": 1411,
+        "file": "work/typing-back-v2/002.png",
+        "scale": 0.9638396883038963,
+        "left": 41,
+        "top": 137
+      },
+      {
+        "crop": {
+          "x": 539,
+          "y": 1268,
+          "width": 183,
+          "height": 251
+        },
+        "headBottom": 1411,
+        "file": "work/typing-back-v2/003.png",
+        "scale": 0.9638396883038963,
+        "left": 41,
+        "top": 137
+      },
+      {
+        "crop": {
+          "x": 771,
+          "y": 1268,
+          "width": 181,
+          "height": 251
+        },
+        "headBottom": 1411,
+        "file": "work/typing-back-v2/004.png",
+        "scale": 0.9638396883038963,
+        "left": 42,
+        "top": 137
+      }
+    ]
+  }
+]

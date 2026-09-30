@@ -1,0 +1,15 @@
+{
+  "source": "generated-v2-corrected.png",
+  "generationId": "exec-9fdf39a0-3d9a-4442-b286-d474374786f5",
+  "outputDirectory": "work/typing-back-v2",
+  "frameDurationsMs": [210, 110, 210, 110],
+  "sharedScale": true,
+  "rows": [
+    { "id": "marvis", "headBottom": 133 },
+    { "id": "code-agent", "headBottom": 386 },
+    { "id": "file-agent", "headBottom": 628 },
+    { "id": "app-agent", "headBottom": 905 },
+    { "id": "review-agent", "headBottom": 1140 },
+    { "id": "data-agent", "headBottom": 1411 }
+  ]
+}

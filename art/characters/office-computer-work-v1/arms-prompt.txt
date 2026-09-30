@@ -1,0 +1,18 @@
+Use case: stylized-concept
+Asset type: detachable arm artwork for the six existing chibi office characters in the reference. Match their precise muted clothing colors, skin, soft cel shading and thin dark outlines.
+
+Make a transparent sprite-component sheet, exactly THREE columns and SIX rows. Each cell contains ONE isolated component, upright and centered, with large transparent gutters. No complete people, heads, furniture or text.
+Columns:
+1 UPPER SLEEVE: a narrow softly rounded fabric upper-arm segment, shoulder end at TOP, elbow end at BOTTOM. Straight vertical relaxed shape. No torso, no hand. Rounded closed painted ends allow overlap at joints. About 120px long and 45px wide in its cell.
+2 FOREARM SLEEVE: a matching narrow straight sleeve segment, elbow at TOP, ribbed cuff at BOTTOM. No upper arm and NO HAND. About 130px long and 40px wide. Rounded elbow end, subtle fabric folds, clean cuff.
+3 LEFT HAND: only a small relaxed chibi hand viewed from the BACK of the hand, wrist at TOP, gently curved typing fingers pointing DOWN, thumb on the image LEFT. The fingers are grouped naturally with a few simple lines, no spread waving fingers and no fist. Include a short wrist stump for overlap with the cuff. About 65px tall and 45px wide. No sleeve attached.
+
+Rows, in exact reference identity order:
+1 warm ivory cotton hoodie sleeves, light warm skin (light-brown-haired person).
+2 muted sage-green sweater sleeves, light warm skin (brown ponytail person).
+3 charcoal hoodie sleeves, light warm skin (black-haired person).
+4 warm ivory fine-ribbed sweater sleeves, light warm skin (long reddish-brown-haired person).
+5 plain warm ivory shirt sleeves, light warm skin (brown-haired black-apron person; do NOT draw apron on sleeve).
+6 muted dusty-blue sweater sleeves, light warm skin (wavy dark-blue-haired person).
+
+Keep cloth thickness and limb width consistent with these small seated characters. Smooth continuous contours suitable for overlapping at joints. No disconnected decoration. Equal magnification across all six rows. Do not make puffy mittens or gloves. Genuine RGBA transparency outside the eighteen separate components. No shadows, highlights floating outside shapes, glow, labels, numbers, grid lines, watermark or background color. Portrait sheet 1024 x 1536.

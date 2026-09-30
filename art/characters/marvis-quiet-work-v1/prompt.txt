@@ -1,0 +1,28 @@
+Use case: precise-object-edit, identity-preserve.
+Asset type: two very subtle FULL-BODY seated office animation edit candidates.
+The first attached image is the exact seated identity and posture master. The
+second attached image places two identical copies on a transparent canvas and
+is the exact EDIT TARGET/layout. Preserve that two-column layout and scale.
+
+Make exactly two back-facing seated figures, the same boy with light brown hair,
+cream hooded sweatshirt, navy trousers and white shoes. Do not redesign him.
+Keep the entire head/hair silhouette, hood, center torso, hips, legs, feet,
+camera, outlines, colors and lighting unchanged in both copies.
+
+Change ONLY a tiny sleeve area below each shoulder:
+LEFT FIGURE: viewer-left elbow/sleeve gently moves forward/up by about 2-3 pixels
+at the original 256x384 canvas scale (4-6 pixels at the attached 2x scale).
+The right arm stays exactly in its original neutral position.
+RIGHT FIGURE: viewer-right elbow/sleeve makes that same tiny forward/up movement.
+The left arm stays exactly in its original neutral position.
+
+This is quiet typing with hands on an unseen keyboard in front of the body.
+Elbows remain tucked close to the torso and BELOW the head. Keep hands hidden
+in front of the torso. No visible hands lifted beside the head, no arm waving,
+no wide elbows, no fists, no body rocking, no head tilt, no new facial features.
+Only a modest contour/fold change in one sleeve per figure; the two frames
+should look almost identical at a glance. The body is seated, never standing.
+
+Keep complete sprites, all shoes, original transparent margins, exactly two
+figures in one row. True transparent RGBA background. No furniture, floor,
+shadow, labels, text, outlines around panels, motion lines or watermark.

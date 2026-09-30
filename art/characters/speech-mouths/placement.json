@@ -1,0 +1,8 @@
+{
+  "marvis": { "front": [117, 177, 23, 11], "right": [165, 178, 11, 8], "seated-right": [173, 237, 11, 10] },
+  "code-agent": { "front": [109, 185, 23, 10], "right": [179, 180, 11, 10], "seated-right": [176, 240, 11, 10] },
+  "file-agent": { "front": [118, 176, 24, 9], "right": [163, 179, 11, 8], "seated-right": [170, 243, 11, 9] },
+  "app-agent": { "front": [115, 173, 23, 11], "right": [173, 177, 11, 10], "seated-right": [183, 236, 10, 10] },
+  "review-agent": { "front": [118, 178, 24, 11], "right": [165, 179, 11, 10], "seated-right": [173, 240, 11, 10] },
+  "data-agent": { "front": [119, 173, 24, 11], "right": [174, 172, 11, 9], "seated-right": [180, 235, 11, 10] }
+}

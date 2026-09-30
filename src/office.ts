@@ -1,0 +1,5 @@
+export { OfficeApp } from './App'
+export type { DashboardAction, DashboardSnapshot, OfficeDataSource } from './dashboard/contract'
+export { dashboardSnapshotSchema, parseDashboardSnapshot } from './dashboard/contract'
+export { ExampleOfficeDataSource } from './dashboard/demoSource'
+export { HttpOfficeDataSource } from './dashboard/httpSource'

@@ -1,0 +1,326 @@
+[
+  {
+    "id": "marvis",
+    "records": [
+      {
+        "file": "work/computer-v1/body.png",
+        "crop": {
+          "x": 85,
+          "y": 202,
+          "width": 252,
+          "height": 418
+        },
+        "scale": 0.6041653848295079,
+        "left": 53,
+        "top": 125,
+        "headBottom": 412
+      },
+      {
+        "file": "work/computer-v1/upper.png",
+        "crop": {
+          "x": 217,
+          "y": 43,
+          "width": 108,
+          "height": 190
+        },
+        "scale": 0.22932381891974907,
+        "left": 112,
+        "top": 153
+      },
+      {
+        "file": "work/computer-v1/forearm.png",
+        "crop": {
+          "x": 469,
+          "y": 50,
+          "width": 92,
+          "height": 177
+        },
+        "scale": 0.3716919417187035,
+        "left": 111,
+        "top": 152
+      },
+      {
+        "file": "work/computer-v1/hand.png",
+        "crop": {
+          "x": 703,
+          "y": 80,
+          "width": 107,
+          "height": 134
+        },
+        "scale": 0.18656716417910446,
+        "left": 116,
+        "top": 158
+      }
+    ]
+  },
+  {
+    "id": "code-agent",
+    "records": [
+      {
+        "file": "work/computer-v1/body.png",
+        "crop": {
+          "x": 512,
+          "y": 199,
+          "width": 232,
+          "height": 421
+        },
+        "scale": 0.5993364974525238,
+        "left": 59,
+        "top": 126,
+        "headBottom": 444
+      },
+      {
+        "file": "work/computer-v1/upper.png",
+        "crop": {
+          "x": 218,
+          "y": 267,
+          "width": 109,
+          "height": 192
+        },
+        "scale": 0.22694202607956002,
+        "left": 112,
+        "top": 153
+      },
+      {
+        "file": "work/computer-v1/forearm.png",
+        "crop": {
+          "x": 470,
+          "y": 272,
+          "width": 97,
+          "height": 186
+        },
+        "scale": 0.3537068477645727,
+        "left": 111,
+        "top": 152
+      },
+      {
+        "file": "work/computer-v1/hand.png",
+        "crop": {
+          "x": 704,
+          "y": 311,
+          "width": 106,
+          "height": 133
+        },
+        "scale": 0.18796992481203006,
+        "left": 116,
+        "top": 158
+      }
+    ]
+  },
+  {
+    "id": "file-agent",
+    "records": [
+      {
+        "file": "work/computer-v1/body.png",
+        "crop": {
+          "x": 919,
+          "y": 195,
+          "width": 258,
+          "height": 424
+        },
+        "scale": 0.6054913577759004,
+        "left": 51,
+        "top": 121,
+        "headBottom": 407
+      },
+      {
+        "file": "work/computer-v1/upper.png",
+        "crop": {
+          "x": 214,
+          "y": 496,
+          "width": 113,
+          "height": 199
+        },
+        "scale": 0.2189579018082222,
+        "left": 112,
+        "top": 153
+      },
+      {
+        "file": "work/computer-v1/forearm.png",
+        "crop": {
+          "x": 467,
+          "y": 501,
+          "width": 98,
+          "height": 191
+        },
+        "scale": 0.3444475062000551,
+        "left": 111,
+        "top": 152
+      },
+      {
+        "file": "work/computer-v1/hand.png",
+        "crop": {
+          "x": 703,
+          "y": 541,
+          "width": 107,
+          "height": 137
+        },
+        "scale": 0.18248175182481752,
+        "left": 116,
+        "top": 158
+      }
+    ]
+  },
+  {
+    "id": "app-agent",
+    "records": [
+      {
+        "file": "work/computer-v1/body.png",
+        "crop": {
+          "x": 55,
+          "y": 790,
+          "width": 310,
+          "height": 446
+        },
+        "scale": 0.5968504881179837,
+        "left": 36,
+        "top": 113,
+        "headBottom": 1043
+      },
+      {
+        "file": "work/computer-v1/upper.png",
+        "crop": {
+          "x": 212,
+          "y": 744,
+          "width": 114,
+          "height": 201
+        },
+        "scale": 0.21678554048986695,
+        "left": 112,
+        "top": 153
+      },
+      {
+        "file": "work/computer-v1/forearm.png",
+        "crop": {
+          "x": 470,
+          "y": 751,
+          "width": 98,
+          "height": 192
+        },
+        "scale": 0.3426535087719298,
+        "left": 111,
+        "top": 152
+      },
+      {
+        "file": "work/computer-v1/hand.png",
+        "crop": {
+          "x": 703,
+          "y": 793,
+          "width": 108,
+          "height": 137
+        },
+        "scale": 0.18248175182481752,
+        "left": 116,
+        "top": 158
+      }
+    ]
+  },
+  {
+    "id": "review-agent",
+    "records": [
+      {
+        "file": "work/computer-v1/body.png",
+        "crop": {
+          "x": 499,
+          "y": 794,
+          "width": 259,
+          "height": 442
+        },
+        "scale": 0.5900873041183948,
+        "left": 52,
+        "top": 118,
+        "headBottom": 1016
+      },
+      {
+        "file": "work/computer-v1/upper.png",
+        "crop": {
+          "x": 212,
+          "y": 1002,
+          "width": 114,
+          "height": 200
+        },
+        "scale": 0.21784271930071317,
+        "left": 112,
+        "top": 153
+      },
+      {
+        "file": "work/computer-v1/forearm.png",
+        "crop": {
+          "x": 472,
+          "y": 1008,
+          "width": 96,
+          "height": 187
+        },
+        "scale": 0.35181536729524343,
+        "left": 111,
+        "top": 152
+      },
+      {
+        "file": "work/computer-v1/hand.png",
+        "crop": {
+          "x": 703,
+          "y": 1044,
+          "width": 109,
+          "height": 139
+        },
+        "scale": 0.17985611510791366,
+        "left": 116,
+        "top": 158
+      }
+    ]
+  },
+  {
+    "id": "data-agent",
+    "records": [
+      {
+        "file": "work/computer-v1/body.png",
+        "crop": {
+          "x": 904,
+          "y": 801,
+          "width": 282,
+          "height": 434
+        },
+        "scale": 0.5982101531635367,
+        "left": 44,
+        "top": 119,
+        "headBottom": 1040
+      },
+      {
+        "file": "work/computer-v1/upper.png",
+        "crop": {
+          "x": 213,
+          "y": 1256,
+          "width": 113,
+          "height": 196
+        },
+        "scale": 0.22222515293101278,
+        "left": 112,
+        "top": 153
+      },
+      {
+        "file": "work/computer-v1/forearm.png",
+        "crop": {
+          "x": 467,
+          "y": 1261,
+          "width": 99,
+          "height": 185
+        },
+        "scale": 0.3556187766714083,
+        "left": 110,
+        "top": 152
+      },
+      {
+        "file": "work/computer-v1/hand.png",
+        "crop": {
+          "x": 702,
+          "y": 1294,
+          "width": 110,
+          "height": 141
+        },
+        "scale": 0.1773049645390071,
+        "left": 116,
+        "top": 158
+      }
+    ]
+  }
+]

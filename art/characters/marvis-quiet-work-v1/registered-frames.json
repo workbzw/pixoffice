@@ -1,0 +1,40 @@
+[
+  {
+    "crop": {
+      "left": 150,
+      "top": 351,
+      "width": 433,
+      "height": 718
+    },
+    "patch": {
+      "left": 66,
+      "top": 260,
+      "width": 37,
+      "height": 50
+    },
+    "scale": 0.3489061656089971,
+    "left": 53,
+    "top": 127,
+    "width": 151,
+    "height": 251
+  },
+  {
+    "crop": {
+      "left": 874,
+      "top": 351,
+      "width": 433,
+      "height": 718
+    },
+    "patch": {
+      "left": 154,
+      "top": 260,
+      "width": 38,
+      "height": 50
+    },
+    "scale": 0.3489298004636909,
+    "left": 53,
+    "top": 127,
+    "width": 151,
+    "height": 251
+  }
+]

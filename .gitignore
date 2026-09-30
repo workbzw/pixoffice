@@ -1,0 +1,8 @@
+node_modules
+public/characters/
+dist
+.dev-server.log
+*.tsbuildinfo
+.character-staging/
+.character-backups/
+.character-preview/

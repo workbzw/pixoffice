@@ -1,0 +1,10 @@
+{
+  "sheet": "actions.png",
+  "headWidth": 147,
+  "frames": [
+    { "file": "standard-v1/walk/back/001.png", "crop": { "left": 49, "top": 27, "width": 272, "height": 495 }, "headTop": 0, "headBottom": 235 },
+    { "file": "standard-v1/walk/back/002.png", "crop": { "left": 431, "top": 27, "width": 270, "height": 499 }, "headTop": 0, "headBottom": 235 },
+    { "file": "standard-v1/walk/back/003.png", "crop": { "left": 802, "top": 26, "width": 269, "height": 494 }, "headTop": 0, "headBottom": 235 },
+    { "file": "standard-v1/walk/back/004.png", "crop": { "left": 1176, "top": 26, "width": 270, "height": 501 }, "headTop": 0, "headBottom": 235 }
+  ]
+}

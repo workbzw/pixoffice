@@ -1,0 +1,21 @@
+{
+  "pose": {
+    "source": "pose-attempt-3.png",
+    "outputId": "exec-2be2597d-ef99-4355-b3d7-33c9b42910a4",
+    "headTop": 110,
+    "headBottom": 730
+  },
+  "motion": {
+    "source": "motion-generated.png",
+    "outputId": "exec-f1a8dccf-6d46-48ac-9a73-636eb1020741",
+    "headTop": 365,
+    "headBottom": 712,
+    "candidates": [
+      { "crop": { "left": 0, "top": 0, "width": 724, "height": 1086 }, "patch": { "left": 49, "top": 224, "width": 24, "height": 29 } },
+      { "crop": { "left": 724, "top": 0, "width": 724, "height": 1086 }, "patch": { "left": 184, "top": 224, "width": 25, "height": 29 } }
+    ]
+  },
+  "cycleFrameMs": 250,
+  "cyclesBeforePause": 3,
+  "pauseMs": 1000
+}

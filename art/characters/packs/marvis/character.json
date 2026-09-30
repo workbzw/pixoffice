@@ -1,0 +1,730 @@
+{
+  "schemaVersion": 1,
+  "id": "marvis",
+  "label": "王明",
+  "profile": "office",
+  "canvas": {
+    "width": 256,
+    "height": 384
+  },
+  "pivot": {
+    "x": 128,
+    "y": 344
+  },
+  "referenceHeight": 280,
+  "displayHeight": 84,
+  "portrait": "idle.front",
+  "mouth": {
+    "pivot": {
+      "x": 128,
+      "y": 192
+    },
+    "views": {
+      "front": {
+        "closed": "mouth.front-closed",
+        "speaking": "mouth.front-speaking"
+      },
+      "right": {
+        "closed": "mouth.right-closed",
+        "speaking": "mouth.right-speaking"
+      }
+    }
+  },
+  "clips": {
+    "idle.front": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "mouth": {
+            "x": 128,
+            "y": 182,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/idle/front/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "walk.front": {
+      "frames": [
+        {
+          "file": "standard-v2/walk/front/001.png",
+          "durationMs": 200,
+          "mouth": {
+            "x": 128.21343873517787,
+            "y": 187.7979381443299,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          }
+        },
+        {
+          "file": "standard-v2/walk/front/002.png",
+          "durationMs": 200,
+          "mouth": {
+            "x": 128.71314741035857,
+            "y": 188.04545454545456,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          }
+        },
+        {
+          "file": "standard-v2/walk/front/003.png",
+          "durationMs": 200,
+          "mouth": {
+            "x": 128.21343873517787,
+            "y": 188.04132231404958,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          }
+        },
+        {
+          "file": "standard-v2/walk/front/004.png",
+          "durationMs": 200,
+          "mouth": {
+            "x": 128.21343873517787,
+            "y": 187.5514403292181,
+            "view": "front",
+            "scale": 1,
+            "rotation": 0
+          }
+        }
+      ],
+      "loop": true
+    },
+    "idle.right": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "mouth": {
+            "x": 170,
+            "y": 182,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/idle/right/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "walk.right": {
+      "frames": [
+        {
+          "durationMs": 200,
+          "mouth": {
+            "x": 170,
+            "y": 183,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/right/001.png"
+        },
+        {
+          "durationMs": 200,
+          "mouth": {
+            "x": 170,
+            "y": 182,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/idle/right/001.png"
+        },
+        {
+          "durationMs": 200,
+          "mouth": {
+            "x": 170,
+            "y": 183,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/walk/right/003.png"
+        },
+        {
+          "durationMs": 200,
+          "mouth": {
+            "x": 170,
+            "y": 182,
+            "view": "right",
+            "scale": 1,
+            "rotation": 0
+          },
+          "file": "body/idle/right/001.png"
+        }
+      ],
+      "loop": true
+    },
+    "idle.back": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "idle/back/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "idle.left": {
+      "alias": "idle.right",
+      "mirrorX": true
+    },
+    "walk.left": {
+      "alias": "walk.right",
+      "mirrorX": true
+    },
+    "walk.back": {
+      "frames": [
+        {
+          "file": "standard-v2/walk/back/001.png",
+          "durationMs": 200
+        },
+        {
+          "file": "standard-v2/walk/back/002.png",
+          "durationMs": 200
+        },
+        {
+          "file": "standard-v2/walk/back/003.png",
+          "durationMs": 200
+        },
+        {
+          "file": "standard-v2/walk/back/004.png",
+          "durationMs": 200
+        }
+      ],
+      "loop": true
+    },
+    "run.back": {
+      "frames": [
+        {
+          "durationMs": 200,
+          "file": "run/back/001.png"
+        },
+        {
+          "durationMs": 200,
+          "file": "run/back/002.png"
+        },
+        {
+          "durationMs": 200,
+          "file": "run/back/003.png"
+        },
+        {
+          "durationMs": 200,
+          "file": "run/back/004.png"
+        }
+      ],
+      "loop": true
+    },
+    "emote.wave": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "emote/wave/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "emote.thinking": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "emote/thinking/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "emote.surprised": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "emote/surprised/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "sit.back": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "standard-v2/sit/back/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "talk.seated-right": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "mouth": {
+            "x": 177.63398692810458,
+            "y": 240.37007874015748,
+            "view": "right",
+            "scale": 0.8587236411290903,
+            "rotation": 0
+          },
+          "file": "standard-v2/talk/seated-right/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "talk.seated-left": {
+      "alias": "talk.seated-right",
+      "mirrorX": true
+    },
+    "pose.lean": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "standard-v2/pose/lean/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "pose.rise": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "standard-v2/pose/rise/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "stand-up.back": {
+      "frames": [
+        {
+          "durationMs": 52,
+          "file": "standard-v2/sit/back/001.png"
+        },
+        {
+          "durationMs": 182,
+          "file": "standard-v2/pose/lean/001.png"
+        },
+        {
+          "durationMs": 224,
+          "file": "standard-v2/pose/rise/001.png"
+        },
+        {
+          "durationMs": 62,
+          "file": "idle/back/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "sit-down.back": {
+      "frames": [
+        {
+          "durationMs": 62,
+          "file": "idle/back/001.png"
+        },
+        {
+          "durationMs": 224,
+          "file": "standard-v2/pose/rise/001.png"
+        },
+        {
+          "durationMs": 182,
+          "file": "standard-v2/pose/lean/001.png"
+        },
+        {
+          "durationMs": 52,
+          "file": "standard-v2/sit/back/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "archive-walk.front": {
+      "frames": [
+        {
+          "durationMs": 125,
+          "file": "archive-walk/front/001.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/front/002.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/front/003.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/front/004.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/front/005.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/front/006.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/front/007.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/front/008.png"
+        }
+      ],
+      "loop": true
+    },
+    "archive-walk.right": {
+      "frames": [
+        {
+          "durationMs": 125,
+          "file": "archive-walk/right/001.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/right/002.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/right/003.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/right/004.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/right/005.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/right/006.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/right/007.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/right/008.png"
+        }
+      ],
+      "loop": true
+    },
+    "archive-walk.back": {
+      "frames": [
+        {
+          "durationMs": 125,
+          "file": "archive-walk/back/001.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/back/002.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/back/003.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/back/004.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/back/005.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/back/006.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/back/007.png"
+        },
+        {
+          "durationMs": 125,
+          "file": "archive-walk/back/008.png"
+        }
+      ],
+      "loop": true
+    },
+    "archive-walk.left": {
+      "alias": "archive-walk.right",
+      "mirrorX": true
+    },
+    "speak.front": {
+      "alias": "idle.front",
+      "mirrorX": false
+    },
+    "speak.right": {
+      "alias": "idle.right",
+      "mirrorX": false
+    },
+    "speak.seated-right": {
+      "alias": "talk.seated-right",
+      "mirrorX": false
+    },
+    "speak.left": {
+      "alias": "idle.left",
+      "mirrorX": false
+    },
+    "speak.seated-left": {
+      "alias": "talk.seated-left",
+      "mirrorX": false
+    },
+    "mouth.front-closed": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "mouth/front/closed.png"
+        }
+      ],
+      "loop": false
+    },
+    "mouth.front-speaking": {
+      "frames": [
+        {
+          "durationMs": 110,
+          "file": "mouth/front/open-1.png"
+        },
+        {
+          "durationMs": 100,
+          "file": "mouth/front/open-2.png"
+        },
+        {
+          "durationMs": 100,
+          "file": "mouth/front/closed.png"
+        },
+        {
+          "durationMs": 120,
+          "file": "mouth/front/open-3.png"
+        },
+        {
+          "durationMs": 90,
+          "file": "mouth/front/open-2.png"
+        },
+        {
+          "durationMs": 210,
+          "file": "mouth/front/closed.png"
+        }
+      ],
+      "loop": true
+    },
+    "mouth.right-closed": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "mouth/right/closed.png"
+        }
+      ],
+      "loop": false
+    },
+    "mouth.right-speaking": {
+      "frames": [
+        {
+          "durationMs": 110,
+          "file": "mouth/right/open-1.png"
+        },
+        {
+          "durationMs": 100,
+          "file": "mouth/right/open-2.png"
+        },
+        {
+          "durationMs": 100,
+          "file": "mouth/right/closed.png"
+        },
+        {
+          "durationMs": 120,
+          "file": "mouth/right/open-3.png"
+        },
+        {
+          "durationMs": 90,
+          "file": "mouth/right/open-2.png"
+        },
+        {
+          "durationMs": 210,
+          "file": "mouth/right/closed.png"
+        }
+      ],
+      "loop": true
+    },
+    "work.typing-back": {
+      "frames": [
+        {
+          "file": "work/typing-back-v2/001.png",
+          "durationMs": 210
+        },
+        {
+          "file": "work/typing-back-v2/002.png",
+          "durationMs": 110
+        },
+        {
+          "file": "work/typing-back-v2/003.png",
+          "durationMs": 210
+        },
+        {
+          "file": "work/typing-back-v2/004.png",
+          "durationMs": 110
+        }
+      ],
+      "loop": true
+    },
+    "work.computer-back": {
+      "frames": [
+        {
+          "file": "work/computer-v1/body.png",
+          "durationMs": 12000
+        }
+      ],
+      "loop": true
+    },
+    "part.work-upper": {
+      "frames": [
+        {
+          "file": "work/computer-v1/upper.png",
+          "durationMs": 1000
+        }
+      ],
+      "loop": false
+    },
+    "part.work-forearm": {
+      "frames": [
+        {
+          "file": "work/computer-v1/forearm.png",
+          "durationMs": 1000
+        }
+      ],
+      "loop": false
+    },
+    "part.work-hand": {
+      "frames": [
+        {
+          "file": "work/computer-v1/hand.png",
+          "durationMs": 1000
+        }
+      ],
+      "loop": false
+    },
+    "work.quiet-back": {
+      "loop": true,
+      "frames": [
+        {
+          "file": "work/quiet-back-v2/001.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/002.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/003.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/004.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/001.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/002.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/003.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/004.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/001.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/002.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/003.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/004.png",
+          "durationMs": 250
+        },
+        {
+          "file": "work/quiet-back-v2/001.png",
+          "durationMs": 1000
+        }
+      ]
+    }
+  },
+  "work": {
+    "shoulders": {
+      "left": {
+        "x": 94.016,
+        "y": 266.026
+      },
+      "right": {
+        "x": 164.587,
+        "y": 266.026
+      }
+    },
+    "previewSurface": {
+      "keyboardLeft": {
+        "x": 100.46376811594203,
+        "y": 212.3485990338164
+      },
+      "keyboardRight": {
+        "x": 144.52173913043478,
+        "y": 212.3485990338164
+      },
+      "mouse": {
+        "x": 178.29951690821255,
+        "y": 210.69642512077294
+      },
+      "bounds": {
+        "left": -9.681159420289845,
+        "right": 263.8454106280193,
+        "back": 167.18917874396135,
+        "front": 232.72541062801932
+      }
+    },
+    "upper": {
+      "clip": "part.work-upper",
+      "root": {
+        "x": 128.25,
+        "y": 159.6
+      },
+      "tip": {
+        "x": 123.5,
+        "y": 189.51999999999998
+      }
+    },
+    "forearm": {
+      "clip": "part.work-forearm",
+      "root": {
+        "x": 128.34,
+        "y": 159.92
+      },
+      "tip": {
+        "x": 128.34,
+        "y": 210.07999999999998
+      }
+    },
+    "hand": {
+      "clip": "part.work-hand",
+      "root": {
+        "x": 127.8,
+        "y": 160.5
+      },
+      "tip": {
+        "x": 127.8,
+        "y": 179.5
+      }
+    }
+  }
+}

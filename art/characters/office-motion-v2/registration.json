@@ -1,0 +1,8 @@
+{
+  "marvis": { "referenceBottom": { "front": 197, "back": 193, "right": 196 }, "walkBottom": [265, 784], "mouthY": 243, "seatBottom": [251, 260, 230, 254] },
+  "code-agent": { "referenceBottom": { "front": 211, "back": 201, "right": 204 }, "walkBottom": [287, 797], "mouthY": 253, "seatBottom": [275, 273, 237, 278] },
+  "file-agent": { "referenceBottom": { "front": 195, "back": 193, "right": 197 }, "walkBottom": [280, 798], "mouthY": 258, "seatBottom": [257, 248, 224, 258] },
+  "app-agent": { "referenceBottom": { "front": 225, "back": 221, "right": 229 }, "walkBottom": [328, 812], "mouthY": 249, "seatBottom": [273, 267, 240, 272] },
+  "review-agent": { "referenceBottom": { "front": 199, "back": 194, "right": 200 }, "walkBottom": [282, 795], "mouthY": 257, "seatBottom": [254, 249, 214, 258] },
+  "data-agent": { "referenceBottom": { "front": 209, "back": 207, "right": 207 }, "walkBottom": [314, 827], "mouthY": 265, "seatBottom": [271, 268, 239, 271] }
+}

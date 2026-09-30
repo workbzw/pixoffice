@@ -1,0 +1,507 @@
+[
+  {
+    "id": "code-agent",
+    "records": [
+      {
+        "input": "neutral.png",
+        "scale": 0.21163549491791972,
+        "left": 20,
+        "top": 87,
+        "width": 217,
+        "height": 325,
+        "measured": {
+          "headWidth": 672,
+          "headHeight": 652,
+          "headArea": 310407,
+          "headCenter": 511.5,
+          "footY": 1370
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 118,
+          "headBottom": 260,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 0,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.29806784588792357,
+        "left": 20,
+        "top": 88,
+        "width": 216,
+        "height": 324,
+        "measured": {
+          "headWidth": 477,
+          "headHeight": 463,
+          "headArea": 156487,
+          "headCenter": 362,
+          "footY": 970
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 117,
+          "headBottom": 260,
+          "footY": 377
+        }
+      },
+      {
+        "input": "neutral.png",
+        "scale": 0.21163549491791972,
+        "left": 20,
+        "top": 87,
+        "width": 217,
+        "height": 325,
+        "measured": {
+          "headWidth": 672,
+          "headHeight": 652,
+          "headArea": 310407,
+          "headCenter": 511.5,
+          "footY": 1370
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 118,
+          "headBottom": 260,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 724,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.29791938675902835,
+        "left": 20,
+        "top": 88,
+        "width": 216,
+        "height": 324,
+        "measured": {
+          "headWidth": 476,
+          "headHeight": 463,
+          "headArea": 156643,
+          "headCenter": 362.5,
+          "footY": 970
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 117,
+          "headBottom": 260,
+          "footY": 377
+        }
+      }
+    ]
+  },
+  {
+    "id": "file-agent",
+    "records": [
+      {
+        "input": "neutral.png",
+        "scale": 0.21950285914697054,
+        "left": 12,
+        "top": 74,
+        "width": 225,
+        "height": 337,
+        "measured": {
+          "headWidth": 696,
+          "headHeight": 586,
+          "headArea": 275915,
+          "headCenter": 530.5,
+          "footY": 1382
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 104,
+          "headBottom": 235,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 0,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.30973486543033374,
+        "left": 12,
+        "top": 74,
+        "width": 224,
+        "height": 336,
+        "measured": {
+          "headWidth": 494,
+          "headHeight": 417,
+          "headArea": 138572,
+          "headCenter": 375.5,
+          "footY": 979
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 103,
+          "headBottom": 236,
+          "footY": 377
+        }
+      },
+      {
+        "input": "neutral.png",
+        "scale": 0.21950285914697054,
+        "left": 12,
+        "top": 74,
+        "width": 225,
+        "height": 337,
+        "measured": {
+          "headWidth": 696,
+          "headHeight": 586,
+          "headArea": 275915,
+          "headCenter": 530.5,
+          "footY": 1382
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 104,
+          "headBottom": 235,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 724,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.3097203377120274,
+        "left": 5,
+        "top": 74,
+        "width": 224,
+        "height": 336,
+        "measured": {
+          "headWidth": 494,
+          "headHeight": 417,
+          "headArea": 138585,
+          "headCenter": 398.5,
+          "footY": 979
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 103,
+          "headBottom": 236,
+          "footY": 377
+        }
+      }
+    ]
+  },
+  {
+    "id": "app-agent",
+    "records": [
+      {
+        "input": "neutral.png",
+        "scale": 0.24840047410452576,
+        "left": 1,
+        "top": 37,
+        "width": 254,
+        "height": 382,
+        "measured": {
+          "headWidth": 743,
+          "headHeight": 606,
+          "headArea": 331314,
+          "headCenter": 512,
+          "footY": 1368
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 96,
+          "headBottom": 249,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 0,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.3486608762081605,
+        "left": 1,
+        "top": 39,
+        "width": 252,
+        "height": 379,
+        "measured": {
+          "headWidth": 527,
+          "headHeight": 432,
+          "headArea": 168166,
+          "headCenter": 363,
+          "footY": 969
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 94,
+          "headBottom": 249,
+          "footY": 377
+        }
+      },
+      {
+        "input": "neutral.png",
+        "scale": 0.24840047410452576,
+        "left": 1,
+        "top": 37,
+        "width": 254,
+        "height": 382,
+        "measured": {
+          "headWidth": 743,
+          "headHeight": 606,
+          "headArea": 331314,
+          "headCenter": 512,
+          "footY": 1368
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 96,
+          "headBottom": 249,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 724,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.34853654392142086,
+        "left": 2,
+        "top": 39,
+        "width": 252,
+        "height": 379,
+        "measured": {
+          "headWidth": 527,
+          "headHeight": 432,
+          "headArea": 168286,
+          "headCenter": 362,
+          "footY": 969
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 94,
+          "headBottom": 249,
+          "footY": 377
+        }
+      }
+    ]
+  },
+  {
+    "id": "review-agent",
+    "records": [
+      {
+        "input": "neutral.png",
+        "scale": 0.2091620970218235,
+        "left": 17,
+        "top": 90,
+        "width": 214,
+        "height": 321,
+        "measured": {
+          "headWidth": 702,
+          "headHeight": 631,
+          "headArea": 302957,
+          "headCenter": 530.5,
+          "footY": 1371
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 118,
+          "headBottom": 251,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 0,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.29498069329526466,
+        "left": 17,
+        "top": 91,
+        "width": 214,
+        "height": 320,
+        "measured": {
+          "headWidth": 499,
+          "headHeight": 447,
+          "headArea": 152321,
+          "headCenter": 375,
+          "footY": 970
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 117,
+          "headBottom": 252,
+          "footY": 377
+        }
+      },
+      {
+        "input": "neutral.png",
+        "scale": 0.2091620970218235,
+        "left": 17,
+        "top": 90,
+        "width": 214,
+        "height": 321,
+        "measured": {
+          "headWidth": 702,
+          "headHeight": 631,
+          "headArea": 302957,
+          "headCenter": 530.5,
+          "footY": 1371
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 118,
+          "headBottom": 251,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 724,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.29445824166077655,
+        "left": 10,
+        "top": 91,
+        "width": 213,
+        "height": 320,
+        "measured": {
+          "headWidth": 500,
+          "headHeight": 447,
+          "headArea": 152862,
+          "headCenter": 399.5,
+          "footY": 971
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 117,
+          "headBottom": 251,
+          "footY": 377
+        }
+      }
+    ]
+  },
+  {
+    "id": "data-agent",
+    "records": [
+      {
+        "input": "neutral.png",
+        "scale": 0.24436720212294036,
+        "left": 2,
+        "top": 48,
+        "width": 250,
+        "height": 375,
+        "measured": {
+          "headWidth": 717,
+          "headHeight": 569,
+          "headArea": 290160,
+          "headCenter": 514,
+          "footY": 1345
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 113,
+          "headBottom": 253,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 0,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.34620961104208353,
+        "left": 2,
+        "top": 47,
+        "width": 251,
+        "height": 376,
+        "measured": {
+          "headWidth": 506,
+          "headHeight": 402,
+          "headArea": 144559,
+          "headCenter": 364.5,
+          "footY": 952
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 109,
+          "headBottom": 252,
+          "footY": 377
+        }
+      },
+      {
+        "input": "neutral.png",
+        "scale": 0.24436720212294036,
+        "left": 2,
+        "top": 48,
+        "width": 250,
+        "height": 375,
+        "measured": {
+          "headWidth": 717,
+          "headHeight": 569,
+          "headArea": 290160,
+          "headCenter": 514,
+          "footY": 1345
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 113,
+          "headBottom": 253,
+          "footY": 377
+        }
+      },
+      {
+        "input": "motion.png",
+        "crop": {
+          "left": 724,
+          "top": 0,
+          "width": 724,
+          "height": 1086
+        },
+        "scale": 0.34609351504927655,
+        "left": 2,
+        "top": 48,
+        "width": 251,
+        "height": 376,
+        "measured": {
+          "headWidth": 508,
+          "headHeight": 402,
+          "headArea": 144656,
+          "headCenter": 364.5,
+          "footY": 952
+        },
+        "rule": {
+          "view": "back",
+          "headTop": 110,
+          "headBottom": 253,
+          "footY": 377
+        }
+      }
+    ]
+  }
+]

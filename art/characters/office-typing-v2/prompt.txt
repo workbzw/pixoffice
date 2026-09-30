@@ -1,0 +1,23 @@
+Use case: identity-preserve
+Asset type: full-body sprite sheet for a seated back-view keyboard-typing animation.
+Edit target: the first reference is the existing sprite sheet, four columns and six rows. Preserve EVERY character's head silhouette, hair, clothing colors, seated torso, legs, shoes, scale, camera, and row/column positions. Change ONLY the arms and hands to produce a clearly readable alternating keyboard-typing motion.
+Supporting pose/contact reference: the second reference is the actual white desk in the game. It supplies the tabletop-height/contact idea only. Do NOT include a desk, keyboard, chair, monitor or any furniture in the output.
+
+Exact layout: 4 columns, 6 rows, 24 isolated complete seated BACK-view sprites, retaining the same six identities in the same row order:
+1 short light-brown hair, cream hoodie, dark trousers.
+2 dark-brown tied hair, muted green top, cream trousers.
+3 short black hair, charcoal hoodie, cream trousers.
+4 long reddish-brown hair, cream sweater, blue trousers.
+5 short brown hair, cream shirt, black apron straps and rear bow.
+6 wavy dark-blue hair, blue top, cream trousers.
+
+All sprites are calmly sitting at a keyboard just in front of them, with fixed head and torso and bent seated legs. Upper arms remain near the torso. Forearms reach forward toward the tabletop; hands are flat with relaxed typing fingers, NEVER fists, waving hands or clenched hands near the ears. The hands must be visible laterally beyond the lower head/hair silhouette and reach a higher tabletop plane than in the original sheet. The press hand is approximately at the bottom quarter of the head silhouette (not down below the neck). Lift changes the hand height by about one sixth of the head height (a deliberately readable 15-22 pixels after registration). Elbows stay low near the torso; the movement comes from bending forearms/wrists, not shrugging the shoulders or moving the body.
+
+Four ordered poses in EACH row:
+A: viewer-left forearm raised with flat fingers lifted above the keyboard plane; viewer-right hand stays down resting/pressing.
+B: viewer-left forearm lowered, flat fingertips visibly press the keyboard plane; viewer-right hand stays low. Clearly distinct from A, same head/body.
+C: viewer-right forearm raised with flat fingers lifted above the keyboard plane; viewer-left hand stays down resting.
+D: viewer-right forearm lowered, flat fingertips visibly press the keyboard plane; viewer-left hand stays low. Clearly distinct from C, same head/body.
+This is an alternating press/release loop, not simultaneous waving. Keep feet, shoulders and head registered identically within each row. Hands must never merge into hair, acquire extra fingers, or make the character look like they are raising their hands to their ears.
+
+Keep the existing soft chibi office illustration, clean outlines and muted clothes. Straight back view throughout, no turning, no face and no mouth. Full hair and complete shoes. Generous transparent gutters between every sprite. Genuine transparent RGBA background everywhere outside the characters, no colored backdrop, ground shadows, glow, grid lines, labels, text or watermark. Output a 1024 x 1536 portrait sheet if possible; preserve the existing sheet arrangement.

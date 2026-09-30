@@ -1,0 +1,53 @@
+{
+  "name": "pixoffice",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "predev": "npm run characters:build",
+    "dev": "node scripts/dev.mjs",
+    "predev:vite": "npm run characters:build",
+    "dev:vite": "vite",
+    "action-gateway": "node scripts/action-gateway.mjs",
+    "dashboard-example": "node examples/dashboard/server.mjs",
+    "characters:build": "node scripts/characters/build.mjs",
+    "characters:check": "node scripts/characters/build.mjs --check",
+    "characters:draft": "node scripts/characters/quality-cli.mjs draft",
+    "characters:audit": "node scripts/characters/quality-cli.mjs audit",
+    "characters:preview": "node scripts/characters/quality-cli.mjs preview",
+    "characters:review": "node scripts/characters/quality-cli.mjs review-template",
+    "characters:publish": "node scripts/characters/quality-cli.mjs publish",
+    "prebuild": "npm run characters:build",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "pretest": "npm run characters:build",
+    "test": "node --test tests/*.test.mjs",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@esotericsoftware/spine-pixi-v8": "~4.2.0",
+    "lucide-react": "^1.48.0",
+    "pathfinding": "^0.4.18",
+    "pixi.js": "^8.18.1",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^24.12.4",
+    "@types/pathfinding": "^0.1.0",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "maxrects-packer": "^2.7.3",
+    "sharp": "^0.35.4",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.12"
+  }
+}

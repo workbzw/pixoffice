@@ -1,0 +1,17 @@
+{
+  "bodyOutputId": "exec-fe0a634d-fe93-4fe5-bf20-a208036eb161",
+  "armsOutputId": "exec-accfdc9c-0014-40cc-b48a-676e083e81ec",
+  "rows": [
+    { "id": "marvis", "headBottom": 412, "shoulders": [[153, 435], [270, 435]] },
+    { "id": "code-agent", "headBottom": 444, "shoulders": [[568, 451], [682, 451]] },
+    { "id": "file-agent", "headBottom": 407, "shoulders": [[991, 430], [1107, 430]] },
+    { "id": "app-agent", "headBottom": 1043, "shoulders": [[145, 1057], [275, 1057]] },
+    { "id": "review-agent", "headBottom": 1016, "shoulders": [[570, 1042], [681, 1042]] },
+    { "id": "data-agent", "headBottom": 1040, "shoulders": [[982, 1056], [1116, 1056]] }
+  ],
+  "parts": [
+    { "name": "upper", "root": [0.65, 0.15], "tip": [0.46, 0.83], "length": 30 },
+    { "name": "forearm", "root": [0.51, 0.12], "tip": [0.51, 0.88], "length": 50 },
+    { "name": "hand", "root": [0.59, 0.1], "tip": [0.59, 0.86], "length": 19 }
+  ]
+}

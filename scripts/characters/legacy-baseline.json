@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "reason": "Frozen pre-admission assets only. Known animation defects remain; this is not art approval. Do not regenerate this allowlist to accept changed or new artwork.",
+  "characters": {
+    "marvis": "8125ffb9e69f1b7ba324f5f00ccf1049e04cdc29a7c420d4f62f34766c26aaad",
+    "code-agent": "c73ae2c5c8b71741968631eab46471e37da43ab83dca0272660b4eb1f1c19b31",
+    "file-agent": "a024da0bfb929419d4d48bb022c84ea972a961af2b753dd50ff515e73f2af09f",
+    "app-agent": "ced259b61f1fb28a6437b52d675c152311da7ff006f591f927923689048a74b4",
+    "review-agent": "363ad457e671b9a8ecbfcd9c4b3dd061272d193a50ee10ecc29de2850a1dafe5",
+    "data-agent": "d5697aecf472a8bf6475fac8c92772745362472d8f8f7fb70aaa4ad8acfe11ab"
+  }
+}

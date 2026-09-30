@@ -1,0 +1,13 @@
+{
+  "outputId": "exec-37167373-77b4-4444-a6af-08189a1d9d73",
+  "source": "generated.png",
+  "master": "standard-v2/sit/back/001.png",
+  "headBottom": 711,
+  "candidates": [
+    { "crop": { "left": 150, "top": 351, "width": 433, "height": 718 }, "patch": { "left": 66, "top": 260, "width": 37, "height": 50 } },
+    { "crop": { "left": 874, "top": 351, "width": 433, "height": 718 }, "patch": { "left": 154, "top": 260, "width": 38, "height": 50 } }
+  ],
+  "cycleFrameMs": 250,
+  "cyclesBeforePause": 3,
+  "pauseMs": 1000
+}

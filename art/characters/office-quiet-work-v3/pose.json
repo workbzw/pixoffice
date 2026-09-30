@@ -1,0 +1,16 @@
+{
+  "reference": "marvis",
+  "clip": "work.quiet-back",
+  "contactY": 230,
+  "hands": {
+    "left": { "crop": { "left": 49, "top": 225, "width": 25, "height": 22 }, "wrist": { "x": 64, "y": 244 } },
+    "right": { "crop": { "left": 183, "top": 225, "width": 26, "height": 22 }, "wrist": { "x": 192, "y": 244 } }
+  },
+  "characters": {
+    "code-agent": { "left": 64, "right": 192 },
+    "file-agent": { "left": 64, "right": 192 },
+    "app-agent": { "left": 34, "right": 222 },
+    "review-agent": { "left": 64, "right": 192 },
+    "data-agent": { "left": 40, "right": 216 }
+  }
+}

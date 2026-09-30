@@ -1,0 +1,12 @@
+{
+  "source": "generated-v1.png",
+  "generationId": "exec-a9965463-6cb9-410a-bb08-9dbbfdbceffe",
+  "rows": [
+    { "id": "marvis", "headBottom": 133 },
+    { "id": "code-agent", "headBottom": 386 },
+    { "id": "file-agent", "headBottom": 628 },
+    { "id": "app-agent", "headBottom": 905 },
+    { "id": "review-agent", "headBottom": 1140 },
+    { "id": "data-agent", "headBottom": 1411 }
+  ]
+}

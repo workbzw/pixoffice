@@ -1,0 +1,298 @@
+{
+  "schemaVersion": 1,
+  "canvas": {
+    "width": 256,
+    "height": 384
+  },
+  "pivot": {
+    "x": 128,
+    "y": 344
+  },
+  "referenceHeight": 280,
+  "displayHeight": 84,
+  "tolerance": {
+    "headWidth": 14,
+    "headCenter": 2,
+    "foot": 2,
+    "headAreaRatio": 0.035,
+    "headHeight": 16
+  },
+  "views": {
+    "front": {
+      "headWidth": 163,
+      "headHeight": 144,
+      "headArea": 17592
+    },
+    "back": {
+      "headWidth": 161,
+      "headHeight": 142,
+      "headArea": 17327
+    },
+    "right": {
+      "headWidth": 151,
+      "headHeight": 142,
+      "headArea": 15766
+    }
+  },
+  "requiredClips": [
+    "idle.front",
+    "walk.front",
+    "idle.right",
+    "walk.right",
+    "idle.back",
+    "idle.left",
+    "walk.left",
+    "walk.back",
+    "sit.back",
+    "talk.seated-right",
+    "talk.seated-left",
+    "pose.lean",
+    "pose.rise",
+    "stand-up.back",
+    "sit-down.back",
+    "speak.front",
+    "speak.right",
+    "speak.seated-right",
+    "speak.left",
+    "speak.seated-left",
+    "work.typing-back",
+    "work.computer-back",
+    "work.quiet-back"
+  ],
+  "frames": {
+    "standard-v2/walk/front/001.png": {
+      "view": "front",
+      "headTop": 76,
+      "headBottom": 217,
+      "footY": 344
+    },
+    "standard-v2/walk/front/002.png": {
+      "view": "front",
+      "headTop": 77,
+      "headBottom": 218,
+      "footY": 344
+    },
+    "standard-v2/walk/front/003.png": {
+      "view": "front",
+      "headTop": 77,
+      "headBottom": 218,
+      "footY": 344
+    },
+    "standard-v2/walk/front/004.png": {
+      "view": "front",
+      "headTop": 78,
+      "headBottom": 219,
+      "footY": 344
+    },
+    "standard-v2/walk/back/001.png": {
+      "view": "back",
+      "headTop": 84,
+      "headBottom": 225,
+      "footY": 344
+    },
+    "standard-v2/walk/back/002.png": {
+      "view": "back",
+      "headTop": 84,
+      "headBottom": 225,
+      "footY": 344
+    },
+    "standard-v2/walk/back/003.png": {
+      "view": "back",
+      "headTop": 85,
+      "headBottom": 225,
+      "footY": 344
+    },
+    "standard-v2/walk/back/004.png": {
+      "view": "back",
+      "headTop": 85,
+      "headBottom": 226,
+      "footY": 344
+    },
+    "standard-v2/sit/back/001.png": {
+      "view": "back",
+      "headTop": 115,
+      "headBottom": 263,
+      "footY": 377
+    },
+    "standard-v2/pose/lean/001.png": {
+      "view": "back",
+      "headTop": 134,
+      "headBottom": 274,
+      "footY": 371
+    },
+    "standard-v2/pose/rise/001.png": {
+      "view": "back",
+      "headTop": 110,
+      "headBottom": 250,
+      "footY": 354
+    },
+    "standard-v2/talk/seated-right/001.png": {
+      "view": "right",
+      "headTop": 134,
+      "headBottom": 271,
+      "footY": 377
+    },
+    "body/idle/front/001.png": {
+      "view": "front",
+      "headTop": 0,
+      "headBottom": 209,
+      "footY": 344
+    },
+    "body/idle/right/001.png": {
+      "view": "right",
+      "headTop": 0,
+      "headBottom": 207,
+      "footY": 344
+    },
+    "body/walk/right/001.png": {
+      "view": "right",
+      "headTop": 0,
+      "headBottom": 207,
+      "footY": 344
+    },
+    "body/walk/right/002.png": {
+      "view": "right",
+      "headTop": 0,
+      "headBottom": 207,
+      "footY": 344
+    },
+    "body/walk/right/003.png": {
+      "view": "right",
+      "headTop": 0,
+      "headBottom": 207,
+      "footY": 344
+    },
+    "idle/back/001.png": {
+      "view": "back",
+      "headTop": 0,
+      "headBottom": 207,
+      "footY": 344
+    },
+    "work/typing-back/001.png": {
+      "view": "back",
+      "headTop": 126,
+      "headBottom": 269,
+      "footY": 377
+    },
+    "work/typing-back/002.png": {
+      "view": "back",
+      "headTop": 124,
+      "headBottom": 268,
+      "footY": 377
+    },
+    "work/typing-back/003.png": {
+      "view": "back",
+      "headTop": 125,
+      "headBottom": 269,
+      "footY": 377
+    },
+    "work/typing-back/004.png": {
+      "view": "back",
+      "headTop": 126,
+      "headBottom": 269,
+      "footY": 377
+    },
+    "work/typing-back-v2/001.png": {
+      "view": "back",
+      "headTop": 138,
+      "headBottom": 276,
+      "footY": 377
+    },
+    "work/typing-back-v2/002.png": {
+      "view": "back",
+      "headTop": 137,
+      "headBottom": 275,
+      "footY": 377
+    },
+    "work/typing-back-v2/003.png": {
+      "view": "back",
+      "headTop": 137,
+      "headBottom": 275,
+      "footY": 377
+    },
+    "work/typing-back-v2/004.png": {
+      "view": "back",
+      "headTop": 137,
+      "headBottom": 275,
+      "footY": 377
+    },
+    "work/computer-v1/body.png": {
+      "view": "back",
+      "headTop": 119,
+      "headBottom": 262,
+      "footY": 377
+    },
+    "work/quiet-back-v2/001.png": {
+      "view": "back",
+      "headTop": 119,
+      "headBottom": 262,
+      "footY": 377
+    },
+    "work/quiet-back-v2/002.png": {
+      "view": "back",
+      "headTop": 119,
+      "headBottom": 262,
+      "footY": 377
+    },
+    "work/quiet-back-v2/003.png": {
+      "view": "back",
+      "headTop": 119,
+      "headBottom": 262,
+      "footY": 377
+    },
+    "work/quiet-back-v2/004.png": {
+      "view": "back",
+      "headTop": 119,
+      "headBottom": 262,
+      "footY": 377
+    },
+    "work/quiet-back-v3/001.png": {
+      "view": "back",
+      "headTop": 119,
+      "headBottom": 262,
+      "footY": 377
+    },
+    "work/quiet-back-v3/002.png": {
+      "view": "back",
+      "headTop": 119,
+      "headBottom": 262,
+      "footY": 377
+    },
+    "work/quiet-back-v3/003.png": {
+      "view": "back",
+      "headTop": 119,
+      "headBottom": 262,
+      "footY": 377
+    },
+    "work/quiet-back-v3/004.png": {
+      "view": "back",
+      "headTop": 119,
+      "headBottom": 262,
+      "footY": 377
+    },
+    "work/quiet-back-v4/001.png": {
+      "view": "back",
+      "headTop": 113,
+      "headBottom": 253,
+      "footY": 377
+    },
+    "work/quiet-back-v4/002.png": {
+      "view": "back",
+      "headTop": 109,
+      "headBottom": 252,
+      "footY": 377
+    },
+    "work/quiet-back-v4/003.png": {
+      "view": "back",
+      "headTop": 113,
+      "headBottom": 253,
+      "footY": 377
+    },
+    "work/quiet-back-v4/004.png": {
+      "view": "back",
+      "headTop": 110,
+      "headBottom": 253,
+      "footY": 377
+    }
+  }
+}
