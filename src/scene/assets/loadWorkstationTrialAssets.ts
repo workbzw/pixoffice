@@ -1,4 +1,5 @@
-import { Assets, type Texture } from 'pixi.js'
+import type { Texture } from 'pixi.js'
+import { loadOfficeTexture } from './loadOfficeTexture'
 
 const parts = ['desk', 'chair', 'computer'] as const
 type TrialTextures = Record<(typeof parts)[number], Texture>
@@ -6,18 +7,17 @@ let textures: TrialTextures | undefined
 
 export function getWorkstationTrialTextures() { return textures }
 
-export async function loadWorkstationTrialAssets() {
-  if (textures) return true
+export async function loadWorkstationTrialAssets(onLoaded?: (part: typeof parts[number]) => void) {
+  if (textures) { parts.forEach(part => onLoaded?.(part)); return true }
   try {
     const loaded = {} as TrialTextures
-    for (const part of parts) {
+    const results = await Promise.allSettled(parts.map(async part => {
       const alias = `office-workstation-trial-v1-${part}`
-      if (!Assets.resolver.hasKey(alias)) Assets.add({ alias, src: `/assets/office/workstation-trial-v1/${part}.png` })
-      const texture = await Assets.load<Texture>(alias)
-      if (!texture?.source) throw new Error(`Invalid workstation texture: ${part}`)
-      texture.source.scaleMode = 'linear'
-      loaded[part] = texture
-    }
+      loaded[part] = await loadOfficeTexture(alias, `workstation-trial-v1/${part}`)
+      onLoaded?.(part)
+    }))
+    const failed = results.find(result => result.status === 'rejected')
+    if (failed?.status === 'rejected') throw failed.reason
     textures = loaded
     return true
   } catch (error) {

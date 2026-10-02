@@ -29,6 +29,29 @@
   max-height: 100%;
 }
 
+.office-loading {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 220px;
+  max-width: calc(100% - 32px);
+  padding: 16px 20px;
+  border: .6px solid #ddd;
+  border-radius: 16px;
+  background: #fffffff2;
+  color: #777;
+  font-size: 12px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.office-loading progress { width: 100%; height: 4px; accent-color: #888; }
+
 .agent-action-menu {
   position: absolute;
   z-index: 20;

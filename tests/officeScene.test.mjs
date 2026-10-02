@@ -107,6 +107,9 @@ test('switching workstation artwork does not alter world state or command histor
 
 test('destroying during renderer initialization cancels mounting and disposes the late renderer', async t => {
   const { OfficeScene } = await loadScene(t)
+  const background = new Texture({ source: new TextureSource({ width: 10, height: 10 }) })
+  t.mock.method(Assets, 'load', async () => background)
+  t.after(() => background.destroy(true))
   let release
   const ready = new Promise(resolve => { release = resolve })
   t.mock.method(Application.prototype, 'init', () => ready)

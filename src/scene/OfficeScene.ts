@@ -4,7 +4,7 @@ import type { Agent, AgentState } from '@/types/agent'
 import { AgentEntity } from './entities/AgentEntity'
 import { createOfficePropViews } from './views/propViews'
 import type { PropView, PropViewRegistry } from './views/propViews'
-import { loadOfficeAssets, getOfficeBackgroundTexture } from './assets/loadOfficeAssets'
+import { loadOfficeBackground, loadOfficeFurniture } from './assets/loadOfficeAssets'
 import { loadWorkstationTrialAssets } from './assets/loadWorkstationTrialAssets'
 import { loadSpineAssets } from './assets/loadSpineAssets'
 import { loadApartmentAssets, supportsCharacterPose, usesApartmentCharacters } from './assets/loadApartmentAssets'
@@ -21,9 +21,35 @@ import { demoCommands } from './systems/officeDemo'
 import { convexAreaContains } from '@/runtime/walkableArea'
 import { FURNITURE_CELL_SIZE, furnitureCells } from '@/runtime/map/furnitureGrid'
 import { CELL_PIXELS, cellCenter } from './gridProjection'
+import { apartmentPoseForState, shouldSitAtDesk } from './characters/apartmentFrames'
+import { characterPoseClip } from '@/contracts/characterPose'
+import type { CharacterManifest } from './characters/packSchema'
 
 export type OfficeAgentClick = { agent: Agent; rosterNo: number; clientX: number; clientY: number }
-type Options = { runtime?: OfficeRuntime; propViews?: PropViewRegistry; onAgentClick?: (event: OfficeAgentClick) => void; onDraftChange?: (error: string | null) => void; onDemoChange?: (enabled: boolean) => void }
+export type SceneLoadProgress = { completed: number; total: number }
+export type SceneActionProgress = SceneLoadProgress & { ready: boolean; error?: string }
+type Options = { runtime?: OfficeRuntime; propViews?: PropViewRegistry; onAgentClick?: (event: OfficeAgentClick) => void; onDraftChange?: (error: string | null) => void; onDemoChange?: (enabled: boolean) => void; onLoadProgress?: (progress: SceneLoadProgress) => void; onActionProgress?: (progress: SceneActionProgress) => void }
+
+function initialCharacterClip(agent: Agent, manifest: CharacterManifest) {
+  const facing = agent.viewFacing ?? 'front', pose = apartmentPoseForState(agent.state, agent.customAnimation, shouldSitAtDesk(agent))
+  let name = pose === 'walking' ? `walk.${facing}` : pose === 'idle' ? `idle.${facing}` : `emote.${pose}`
+  if (pose === 'seated' || pose === 'typing') {
+    name = characterPoseClip('seated', facing)
+    if (pose === 'typing' && facing === 'back') {
+      if (manifest.clips['work.quiet-back'] || manifest.work) name = 'work.quiet-back'
+      else if (manifest.clips['work.typing-back']) name = 'work.typing-back'
+    }
+  }
+  if (agent.bubbleText && !manifest.mouth && ['idle', 'seated', 'typing'].includes(pose)) {
+    const speech = pose === 'seated' || pose === 'typing' ? `speak.seated-${facing}` : `speak.${facing}`
+    if (manifest.clips[speech]) name = speech
+  }
+  if (agent.seatTransition) {
+    const stage = agent.seatTransition.stage
+    name = stage === 'rising' ? 'stand-up.back' : stage === 'sitting' ? 'sit-down.back' : `${['entering', 'exiting'].includes(stage) ? 'walk' : 'idle'}.${facing}`
+  }
+  return name
+}
 
 /** Pixi adapter: all authoritative state belongs to OfficeRuntime. */
 export class OfficeScene {
@@ -50,6 +76,9 @@ export class OfficeScene {
   private demoCommandIds: string[] = []
   private workstationTrial = true
   private characterLease?: Awaited<ReturnType<typeof loadApartmentAssets>>
+  private actionsReady = true
+  private firstFrameReady = false
+  private actionPreparation?: Promise<void>
 
   constructor(options: Options = {}) {
     this.options = options
@@ -59,6 +88,8 @@ export class OfficeScene {
   }
   async init(host: HTMLElement, width: number, height: number) {
     if (this.destroyed) return
+    this.actionsReady = false
+    const backgroundReady = loadOfficeBackground()
     const app = new Application()
     await app.init({ width, height, backgroundColor: 0xffffff, antialias: true, resolution: Math.min(window.devicePixelRatio || 1, 2), autoDensity: true })
     if (this.destroyed) { app.destroy(true, { children: true }); return }
@@ -67,28 +98,54 @@ export class OfficeScene {
     app.ticker.maxFPS = 60
     this.app = app; host.appendChild(app.canvas)
     this.world = new Container(); app.stage.addChild(this.world)
-    const apartment = usesApartmentCharacters() && await loadApartmentAssets(this.getAgents().map(agent => agent.appearanceId ?? agent.id))
-    if (this.destroyed) { if (apartment) apartment.release(); return }
-    if (apartment) this.characterLease = apartment
-    if (!apartment) await loadSpineAssets()
-    if (this.destroyed) return
-    await loadOfficeAssets()
-    if (this.destroyed) return
-    await loadWorkstationTrialAssets()
-    if (this.destroyed) return
-    const data = this.runtime.readWorld(), background = getOfficeBackgroundTexture()
-    if (background) {
-      const sprite = new Sprite(background), scale = Math.min(data.width * CELL_PIXELS / background.width, data.height * CELL_PIXELS / background.height)
-      sprite.scale.set(scale); sprite.position.set((data.width * CELL_PIXELS - background.width * scale) / 2, (data.height * CELL_PIXELS - background.height * scale) / 2)
-      this.world.addChild(sprite)
+    this.resize(width, height)
+    const characterIds = [...new Set(this.getAgents().map(agent => agent.appearanceId ?? agent.id))]
+    const frameCharacters = usesApartmentCharacters()
+    const total = 6 + (frameCharacters ? characterIds.length : 1), completed = new Set<string>()
+    const report = (resource?: string) => {
+      if (this.destroyed) return
+      if (resource) completed.add(resource)
+      this.options.onLoadProgress?.({ completed: completed.size, total })
     }
+    report()
+    const backgroundShown = backgroundReady.then(background => {
+      if (this.destroyed) return
+      if (background) {
+        const data = this.runtime.readWorld()
+        const sprite = new Sprite(background), scale = Math.min(data.width * CELL_PIXELS / background.width, data.height * CELL_PIXELS / background.height)
+        sprite.scale.set(scale); sprite.position.set((data.width * CELL_PIXELS - background.width * scale) / 2, (data.height * CELL_PIXELS - background.height * scale) / 2)
+        this.world!.addChild(sprite)
+      }
+      app.render()
+      report('background')
+      performance.mark('pixoffice:background-visible')
+    })
+    const charactersReady = (async () => {
+      const apartment = frameCharacters && await loadApartmentAssets(characterIds, id => report(`character:${id}`), {
+        preload: 'startup', clipsForPack: pack => this.getAgents().filter(agent => (agent.appearanceId ?? agent.id) === pack.manifest.id).map(agent => initialCharacterClip(agent, pack.manifest)),
+      })
+      if (this.destroyed) { if (apartment) apartment.release(); return }
+      if (apartment) this.characterLease = apartment
+      else {
+        await loadSpineAssets()
+        if (frameCharacters) characterIds.forEach(id => report(`character:${id}`))
+        else report('characters')
+      }
+    })()
+    await Promise.all([
+      backgroundShown, charactersReady,
+      loadOfficeFurniture(part => report(`furniture:${part}`)),
+      loadWorkstationTrialAssets(part => report(`workstation:${part}`)),
+    ])
+    if (this.destroyed) return
+    const data = this.runtime.readWorld()
     this.world.addChild(this.grid)
     this.layer = new Container(); this.layer.sortableChildren = true; this.world.addChild(this.layer)
     for (const prop of data.props) this.mountProp(prop)
     this.getAgents().forEach(agent => {
       const entity = new AgentEntity(agent)
       entity.on('pointertap', (event: FederatedPointerEvent) => {
-        if (this.runtime.isEditing) return
+        if (!this.actionsReady || this.runtime.isEditing) return
         event.stopPropagation()
         const agents = this.getAgents(), index = agents.findIndex(current => current.id === agent.id)
         if (index >= 0) this.options.onAgentClick?.({ agent: agents[index], rosterNo: index + 1, clientX: event.clientX, clientY: event.clientY })
@@ -96,18 +153,57 @@ export class OfficeScene {
       this.agentEntities.set(agent.id, entity); this.layer!.addChild(entity)
     })
     app.stage.eventMode = 'static'
-    this.resize(width, height)
+    this.resize(app.screen.width, app.screen.height)
     this.unsubscribe = this.runtime.subscribe(() => this.syncProps())
     this.syncProps(); this.syncActors(0)
+    if (!this.renderingSuspended) app.render()
     app.ticker.add(this.onTick)
-    bindOfficeScene(this)
+    this.firstFrameReady = true
+    performance.mark('pixoffice:scene-ready')
+    void this.prepareActions()
+  }
+
+  get areActionsReady() { return this.actionsReady }
+  prepareActions(): Promise<void> {
+    if (this.destroyed || !this.firstFrameReady) return Promise.resolve()
+    if (this.actionPreparation) return this.actionPreparation
+    const packs = this.characterLease?.packs ?? [], complete = new Set(packs.filter(pack => pack.isComplete).map(pack => pack.manifest.id))
+    const report = (error?: string) => {
+      if (!this.destroyed) this.options.onActionProgress?.({ completed: complete.size, total: packs.length, ready: this.actionsReady, error })
+    }
+    const finish = () => {
+      if (this.destroyed) return
+      this.actionsReady = true
+      bindOfficeScene(this)
+      report()
+      performance.mark('pixoffice:actions-ready')
+    }
+    if (complete.size === packs.length) { finish(); return Promise.resolve() }
+    this.actionsReady = false
+    report()
+    this.actionPreparation = (async () => {
+      // Yield the first complete office frame before scheduling noncritical pages.
+      await new Promise(resolve => setTimeout(resolve, 0))
+      if (this.destroyed) return
+      const results = await Promise.allSettled(packs.map(async pack => {
+        await pack.ensureAll(); complete.add(pack.manifest.id); report()
+      }))
+      if (this.destroyed) return
+      const failed = results.find(result => result.status === 'rejected')
+      if (failed?.status === 'rejected') report(failed.reason instanceof Error ? failed.reason.message : '互动动作加载失败')
+      else finish()
+    })().finally(() => { this.actionPreparation = undefined })
+    return this.actionPreparation
+  }
+  private requireActions() {
+    if (!this.actionsReady) throw new SceneFault('RESOURCES_LOADING', '互动动作正在准备，请稍候')
   }
 
   getAgents() { return projectAgents(this.runtime) }
-  requestDeskVisit(visitor: number, host: number, message: string) { return this.runtime.submit(visitCommand(this.runtime, visitor, [host], () => message)) }
-  requestDeskVisitTour(visitor: number, hosts: number[], message?: (no: number, name: string) => string) { return this.runtime.submit(visitCommand(this.runtime, visitor, hosts, message ?? ((_, name) => `${name}，请接手下一步。`))) }
-  setAgentState(id: string, state: AgentState, task?: string) { return this.runtime.submit(presentationCommand(this.runtime, id, state, task)) }
-  playAgentAnimation(id: string, animation: string) { return this.runtime.submit({ ...commandBase(this.runtime), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: id, role: 'actor' }], params: { animation } }) }
+  requestDeskVisit(visitor: number, host: number, message: string) { this.requireActions(); return this.runtime.submit(visitCommand(this.runtime, visitor, [host], () => message)) }
+  requestDeskVisitTour(visitor: number, hosts: number[], message?: (no: number, name: string) => string) { this.requireActions(); return this.runtime.submit(visitCommand(this.runtime, visitor, hosts, message ?? ((_, name) => `${name}，请接手下一步。`))) }
+  setAgentState(id: string, state: AgentState, task?: string) { this.requireActions(); return this.runtime.submit(presentationCommand(this.runtime, id, state, task)) }
+  playAgentAnimation(id: string, animation: string) { this.requireActions(); return this.runtime.submit({ ...commandBase(this.runtime), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: id, role: 'actor' }], params: { animation } }) }
   get isDemoRunning() { return this.demo }
   setWorkstationTrial(enabled: boolean) {
     this.workstationTrial = enabled
@@ -118,6 +214,7 @@ export class OfficeScene {
   }
   setDemo(enabled: boolean) {
     if (enabled) {
+      this.requireActions()
       const snapshot = this.runtime.snapshot()
       if (snapshot.persistenceError) throw new SceneFault('PERSISTENCE_FAILED', '存档尚未恢复，请先点击“备份并恢复布局”')
       if (snapshot.editing) throw new SceneFault('EDITING', '请先完成布局编辑')
@@ -135,6 +232,7 @@ export class OfficeScene {
   }
 
   beginEditing() {
+    this.requireActions()
     this.setDemo(false)
     const result = this.runtime.submit({ ...commandBase(this.runtime), type: 'map.edit', edit: { action: 'begin', expectedLayoutRevision: this.runtime.readWorld().layoutRevision } })
     if (result.error) throw new SceneFault(result.error.code, result.error.message)
@@ -237,7 +335,7 @@ export class OfficeScene {
   }
   private onTick = (ticker: { deltaTime: number }) => {
     const dt = Math.min(ticker.deltaTime / 60, .05)
-    this.runtime.tick(dt * 1000)
+    if (this.actionsReady) this.runtime.tick(dt * 1000)
     if (!this.renderingSuspended) {
       this.syncActors(dt)
       this.app?.render()
@@ -245,7 +343,7 @@ export class OfficeScene {
     if (this.lastRevision !== this.runtime.getRevision()) {
       this.lastRevision = this.runtime.getRevision(); setOfficeAgents(this.getAgents()); notifyVisitMissionActivity(this.getAgents())
     }
-    if (this.demo && !this.runtime.isEditing) {
+    if (this.actionsReady && this.demo && !this.runtime.isEditing) {
       try {
         const snapshot = this.runtime.snapshot()
         const failed = snapshot.records.find(record => this.demoCommandIds.includes(record.command.commandId) && record.error)
@@ -275,6 +373,7 @@ export class OfficeScene {
     this.app.renderer.resize(width, height); this.app.stage.hitArea = new Rectangle(0, 0, width, height)
     this.world.scale.set(scale); this.world.position.set((width - data.width * CELL_PIXELS * scale) / 2, (height - data.height * CELL_PIXELS * scale) / 2)
     Object.assign(this.app.canvas.style, { display: 'block', width: '100%', height: '100%' })
+    if (!this.layer && !this.renderingSuspended) this.app.render()
   }
   destroy() {
     if (this.destroyed) return

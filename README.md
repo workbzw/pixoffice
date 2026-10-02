@@ -29,7 +29,11 @@ npm run characters:build  # 检查准入并打包正式人物
 npm run characters:check  # 校验源素材与生成资源是否一致
 ```
 
-`npm run dev`、`npm run build`、`npm test` 会先自动打包。生成目录 `public/characters/` 不纳入 Git；旧图集保留为来源记录，正常帧动画不再直接加载它们。
+`npm run dev`、`npm run build`、`npm test` 会先自动打包。人物图集和首屏办公室素材采用无损 WebP，保留原始 PNG、帧坐标和动作时序。生成目录 `public/characters/` 与办公室生成的 `.webp` 不纳入 Git；旧图集保留为来源记录，正常帧动画不再直接加载它们。
+
+首次打开先绘制白底与办公室背景，人物首屏包（坐姿、工作帧）、桌椅并行加载（普通纹理最多 4 个并发，背景独立优先加载），显示实际资源完成数量。侧栏头像使用独立小图，不拉取完整动作图集。保存场景中的其他当前姿态按需补齐，旧版未分组图集仍兼容。
+
+办公室可见后继续播放当前工作动作，后台准备走路、对话和表情等完整动作；准备完成后开放互动、演示、编辑入口及场景网关。失败时保留已显示画面，并提供重试。浏览器性能时间线提供 `pixoffice:background-visible`、`pixoffice:scene-ready`（首屏可见）与 `pixoffice:actions-ready`（完整互动可用）三个标记。后台加载期间场景不推进模拟时钟；直接使用 headless runtime 的宿主应等待资源就绪后再推进视觉模拟。
 
 [人物配置与动作规范](./docs/character-packs.md) · [新增人物、素材验收与发布流程](./docs/character-admission.md)
 

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { OfficeScene, type OfficeAgentClick } from '@/scene/OfficeScene'
+import { OfficeScene, type OfficeAgentClick, type SceneLoadProgress, type SceneActionProgress } from '@/scene/OfficeScene'
 import type { Agent, AgentState } from '@/types/agent'
 import { submitVisitAction } from '@/services/officeActionDispatcher'
 import { isApartmentReady, usesApartmentCharacters } from '@/scene/assets/loadApartmentAssets'
 import { APARTMENT_EMOTES } from '@/scene/characters/apartmentFrames'
 import { CharacterPreview } from './CharacterPreview'
-import { Grid2X2, Pause, Play, X } from 'lucide-react'
+import { Grid2X2, Pause, Play, RotateCw, X } from 'lucide-react'
 import type { OfficeRuntime } from '@/runtime/OfficeRuntime'
 import { RoomEditor } from './map-editor/RoomEditor'
 import { MapEditorOverlay } from './map-editor/MapEditorOverlay'
@@ -71,6 +71,8 @@ export function OfficeCanvas({ runtime, mapView, setMapView, covered = false }: 
   const [demo, setDemo] = useState(false)
   const [notice, setNotice] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
+  const [progress, setProgress] = useState<SceneLoadProgress>({ completed: 0, total: 0 })
+  const [actions, setActions] = useState<SceneActionProgress>({ completed: 0, total: 0, ready: false })
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({})
   const editorRuntime = runtime
   const editor = runtime.editorSnapshot()
@@ -96,7 +98,9 @@ export function OfficeCanvas({ runtime, mapView, setMapView, covered = false }: 
     }
 
     let active = true
-    const scene = new OfficeScene({ runtime, onAgentClick: handleAgentClick, onDraftChange: setNotice, onDemoChange: setDemo })
+    const scene = new OfficeScene({ runtime, onAgentClick: handleAgentClick, onDraftChange: setNotice, onDemoChange: setDemo,
+      onLoadProgress: value => { if (active) setProgress(value) },
+      onActionProgress: value => { if (active) setActions(value) } })
     sceneRef.current = scene
 
     const ro = new ResizeObserver((entries) => {
@@ -105,6 +109,9 @@ export function OfficeCanvas({ runtime, mapView, setMapView, covered = false }: 
 
       if (!readyRef.current) {
         readyRef.current = true
+        setLoaded(false)
+        setProgress({ completed: 0, total: 0 })
+        setActions({ completed: 0, total: 0, ready: false })
         void scene.init(host, width, height).then(async () => {
           if (!active) return
           setLoaded(true); setDemo(scene.isDemoRunning)
@@ -198,16 +205,22 @@ export function OfficeCanvas({ runtime, mapView, setMapView, covered = false }: 
   return (
     <div ref={hostRef} className={`office-canvas ${editor ? 'is-decorating' : ''} ${(mapView ?? localView).catalogOpen ? '' : 'catalog-closed'}`}>
       <div ref={surfaceRef} className="office-render-surface" aria-hidden="true" />
+      {!loaded && !notice && <div className="office-loading" role="status" aria-live="polite">
+        <span>正在加载办公室{progress.total > 0 ? ` · ${progress.completed}/${progress.total}` : '…'}</span>
+        {progress.total > 0 && <progress aria-label="办公室资源加载进度" value={progress.completed} max={progress.total} />}
+      </div>}
       {editor && editorRuntime ? <>
         <MapEditorOverlay runtime={editorRuntime} draft={editor} view={mapView ?? localView} setView={setMapView ?? setLocalView} onError={setNotice} onPreview={previewProp} onHighlight={highlightProp} />
         <RoomEditor key={editor.id} runtime={editorRuntime} draft={editor} view={mapView ?? localView} setView={setMapView ?? setLocalView} onError={setNotice} thumbnails={thumbnails} />
       </> : <div className="runtime-scene-toolbar">
-          <button type="button" title="编辑布局" aria-label="编辑布局" disabled={!loaded} onClick={edit}><Grid2X2 size={17} /></button>
-          <button type="button" title={demo ? '停止演示' : '开始演示'} aria-label={demo ? '停止演示' : '开始演示'} disabled={!loaded} onClick={toggleDemo}>{demo ? <Pause size={17} /> : <Play size={17} />}</button>
+          <button type="button" title="编辑布局" aria-label="编辑布局" disabled={!loaded || !actions.ready} onClick={edit}><Grid2X2 size={17} /></button>
+          <button type="button" title={demo ? '停止演示' : '开始演示'} aria-label={demo ? '停止演示' : '开始演示'} disabled={!loaded || !actions.ready} onClick={toggleDemo}>{demo ? <Pause size={17} /> : <Play size={17} />}</button>
+          {loaded && !actions.ready && <span role="status" title={actions.error}>{actions.error ? '互动动作加载失败' : `准备互动动作 · ${actions.completed}/${actions.total}`}</span>}
+          {loaded && actions.error && <button type="button" title="重试加载互动动作" aria-label="重试加载互动动作" onClick={() => { void sceneRef.current?.prepareActions() }}><RotateCw size={16} /></button>}
           {demo && <span>演示中</span>}
       </div>}
       {notice && <div className="runtime-scene-notice" role="alert">{notice}<button type="button" aria-label="关闭提示" onClick={() => setNotice(null)}><X size={14} /></button></div>}
-      <button className="character-preview-trigger" type="button" onClick={() => setPreviewOpen(true)}>人物预览</button>
+      <button className="character-preview-trigger" type="button" disabled={!loaded || !actions.ready} onClick={() => setPreviewOpen(true)}>人物预览</button>
       {previewOpen && <CharacterPreview onClose={() => setPreviewOpen(false)} />}
       {menu && !editor && (
         <div

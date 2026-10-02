@@ -107,6 +107,10 @@ export class ApartmentCharacter extends Container {
       elapsed = this.walkingDistance / (manifest.displayHeight * .72) * duration
     }
     const layers = sampleCharacterLayers(manifest, name, elapsed, progress, speaking ? this.speechElapsed : undefined, this.workSurface)
+    if (layers && [layers.body.key, ...(layers.mouth ? [layers.mouth.key] : []), ...(layers.work?.parts.map(part => part.key) ?? [])].some(key => !textures.has(key))) {
+      this.poseError = `Character action loading: ${name}`
+      return
+    }
     for (const part of this.workSprites) part.visible = false
     this.poseError = layers ? undefined : `Unsupported character action: ${name}`
     this.sprite.visible = Boolean(layers)

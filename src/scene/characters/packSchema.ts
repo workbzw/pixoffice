@@ -6,6 +6,7 @@ import { OFFICE_SEATED_CLIPS } from '../../contracts/characterPose.ts'
 const id = z.string().regex(/^[a-z][a-z0-9-]{0,63}$/)
 const clipName = z.string().regex(/^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/)
 const relativeFile = z.string().regex(/^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\.png$/)
+const atlasFile = z.string().regex(/^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_-]+)*\.(?:png|webp)$/)
 const size = z.object({ width: z.number().int().positive().max(2048), height: z.number().int().positive().max(2048) }).strict()
 const point = z.object({ x: z.number().int().nonnegative(), y: z.number().int().nonnegative() }).strict()
 const rect = size.extend({ x: z.number().int().nonnegative(), y: z.number().int().nonnegative() })
@@ -92,7 +93,7 @@ function validateCommon(value: { canvas: { width: number; height: number }; pivo
 export const CharacterSourceSchema = z.object({ ...common, clips: z.record(clipName, sourceClip) }).strict().superRefine(validateCommon)
 export const CharacterManifestSchema = z.object({
   ...common, revision: z.string().regex(/^[a-f0-9]{16}$/),
-  pages: z.array(size.extend({ image: relativeFile })).min(1).max(64),
+  pages: z.array(size.extend({ image: atlasFile, group: z.enum(['startup', 'deferred']).optional() })).min(1).max(64),
   frames: z.record(relativeFile, z.object({ page: z.number().int().nonnegative(), rect, offset: point }).strict()),
   clips: z.record(clipName, packedClip),
 }).strict().superRefine((value, ctx) => {
@@ -111,7 +112,9 @@ export const CharacterManifestSchema = z.object({
 })
 export const CharacterRegistrySchema = z.object({
   schemaVersion: z.literal(1),
-  characters: z.array(z.object({ id, label: z.string(), manifest: z.string().regex(/^[a-z][a-z0-9-]*\/manifest-[a-f0-9]{16}\.json$/), clips: z.array(clipName) }).strict()),
+  characters: z.array(z.object({ id, label: z.string(), manifest: z.string().regex(/^[a-z][a-z0-9-]*\/manifest-[a-f0-9]{16}\.json$/), clips: z.array(clipName),
+    portrait: z.object({ image: atlasFile, canvas: size, referenceHeight: z.number().positive().max(2048) }).strict().optional(),
+  }).strict()),
 }).strict().superRefine((value, ctx) => {
   if (new Set(value.characters.map(entry => entry.id)).size !== value.characters.length) ctx.addIssue({ code: 'custom', message: 'Duplicate character IDs' })
 })
@@ -120,7 +123,7 @@ export type CharacterSource = z.infer<typeof CharacterSourceSchema>
 export type CharacterManifest = z.infer<typeof CharacterManifestSchema>
 export type CharacterRegistry = z.infer<typeof CharacterRegistrySchema>
 
-export function resolveCharacterClip(manifest: CharacterManifest, requested: string) {
+export function resolveCharacterClip(manifest: Pick<CharacterManifest, 'clips'>, requested: string) {
   let name = requested
   let clip = manifest.clips[name]
   let fallback = false
@@ -141,6 +144,27 @@ export function resolveCharacterClip(manifest: CharacterManifest, requested: str
     clip = manifest.clips[name]
   }
   return clip && !('alias' in clip) ? { ...clip, name, requested, mirrorX, fallback } : undefined
+}
+
+/** Include every body, mouth and generated-work dependency before a pose can render. */
+export function characterFrameDependencies(manifest: Pick<CharacterManifest, 'clips' | 'mouth' | 'work'>, names: string[]) {
+  const keys = new Set<string>(), visited = new Set<string>()
+  const visit = (name: string) => {
+    if (visited.has(name)) return
+    visited.add(name)
+    if (manifest.work && (name === 'work.computer-back' || name === 'work.quiet-back' && !manifest.clips[name])) {
+      if (name === 'work.quiet-back') visit('work.computer-back')
+      for (const part of [manifest.work.upper, manifest.work.forearm, manifest.work.hand]) visit(part.clip)
+    }
+    const clip = resolveCharacterClip(manifest, name)
+    for (const frame of clip?.frames ?? []) {
+      keys.add(frame.frame)
+      const mouth = frame.mouth && manifest.mouth?.views[frame.mouth.view]
+      if (mouth) { visit(mouth.closed); visit(mouth.speaking) }
+    }
+  }
+  names.forEach(visit)
+  return [...keys]
 }
 
 export function sampleCharacterClip(manifest: CharacterManifest, name: string, elapsedMs = 0, progress?: number) {

@@ -1,18 +1,14 @@
-import { Assets, Rectangle, Texture } from 'pixi.js'
 import { AGENT_ROSTER } from '@/scene/layout/officeLayout'
-import { CharacterManifestSchema, CharacterRegistrySchema, resolveCharacterClip, type CharacterManifest, type CharacterRegistry } from '@/scene/characters/packSchema'
+import { CharacterManifestSchema, CharacterRegistrySchema, resolveCharacterClip, type CharacterRegistry } from '@/scene/characters/packSchema'
 import { ResourceLeaseCache } from './ResourceLeaseCache'
+import { CharacterPackResources } from './CharacterPackResources'
 import { characterPoseClip, supportsOfficePose } from '@/contracts/characterPose'
 import type { PoseSupport } from '@/runtime/actionContract'
 
-export type CharacterPack = {
-  manifest: CharacterManifest
-  pageUrls: string[]
-  textures: Map<string, Texture>
-  dispose(): Promise<void>
-}
+export type CharacterPack = CharacterPackResources
 let registryPromise: Promise<CharacterRegistry> | undefined
 let resourceBase = '/characters'
+export const characterResourceUrl = (path: string) => `${resourceBase}/${path}`
 /** A separate dev page may inspect candidates without replacing the production registry. */
 export function configureCharacterPreview(digest: string) {
   if (!import.meta.env.DEV || window.location.pathname !== '/character-lab.html' || !/^[a-f0-9]{64}$/.test(digest)) throw new Error('Invalid development preview')
@@ -38,27 +34,11 @@ async function loadPack(id: string): Promise<CharacterPack> {
   const manifest = CharacterManifestSchema.parse(await readJson(url))
   if (manifest.id !== id) throw new Error(`Character manifest ID mismatch: ${id}`)
   const pageUrls = manifest.pages.map(page => `${url.slice(0, url.lastIndexOf('/') + 1)}${page.image}`)
-  const pages: Texture[] = [], textures = new Map<string, Texture>()
-  const dispose = async () => {
-    for (const texture of textures.values()) texture.destroy()
-    textures.clear()
-    for (const pageUrl of pageUrls.slice(0, pages.length)) await Assets.unload(pageUrl)
-  }
+  const pack = new CharacterPackResources(manifest, pageUrls)
   try {
-    for (const [index, pageUrl] of pageUrls.entries()) {
-      const texture = await Assets.load<Texture>(pageUrl)
-      pages.push(texture)
-      const expected = manifest.pages[index]
-      if (texture.width !== expected.width || texture.height !== expected.height) throw new Error(`Character atlas dimensions mismatch: ${pageUrl}`)
-    }
-    for (const [name, frame] of Object.entries(manifest.frames)) textures.set(name, new Texture({
-      source: pages[frame.page].source,
-      frame: new Rectangle(frame.rect.x, frame.rect.y, frame.rect.width, frame.rect.height),
-      orig: new Rectangle(0, 0, manifest.canvas.width, manifest.canvas.height),
-      trim: new Rectangle(frame.offset.x, frame.offset.y, frame.rect.width, frame.rect.height),
-    }))
-    return { manifest, pageUrls, textures, dispose }
-  } catch (error) { await dispose(); throw error }
+    await pack.ensureStartup()
+    return pack
+  } catch (error) { await pack.dispose(); throw error }
 }
 export const characterAssets = new ResourceLeaseCache(loadPack)
 export const getCharacterPack = (id: string) => characterAssets.get(id)
@@ -72,14 +52,29 @@ export function usesApartmentCharacters(): boolean {
 export function isApartmentReady(id?: string): boolean {
   return id ? Boolean(getCharacterPack(id)) : AGENT_ROSTER.every(agent => getCharacterPack(agent.id))
 }
-export async function acquireCharacterPacks(ids: string[]) {
+type CharacterLoadOptions = { preload: 'startup' | 'all'; clipsForPack?: (pack: CharacterPack) => string[] }
+export async function acquireCharacterPacks(ids: string[], onLoaded?: (id: string) => void, options: CharacterLoadOptions = { preload: 'all' }) {
   const leases: Array<Awaited<ReturnType<typeof characterAssets.acquire>>> = []
   try {
-    for (const id of new Set(ids)) leases.push(await characterAssets.acquire(id))
-    return { packs: leases.map(lease => lease.value), release: () => leases.forEach(lease => lease.release()) }
+    // Wait for every acquisition before releasing on failure, including late successful loads.
+    const results = await Promise.allSettled([...new Set(ids)].map(async id => {
+      const lease = await characterAssets.acquire(id)
+      leases.push(lease)
+      if (options.preload === 'all') await lease.value.ensureAll()
+      else if (options.clipsForPack) await lease.value.ensureClips(options.clipsForPack(lease.value))
+      onLoaded?.(id)
+      return lease
+    }))
+    const failed = results.find(result => result.status === 'rejected')
+    if (failed?.status === 'rejected') throw failed.reason
+    const ordered = results.map(result => {
+      if (result.status === 'rejected') throw result.reason
+      return result.value
+    })
+    return { packs: ordered.map(lease => lease.value), release: () => leases.forEach(lease => lease.release()) }
   } catch (error) { leases.forEach(lease => lease.release()); throw error }
 }
-export async function loadApartmentAssets(ids = AGENT_ROSTER.map(agent => agent.id)) {
-  try { return await acquireCharacterPacks(ids) }
+export async function loadApartmentAssets(ids = AGENT_ROSTER.map(agent => agent.id), onLoaded?: (id: string) => void, options?: CharacterLoadOptions) {
+  try { return await acquireCharacterPacks(ids, onLoaded, options) }
   catch (error) { console.error('[Characters] 人物资源包加载失败，回退原人物素材', error); return undefined }
 }

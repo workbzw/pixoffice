@@ -1,7 +1,9 @@
 import type { CharacterPack } from '@/scene/assets/loadApartmentAssets'
-import type { CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import { sampleCharacterLayers, type CharacterManifest } from '@/scene/characters/packSchema'
 import { useCharacterPack } from './useCharacterPack'
+import { characterResourceUrl, loadCharacterRegistry } from '@/scene/assets/loadApartmentAssets'
+import type { CharacterRegistry } from '@/scene/characters/packSchema'
 
 export function CharacterArtwork({ pack, clip, elapsedMs = 0, height = 160, guides = false, label = '' }: {
   pack: CharacterPack; clip: string; elapsedMs?: number; height?: number; guides?: boolean; label?: string
@@ -38,6 +40,22 @@ export function CharacterArtwork({ pack, clip, elapsedMs = 0, height = 160, guid
 }
 
 export function CharacterAvatar({ id }: { id: string }) {
+  const [entry, setEntry] = useState<CharacterRegistry['characters'][number]>()
+  useEffect(() => {
+    let active = true
+    void loadCharacterRegistry().then(registry => {
+      if (active) setEntry(registry.characters.find(character => character.id === id))
+    }).catch(() => { /* The scene reports resource failures; avatars remain empty. */ })
+    return () => { active = false }
+  }, [id])
+  const portrait = entry?.id === id ? entry.portrait : undefined
+  return <span className="runtime-avatar">{portrait ? <img alt={entry!.label} draggable={false} decoding="async"
+    src={characterResourceUrl(`${id}/${portrait.image}`)}
+    style={{ width: portrait.canvas.width * 32 / portrait.referenceHeight, height: portrait.canvas.height * 32 / portrait.referenceHeight }} />
+    : entry?.id === id && <LegacyCharacterAvatar id={id} />}</span>
+}
+
+function LegacyCharacterAvatar({ id }: { id: string }) {
   const { pack } = useCharacterPack(id)
-  return <span className="runtime-avatar">{pack && <CharacterArtwork pack={pack} clip={pack.manifest.portrait} height={32} label={pack.manifest.label} />}</span>
+  return pack && <CharacterArtwork pack={pack} clip={pack.manifest.portrait} height={32} label={pack.manifest.label} />
 }

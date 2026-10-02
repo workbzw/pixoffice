@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
 import { buildCharacter, buildCharacters } from '../scripts/characters/build.mjs'
-import { CharacterSourceSchema, CharacterManifestSchema, resolveCharacterClip, sampleCharacterClip } from '../src/scene/characters/packSchema.ts'
+import { CharacterSourceSchema, CharacterManifestSchema, resolveCharacterClip, sampleCharacterClip, characterFrameDependencies } from '../src/scene/characters/packSchema.ts'
 import { ResourceLeaseCache } from '../src/scene/assets/ResourceLeaseCache.ts'
 import { characterPackFixture } from './helpers/characterPack.mjs'
 
@@ -47,6 +47,29 @@ test('character packs build deterministically, paginate and preserve source pixe
   }
 })
 
+test('lossless WebP atlases keep PNG frame coordinates, timing, dimensions and visible pixels', async t => {
+  const directory = await temporary(t)
+  await fixture(directory)
+  const png = await buildCharacter(directory, { atlasFormat: 'png' })
+  const webp = await buildCharacter(directory)
+  assert.deepEqual(webp.manifest.frames, png.manifest.frames)
+  assert.deepEqual(webp.manifest.clips, png.manifest.clips)
+  assert.deepEqual(webp.manifest.canvas, png.manifest.canvas)
+  for (const [index, page] of webp.manifest.pages.entries()) {
+    assert.match(page.image, /\.webp$/)
+    const before = await sharp(png.outputs.get(png.manifest.pages[index].image)).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    const after = await sharp(webp.outputs.get(page.image)).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    assert.deepEqual(after.info, before.info)
+    for (let offset = 0; offset < before.data.length; offset += 4) {
+      assert.equal(after.data[offset + 3], before.data[offset + 3])
+      if (before.data[offset + 3]) assert(before.data.subarray(offset, offset + 3).equals(after.data.subarray(offset, offset + 3)))
+    }
+  }
+  const legacy = structuredClone(webp.manifest)
+  legacy.pages.forEach(page => { page.image = page.image.replace('.webp', '.png') })
+  assert(CharacterManifestSchema.safeParse(legacy).success, 'old PNG packs remain compatible')
+})
+
 test('adding a source directory registers a new character without editing renderer code', async t => {
   const root = await temporary(t), sourceRoot = path.join(root, 'source'), outputRoot = path.join(root, 'output')
   await fixture(path.join(sourceRoot, 'first'), 'first')
@@ -60,6 +83,36 @@ test('adding a source directory registers a new character without editing render
   await writeFile(path.join(sourceRoot, 'second', 'character.json'), '{}')
   await assert.rejects(buildCharacters({ sourceRoot, outputRoot, requireAdmission: false }))
   assert(before.equals(await readFile(path.join(outputRoot, 'registry.json'))), 'failed builds leave the working registry intact')
+})
+
+test('office packs put only seated/work dependencies in startup atlases and publish small stable portraits', async () => {
+  const built = await buildCharacter(new URL('../art/characters/packs/marvis/', import.meta.url).pathname)
+  const expected = new Set(characterFrameDependencies(built.manifest, ['sit.back', 'work.quiet-back']))
+  const startup = Object.entries(built.manifest.frames).filter(([, frame]) => built.manifest.pages[frame.page].group === 'startup').map(([key]) => key)
+  assert.deepEqual(new Set(startup), expected)
+  assert.equal(built.manifest.pages[built.manifest.frames[resolveCharacterClip(built.manifest, 'walk.back').frames[0].frame].page].group, 'deferred')
+  const source = JSON.parse(await readFile(new URL('../art/characters/packs/marvis/character.json', import.meta.url)))
+  assert.equal(Object.keys(built.manifest.frames).length, new Set(Object.values(source.clips).flatMap(clip => clip.frames?.map(frame => frame.file) ?? [])).size)
+  assert.deepEqual(built.portrait.canvas, source.canvas)
+  assert.equal(built.portrait.referenceHeight, source.referenceHeight)
+  const image = built.outputs.get(built.portrait.image), metadata = await sharp(image).metadata()
+  assert.equal(metadata.format, 'webp')
+  assert(metadata.width < source.canvas.width && metadata.height < source.canvas.height)
+  assert(image.length < 12000)
+  assert(built.outputs.get(built.manifestFile), 'portrait generation does not replace the manifest')
+})
+
+test('action dependencies include aliased bodies, independent mouths and procedural work parts', () => {
+  const direct = frame => ({ loop: false, frames: [{ frame, durationMs: 100 }] })
+  const rig = { clips: {
+    'idle.front': { loop: false, frames: [{ frame: 'body.png', durationMs: 100, mouth: { view: 'front' } }] },
+    'idle.left': { alias: 'idle.front', mirrorX: true },
+    'mouth.closed': direct('closed.png'), 'mouth.speaking': direct('open.png'),
+    'work.computer-back': direct('work.png'), 'arm.upper': direct('upper.png'), 'arm.forearm': direct('forearm.png'), 'arm.hand': direct('hand.png'),
+  }, mouth: { views: { front: { closed: 'mouth.closed', speaking: 'mouth.speaking' } } },
+  work: { upper: { clip: 'arm.upper' }, forearm: { clip: 'arm.forearm' }, hand: { clip: 'arm.hand' } } }
+  assert.deepEqual(new Set(characterFrameDependencies(rig, ['idle.left', 'idle.front'])), new Set(['body.png', 'closed.png', 'open.png']))
+  assert.deepEqual(new Set(characterFrameDependencies(rig, ['work.quiet-back'])), new Set(['work.png', 'upper.png', 'forearm.png', 'hand.png']))
 })
 
 test('bad source sizes, empty frames, missing files, escaping symlinks and stale output are rejected', async t => {
