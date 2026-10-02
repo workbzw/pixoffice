@@ -9,7 +9,7 @@ passing. The six rows are marvis, code-agent, file-agent, app-agent,
 review-agent, data-agent. The runtime locates transparent gutters and registers
 each resident's four whole-body frames to a common head anchor and ground line.
 Playback is one second per full cycle. No limb warping, optical-flow
-interpolation, Spine data, or added vertical bounce is used.
+interpolation, skeletal motion data, or added vertical bounce is used.
 
 The earlier back-walk-v1 assets are retained unchanged as the running gait and
 loaded only on demand in Character Preview. Front/side walking, expressions,
@@ -68,4 +68,3 @@ For EVERY row: in column 3, the RIGHT shoe on the RIGHT side of the image must b
 Most important row3 (black hoodie beige pants), row4 (auburn long hair blue jeans), row6 (blue cardigan ivory pants): they currently repeat the LEFT lifted foot in column3; fix this to the RIGHT lifted foot. Do not mirror the entire character or hair. Only swap the lower-body leg poses across the midline within the same frame.
 Keep this a quiet small indoor walk with very low foot clearance, no jogging, almost straight legs, no high soles, no high knees, minimal heel lift. At least one foot flat on the same ground line. 24 whole-body figures. Maintain actual transparent alpha everywhere else. No background, text, floor or shadows.
 ```
-

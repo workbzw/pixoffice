@@ -154,6 +154,6 @@ npm run build
 
 ## 旧资源
 
-`public/assets/characters/apartment/` 保留旧素材与生成提示词，作为来源记录和一次性导入输入，不再由正常帧动画播放器加载。`?characters=classic` 仍保留原 Spine 对照，不属于新人物包管线。
+`public/assets/characters/apartment/` 保留原创帧素材与生成提示词，作为来源记录和一次性导入输入，不再由正常帧动画播放器加载。页面统一使用独立人物包，不再提供旧角色切换或旧动画回退。人物包加载失败时只使用程序绘制的占位人物，并在控制台报告加载错误。
 
 迁移脚本 `scripts/characters/import-apartment.mjs` 只用于最初迁移，现在直接写库入口已停用，不应在日常修改素材后重跑。其他历史 README 中的直接发布命令也以新准入流程为准。

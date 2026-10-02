@@ -79,8 +79,6 @@ export function CharacterPreview({ onClose }: { onClose: () => void }) {
   }, [])
   const entries = registry?.characters.filter(entry => selected === 'all' || entry.id === selected) ?? []
   const clips = [...new Set(entries.flatMap(entry => entry.clips.includes('work.computer-back') ? [...entry.clips, 'work.quiet-back'] : entry.clips))].filter(name => !['pose.', 'mouth.', 'part.'].some(prefix => name.startsWith(prefix)) && (selected !== 'all' || !name.startsWith('archive-walk.')))
-  const comparison = new URL(window.location.href)
-  comparison.searchParams.set('characters', 'classic')
   const canCompare = Boolean(registry?.characters.length)
   const comparisonId = registry?.characters.some(entry => entry.id === comparisonCharacter) ? comparisonCharacter : registry?.characters[0]?.id ?? comparisonCharacter
   const hasQuietWork = (id: string) => Boolean(registry?.characters.find(entry => entry.id === id)?.clips.some(clip => clip === 'work.quiet-back' || clip === 'work.computer-back'))
@@ -113,7 +111,6 @@ export function CharacterPreview({ onClose }: { onClose: () => void }) {
       <button type="button" aria-label="上一帧" title="上一帧" disabled={playing} onClick={() => setManualStep(value => value - 1)}><ChevronLeft size={16} /></button>
       <button type="button" aria-label="下一帧" title="下一帧" disabled={playing} onClick={() => setManualStep(value => value + 1)}><ChevronRight size={16} /></button>
       <label><input type="checkbox" checked={guides} onChange={event => setGuides(event.target.checked)} />地面与锚点</label>
-      {window.location.pathname !== '/character-lab.html' && <a href={comparison.href}>原人物对照</a>}
     </div>
     {error && <p role="alert">{error}</p>}
     {!registry && !error && <p role="status">正在加载人物目录…</p>}

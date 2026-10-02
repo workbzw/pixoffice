@@ -14,7 +14,7 @@ test('all six work loops keep names and bubbles fixed while complete picture fra
     character.setAtDesk(true); character.setViewFacing('back'); character.playState('working')
     const names = new Set(), bubbles = new Set(), textures = new Set()
     const entity = {
-      useSpine: true, spineChar: character,
+      character,
       statusLabel: { layout(y) { names.add(y) }, getLabelTopY(y) { return y - 30 } },
       bubble: { position: { set(_x, y) { bubbles.add(y) } } },
     }

@@ -1,5 +1,5 @@
 import type { Agent, AgentState } from '@/types/agent'
-import type { ChibiFacing } from './chibiAgentPresets'
+import type { CharacterFacing } from './characterFacing'
 import { isHomeDeskSeat } from '@/scene/systems/MovementSystem'
 import type { SeatTransition } from '@/runtime/model'
 
@@ -34,7 +34,7 @@ export const APARTMENT_EMOTES = [
 ] as const
 
 export function resolveApartmentFrame(
-  facing: ChibiFacing,
+  facing: CharacterFacing,
   pose: Exclude<ApartmentPose, 'seated' | 'typing'>,
   elapsed = 0,
 ): { index: number; mirrored: boolean } {
@@ -63,7 +63,7 @@ export function shouldSitAtDesk(agent: Agent): boolean {
     isHomeDeskSeat(agent.assignedDeskId, agent.x, agent.y)
 }
 
-export function resolveSeatTransitionFrame(transition: SeatTransition, facing: ChibiFacing) {
+export function resolveSeatTransitionFrame(transition: SeatTransition, facing: CharacterFacing) {
   if (transition.stage === 'rising' || transition.stage === 'sitting') {
     const amount = Math.max(0, Math.min(1, transition.seatedAmount))
     // Authored whole-body keyframes, played in reverse when sitting down.
@@ -156,43 +156,6 @@ export function detectApartmentFrames(
     }
   }
   return frames
-}
-
-export const REFINED_WALK_CYCLE_DURATION = 1
-export const REFINED_WALK_FRAME_COUNT = 60
-export type WalkDirection = ChibiFacing
-
-export function resolveRefinedWalkFrame(facing: ChibiFacing, elapsed: number, frameCount = REFINED_WALK_FRAME_COUNT, cycleDuration = REFINED_WALK_CYCLE_DURATION) {
-  const progress = Number.isFinite(elapsed) ? Math.max(0, elapsed) : 0
-  return {
-    direction: facing,
-    index: Math.floor(progress / cycleDuration * frameCount + 1e-9) % frameCount,
-  }
-}
-
-export type WalkManifest = {
-  version: number
-  frameCount: number
-  cycleDuration: number
-  referenceHeight: number
-  groundY: number
-  directions: Record<WalkDirection, { image: string; width: number; height: number; frameSize: { width: number; height: number }; frames: SpriteFrame[]; contentTop: number[] }>
-}
-
-export function validateWalkManifest(value: unknown): WalkManifest {
-  const manifest = value as WalkManifest | undefined
-  if (!manifest || manifest.version !== 6 || manifest.frameCount !== REFINED_WALK_FRAME_COUNT || manifest.cycleDuration !== REFINED_WALK_CYCLE_DURATION) throw new Error('Invalid walk manifest')
-  if (!Number.isFinite(manifest.referenceHeight) || manifest.referenceHeight <= 0 || !Number.isFinite(manifest.groundY) || manifest.groundY <= 0) throw new Error('Invalid walk registration')
-  for (const direction of ['front', 'right', 'back', 'left'] as const) {
-    const sheet = manifest.directions?.[direction]
-    if (!sheet || sheet.image !== `marvis-walk-v6-${direction}.png` || !Number.isInteger(sheet.width) || !Number.isInteger(sheet.height) || sheet.width <= 0 || sheet.height <= 0 || !Array.isArray(sheet.frames) || sheet.frames.length !== manifest.frameCount) throw new Error('Invalid walk atlas')
-    if (!sheet.frameSize || manifest.referenceHeight > sheet.frameSize.height || manifest.groundY > sheet.frameSize.height) throw new Error('Invalid walk registration')
-    if (!Array.isArray(sheet.contentTop) || sheet.contentTop.length !== manifest.frameCount || sheet.contentTop.some(y => !Number.isFinite(y) || y < 0 || y >= sheet.frameSize.height)) throw new Error('Invalid walk content bounds')
-    for (const frame of sheet.frames) {
-      if (!frame || ![frame.x, frame.y, frame.width, frame.height].every(Number.isInteger) || frame.x < 0 || frame.y < 0 || frame.width <= 0 || frame.height <= 0 || frame.x + frame.width > sheet.width || frame.y + frame.height > sheet.height || frame.width !== sheet.frameSize?.width || frame.height !== sheet.frameSize?.height) throw new Error('Invalid walk frame')
-    }
-  }
-  return manifest
 }
 
 export function registerWalkFrames(

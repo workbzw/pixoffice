@@ -2,7 +2,6 @@ import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { createTestServer } from './helpers/vite.mjs'
 import { readFile } from 'node:fs/promises'
-import { createHash } from 'node:crypto'
 import { characterPackFixture } from './helpers/characterPack.mjs'
 import sharp from 'sharp'
 import { alphaBounds } from '../scripts/characters/build.mjs'
@@ -14,7 +13,7 @@ async function loadFrames(t) {
 }
 
 test('all six residents retain the former four-pose back gait for running', async t => {
-  const { BACK_WALK_FRAMES, BACK_WALK_CYCLE_DURATION, resolveRefinedWalkFrame } = await loadFrames(t)
+  const { BACK_WALK_FRAMES } = await loadFrames(t)
   assert.deepEqual(Object.keys(BACK_WALK_FRAMES).sort(), ['app-agent', 'code-agent', 'data-agent', 'file-agent', 'marvis', 'review-agent'])
   for (const [id, frames] of Object.entries(BACK_WALK_FRAMES)) {
     assert.equal(frames.length, 4)
@@ -22,10 +21,6 @@ test('all six residents retain the former four-pose back gait for running', asyn
     assert(frames.every(index => Number.isInteger(index) && index >= 0 && index < 8))
     assert.equal(frames[1], 2, `${id}: right raised key pose`)
     assert.equal(frames[3], 6, `${id}: left raised key pose`)
-    const sequence = Array.from({ length: 5 }, (_, index) => frames[
-      resolveRefinedWalkFrame('back', index * BACK_WALK_CYCLE_DURATION / 4, 4, BACK_WALK_CYCLE_DURATION).index
-    ])
-    assert.deepEqual(sequence, [...frames, frames[0]])
     const png = await readFile(new URL(`../public/assets/characters/apartment/back-walk-v1/${id}.png`, import.meta.url))
     assert.equal(png.subarray(1, 4).toString(), 'PNG')
     assert.equal(png.readUInt32BE(16), 1536)
@@ -35,12 +30,10 @@ test('all six residents retain the former four-pose back gait for running', asyn
 })
 
 test('indoor walking uses a separate four-phase atlas for each resident and a calmer cadence', async t => {
-  const { INDOOR_BACK_WALK_ROWS, INDOOR_WALK_CYCLE_DURATION, BACK_WALK_CYCLE_DURATION, resolveRefinedWalkFrame } = await loadFrames(t)
+  const { INDOOR_BACK_WALK_ROWS, INDOOR_WALK_CYCLE_DURATION, BACK_WALK_CYCLE_DURATION } = await loadFrames(t)
   assert.deepEqual(Object.keys(INDOOR_BACK_WALK_ROWS), ['marvis', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent'])
   assert.deepEqual(Object.values(INDOOR_BACK_WALK_ROWS), [0, 1, 2, 3, 4, 5])
   assert(INDOOR_WALK_CYCLE_DURATION > BACK_WALK_CYCLE_DURATION)
-  assert.deepEqual([0, .25, .5, .75, 1].map(phase =>
-    resolveRefinedWalkFrame('back', phase * INDOOR_WALK_CYCLE_DURATION, 4, INDOOR_WALK_CYCLE_DURATION).index), [0, 1, 2, 3, 0])
   const png = await readFile(new URL('../public/assets/characters/apartment/indoor-back-walk-v1.png', import.meta.url))
   assert.equal(png.readUInt32BE(16), 1024)
   assert.equal(png.readUInt32BE(20), 1536)
@@ -338,8 +331,8 @@ test('working and thinking cannot override a seated participant looking at their
   const entity = Object.create(AgentEntity.prototype)
   const facings = []
   Object.assign(entity, {
-    useSpine: true, animationX: 0, animationY: 0,
-    spineChar: { setViewFacing: facing => facings.push(facing), playState() {} },
+    animationX: 0, animationY: 0,
+    character: { setViewFacing: facing => facings.push(facing), setAtDesk() {}, setSeatTransition() {}, setSpeechText() {}, playState() {}, update() {} },
     bubble: { update() {} }, statusLabel: { setState() {}, setTask() {} }, updateOverlayPositions() {},
   })
   for (const state of ['working', 'thinking']) {
@@ -353,6 +346,61 @@ test('working and thinking cannot override a seated participant looking at their
   assert.deepEqual(facings, ['back'], 'legacy working actors still face the desk')
 })
 
+test('entity forwards speech, seat state and work surfaces to its picture-frame character', async t => {
+  const server = await createTestServer(); t.after(() => server.close())
+  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
+  const { transformWorkSurface } = await server.ssrLoadModule('/src/scene/characters/workSurface.ts')
+  const entity = Object.create(AgentEntity.prototype), speech = [], poses = [], seats = [], desks = [], surfaces = []
+  const transition = { stage: 'sitting', seatedAmount: .7 }
+  Object.assign(entity, {
+    agent: { x: 50, y: 80, seated: true, state: 'working', seatTransition: transition },
+    character: { setSpeechText: value => speech.push(value), playState: (...args) => poses.push(args),
+      setSeatTransition: value => seats.push(value), setAtDesk: value => desks.push(value), setWorkSurface: value => surfaces.push(value) },
+    bubble: { show() {}, hide() {} }, updateOverlayPositions() {},
+  })
+  entity.showBubble('请接手下一步。')
+  entity.syncCharacterState()
+  assert.deepEqual(speech, ['请接手下一步。', '请接手下一步。'])
+  assert.deepEqual(seats, [transition]); assert.deepEqual(desks, [true]); assert.deepEqual(poses, [['working', undefined]])
+  const surface = { keyboardLeft: { x: 40, y: 30 }, keyboardRight: { x: 70, y: 30 }, mouse: { x: 75, y: 30 },
+    bounds: { left: 30, right: 80, back: 20, front: 40 } }
+  entity.setWorkSurface(surface)
+  assert.deepEqual(surfaces[0], transformWorkSurface(surface, 1, -50, -80))
+  entity.setWorkSurface(); assert.equal(surfaces[1], undefined)
+  entity.hideBubble(); assert.equal(speech.at(-1), undefined); assert.equal(entity.data.bubbleText, undefined)
+})
+
+test('procedural placeholders keep updating state and overlays when a frame pack is missing', async t => {
+  const server = await createTestServer(); t.after(() => server.close())
+  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
+  const entity = Object.create(AgentEntity.prototype), drawn = [], labels = []
+  Object.assign(entity, {
+    character: null, agent: { x: 0, y: 0, currentTask: '整理信息' }, animationX: 0, animationY: 0, walkPhase: 0,
+    drawFallbackBody: state => drawn.push(state), bubble: { update() {} },
+    statusLabel: { setState: state => labels.push(state), setTask() {} }, updateOverlayPositions() {},
+  })
+  for (const state of ['idle', 'walking', 'working', 'thinking', 'talking']) entity.updateVisuals(state, .05)
+  assert.deepEqual(drawn, ['idle', 'walking', 'working', 'thinking', 'talking'])
+  assert.deepEqual(labels, drawn); assert(entity.walkPhase > 0)
+})
+
+test('a failed scene group cannot mount frame textures from released idle leases', async t => {
+  const server = await createTestServer(); t.after(() => server.close())
+  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
+  const { StatusLabel } = await server.ssrLoadModule('/src/scene/ui/StatusLabel.ts')
+  const { characterAssets } = await server.ssrLoadModule('/src/scene/assets/loadApartmentAssets.ts')
+  t.mock.method(StatusLabel.prototype, 'paintStateDot', () => {})
+  t.mock.method(StatusLabel.prototype, 'getLabelTopY', () => -80)
+  t.mock.method(characterAssets, 'get', () => assert.fail('a scene without leases must not inspect cached frame textures'))
+  const entity = new AgentEntity({ id: 'marvis', name: '王明', x: 50, y: 80, state: 'idle', color: 0xe85d4a, facing: 1 }, false)
+  t.after(() => entity.destroy({ children: true }))
+  assert.equal(entity.character, null)
+  assert(entity.fallbackBody && entity.fallbackScarf)
+  assert(entity.children.includes(entity.fallbackBody))
+  entity.updateVisuals('walking', .05)
+  assert.equal(entity.data.state, 'idle', 'view updates do not overwrite authoritative state')
+})
+
 test('walking preserves its facing at a subpixel waypoint instead of flashing to the front', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
@@ -360,8 +408,8 @@ test('walking preserves its facing at a subpixel waypoint instead of flashing to
   const entity = Object.create(AgentEntity.prototype)
   const facings = []
   Object.assign(entity, {
-    useSpine: true, animationX: 0, animationY: 0,
-    spineChar: { setViewFacing: facing => facings.push(facing), setFacing() {}, playState() {} },
+    animationX: 0, animationY: 0,
+    character: { setViewFacing: facing => facings.push(facing), setFacing() {}, setAtDesk() {}, setSeatTransition() {}, setSpeechText() {}, playState() {}, update() {} },
     bubble: { update() {} }, statusLabel: { setState() {}, setTask() {} }, updateOverlayPositions() {},
   })
   for (const [facing, dx, dy] of [['right', 1, 0], ['left', -1, 0], ['back', 0, -1], ['front', 0, 1]]) {
@@ -390,8 +438,8 @@ test('seat alignment never overrides the projected docking direction', async t =
   const entity = Object.create(AgentEntity.prototype)
   let renderedFacing
   Object.assign(entity, {
-    useSpine: true, animationX: 0, animationY: 0,
-    spineChar: { setViewFacing(facing) { renderedFacing = facing }, setFacing() {}, playState() {} },
+    animationX: 0, animationY: 0,
+    character: { setViewFacing(facing) { renderedFacing = facing }, setFacing() {}, setAtDesk() {}, setSeatTransition() {}, setSpeechText() {}, playState() {}, update() {} },
     bubble: { update() {} }, statusLabel: { setState() {}, setTask() {} }, updateOverlayPositions() {},
   })
   let walkingFrames = 0
@@ -439,6 +487,7 @@ test('Marvis keeps the same head width through seated, leaning, rising and stand
   }
   assert(Math.max(...widths) - Math.min(...widths) <= 2, `head widths should agree within raster rounding: ${widths}`)
 })
+
 
 test('walk atlas uses shared scale and head registration despite arm silhouette changes', async t => {
   const { registerWalkFrames, detectApartmentFrames } = await loadFrames(t)

@@ -1,7 +1,7 @@
 import { Container, Graphics, Sprite } from 'pixi.js'
 import type { AgentState } from '@/types/agent'
 import type { SeatTransition } from '@/runtime/model'
-import type { ChibiFacing } from './chibiAgentPresets'
+import type { CharacterFacing } from './characterFacing'
 import { getCharacterPack, type CharacterPack } from '@/scene/assets/loadApartmentAssets'
 import { apartmentPoseForState, type ApartmentPose } from './apartmentFrames'
 import { resolveCharacterClip, sampleCharacterLayers } from './packSchema'
@@ -15,7 +15,7 @@ export class ApartmentCharacter extends Container {
   private readonly mouthSprite = new Sprite()
   private readonly workSprites = Array.from({ length: 6 }, () => new Sprite())
   private workSurface?: WorkSurface
-  private facing: ChibiFacing = 'front'
+  private facing: CharacterFacing = 'front'
   private pose: ApartmentPose = 'idle'
   private elapsed = 0
   private walkingDistance = 0
@@ -49,7 +49,7 @@ export class ApartmentCharacter extends Container {
     if (next === this.speechText) return
     this.speechText = next; this.speechElapsed = 0; this.renderFrame()
   }
-  setViewFacing(facing: ChibiFacing) { if (this.facing !== facing) { this.facing = facing; this.renderFrame() } }
+  setViewFacing(facing: CharacterFacing) { if (this.facing !== facing) { this.facing = facing; this.renderFrame() } }
   playState(state: AgentState, customAnimation?: string) {
     const pose = apartmentPoseForState(state, customAnimation, this.atDesk)
     if (this.pose === pose) return

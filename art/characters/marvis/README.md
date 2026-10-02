@@ -5,19 +5,16 @@ transparent source PNGs are stored here, outside the public runtime assets.
 The reference is the project's approved `public/assets/characters/apartment/marvis.png`;
 front/back requests also used the preceding parts atlas for layout consistency.
 No external character artwork or additional animation runtime is used by this trial.
-Version 6 motion uses numeric references from the project's existing animation;
-its separate provenance is recorded below.
 This provenance is not a guarantee of exclusive rights to AI-generated artwork.
 
-## Current Version
+## Archived Artwork
 
-Version 6 uses `parts-v3-front.png`, `parts-v3-right.png` and `parts-v3-back.png`.
+The source atlases are `parts-v3-front.png`, `parts-v3-right.png` and `parts-v3-back.png`.
 Each contains six parts, including one continuous arm and one continuous trouser
 leg. See [walk-v3.md](./walk-v3.md) for the selected outputs, references and exact
-generation prompts. The current bake script produces version 6 atlases. See
-[walk-v6.md](./walk-v6.md) for exact sampling and the removed V5 adjustments.
+generation prompts. These cutout experiments are not part of the active character pipeline.
 Earlier baked results are preserved in `archive-v2/`, `archive-v3/` and
-`archive-v4/` and `archive-v5/`, outside public runtime assets.
+`archive-v4/`, outside public runtime assets.
 
 ## Legacy Version 2 Source Layout
 
@@ -25,27 +22,17 @@ Each atlas contains twelve detached parts, in reading order: head, torso,
 left/far upper arm, right/near upper arm, left/far forearm with hand,
 right/near forearm with hand, two thighs, two calves, two shoes.
 
-Generated layouts are not a mathematically uniform grid. The current rig records
+Generated layouts are not a mathematically uniform grid. The historical trial records
 explicit complete-part bounds for version 3, excluding transparent gaps instead
 of clipping parts at an imagined grid edge. Version 2 baked atlases are retained
 under `archive-v2/`, outside the public runtime assets.
 
-## Reproduce
+## Active Pipeline
 
-Run from the project root with Playwright available as an authoring tool:
-
-```sh
-PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/character-walk/export-reference-motion.mjs
-PLAYWRIGHT_MODULE=/absolute/path/to/playwright/index.mjs node scripts/bake-marvis-walk.mjs
-```
-
-The optional `CHROME_CHANNEL` selects the installed browser (default: chrome).
-The script starts and closes its own local Vite server and browser. It uses the
-existing PixiJS renderer to bake four 10x6 atlases, 256x352 pixels per cell, plus
-the shared-frame JSON manifest under `public/assets/characters/apartment/`.
-Set `WALK_AUDIT_PATH=/tmp/marvis-walk-audit` to export joint samples for inspection.
-Playwright is not a production dependency. The app loads only baked sprites,
-not these source parts or the authoring rig.
+Active characters use whole-character picture frames in `art/characters/packs/`.
+See [the character-pack guide](../../../docs/character-packs.md) for validation,
+preview, publication and atlas building. The old motion-transfer pipeline and
+its derived assets have been removed; the artwork here is retained for provenance.
 
 ## Version 2 Generation History
 

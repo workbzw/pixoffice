@@ -46,9 +46,6 @@ export const supportsCharacterPose: PoseSupport = (id, posture, facing) => {
   const pack = getCharacterPack(id)
   return pack ? Boolean(resolveCharacterClip(pack.manifest, characterPoseClip(posture, facing))) : supportsOfficePose(id, posture, facing)
 }
-export function usesApartmentCharacters(): boolean {
-  return typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('characters') !== 'classic'
-}
 export function isApartmentReady(id?: string): boolean {
   return id ? Boolean(getCharacterPack(id)) : AGENT_ROSTER.every(agent => getCharacterPack(agent.id))
 }
@@ -76,5 +73,5 @@ export async function acquireCharacterPacks(ids: string[], onLoaded?: (id: strin
 }
 export async function loadApartmentAssets(ids = AGENT_ROSTER.map(agent => agent.id), onLoaded?: (id: string) => void, options?: CharacterLoadOptions) {
   try { return await acquireCharacterPacks(ids, onLoaded, options) }
-  catch (error) { console.error('[Characters] 人物资源包加载失败，回退原人物素材', error); return undefined }
+  catch (error) { console.error('[Characters] 人物资源包加载失败，使用占位人物', error); return undefined }
 }

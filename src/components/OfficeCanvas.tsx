@@ -3,7 +3,6 @@ import type { Dispatch, SetStateAction } from 'react'
 import { OfficeScene, type OfficeAgentClick, type SceneLoadProgress, type SceneActionProgress } from '@/scene/OfficeScene'
 import type { Agent, AgentState } from '@/types/agent'
 import { submitVisitAction } from '@/services/officeActionDispatcher'
-import { isApartmentReady, usesApartmentCharacters } from '@/scene/assets/loadApartmentAssets'
 import { APARTMENT_EMOTES } from '@/scene/characters/apartmentFrames'
 import { CharacterPreview } from './CharacterPreview'
 import { Grid2X2, Pause, Play, RotateCw, X } from 'lucide-react'
@@ -32,32 +31,6 @@ const STATE_ACTIONS: Array<{
   { label: '进入思考', state: 'thinking', task: '思考下一步…' },
   { label: '暂时空闲', state: 'idle' },
 ]
-
-const EMOTE_ACTIONS = [
-  { label: '生气', animation: 'emotes/angry' },
-  { label: '打嗝', animation: 'emotes/burp' },
-  { label: '困惑', animation: 'emotes/confused' },
-  { label: '哭泣', animation: 'emotes/crying' },
-  { label: '倒下', animation: 'emotes/dead' },
-  { label: '坚定', animation: 'emotes/determined' },
-  { label: '凝视', animation: 'emotes/dramatic-stare' },
-  { label: '兴奋', animation: 'emotes/excited' },
-  { label: '撒娇', animation: 'emotes/fawning' },
-  { label: '脸红', animation: 'emotes/flushed' },
-  { label: '欢呼', animation: 'emotes/hooray' },
-  { label: '灵感', animation: 'emotes/idea' },
-  { label: '刚刚好', animation: 'emotes/just-right' },
-  { label: '大笑', animation: 'emotes/laugh' },
-  { label: '喜欢', animation: 'emotes/love' },
-  { label: '害怕', animation: 'emotes/scared' },
-  { label: '遮眼', animation: 'emotes/see-no-evil' },
-  { label: '耸肩', animation: 'emotes/shrug' },
-  { label: '闷闷不乐', animation: 'emotes/sulk' },
-  { label: '冒汗', animation: 'emotes/sweat' },
-  { label: '思考表情', animation: 'emotes/thinking' },
-  { label: '吐舌', animation: 'emotes/tongue-out' },
-  { label: '挥手', animation: 'emotes/wave' },
-] as const
 
 export function OfficeCanvas({ runtime, mapView, setMapView, covered = false }: { runtime: OfficeRuntime; mapView?: MapView; setMapView?: Dispatch<SetStateAction<MapView>>; covered?: boolean }) {
   useSyncExternalStore(runtime.subscribe, runtime.getRevision)
@@ -266,7 +239,7 @@ export function OfficeCanvas({ runtime, mapView, setMapView, covered = false }: 
               <div className="agent-action-group">
                 <div className="agent-action-section-title">表情动作</div>
                 <div className="agent-emote-grid">
-                  {(usesApartmentCharacters() && isApartmentReady(menu.agent.appearanceId ?? menu.agent.id) ? APARTMENT_EMOTES : EMOTE_ACTIONS).map((action) => (
+                  {APARTMENT_EMOTES.map((action) => (
                     <button
                       key={action.animation}
                       type="button"

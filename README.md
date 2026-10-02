@@ -41,8 +41,9 @@ npm run characters:check  # 校验源素材与生成资源是否一致
 
 注意素材版权问题！
 
+## 第三方软件许可
 
-
+正式构建自动生成[第三方许可证与署名](./public/THIRD_PARTY_NOTICES.txt)，并与项目许可证一起发布到网站的 `/THIRD_PARTY_NOTICES.txt` 和 `/LICENSE.txt`。依赖升级后应提交更新的声明文件；`npm run licenses:check` 可检查缺失、过期或未经审核的许可。此声明仅涵盖软件依赖，不代表图片素材已获得授权，详见[许可维护说明](./licenses/README.md)。
 
 ## 运行
 

@@ -1,6 +1,6 @@
 # Office motion v2
 
-Six front/back indoor gait sheets generated with the built-in ImageGen tool on 2026-09-27. Each `<id>-reference.png` uses the character's existing front/back standing art as its identity reference. No Spine assets or motion data were used for these sheets.
+Six front/back indoor gait sheets generated with the built-in ImageGen tool on 2026-09-27. Each `<id>-reference.png` uses the character's existing front/back standing art as its identity reference. No external character assets or skeletal motion data were used for these sheets.
 
 ## Source files
 

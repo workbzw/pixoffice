@@ -4,29 +4,26 @@ import {
   resolveWalkViewFacing,
   viewFacingToLR,
 } from '@/scene/systems/movementFacing'
-import { SpineCharacter } from '@/scene/characters/SpineCharacter'
 import { ApartmentCharacter } from '@/scene/characters/ApartmentCharacter'
 import { transformWorkSurface, type WorkSurface } from '@/scene/characters/workSurface'
 import { shouldSitAtDesk } from '@/scene/characters/apartmentFrames'
-import { isApartmentReady, usesApartmentCharacters } from '@/scene/assets/loadApartmentAssets'
-import { isSpineReady } from '@/scene/assets/loadSpineAssets'
+import { isApartmentReady } from '@/scene/assets/loadApartmentAssets'
 import { Bubble } from '@/scene/ui/Bubble'
 import { StatusLabel } from '@/scene/ui/StatusLabel'
 
 export class AgentEntity extends Container {
   readonly agentId: string
   private agent: Agent
-  private spineChar: SpineCharacter | ApartmentCharacter | null = null
+  private character: ApartmentCharacter | null = null
   private fallbackBody: Graphics | null = null
   private fallbackScarf: Graphics | null = null
   private statusLabel: StatusLabel
   private bubble: Bubble
   private walkPhase = 0
-  private useSpine = false
   private animationX: number
   private animationY: number
 
-  constructor(agent: Agent) {
+  constructor(agent: Agent, frameResourcesOwned = true) {
     super()
     this.agentId = agent.id
     this.agent = { ...agent }
@@ -36,21 +33,17 @@ export class AgentEntity extends Container {
     this.statusLabel = new StatusLabel(agent.name)
     this.bubble = new Bubble()
 
-    const apartmentReady = usesApartmentCharacters() && isApartmentReady(agent.appearanceId ?? agent.id)
-    if (apartmentReady || isSpineReady()) {
-      this.spineChar = apartmentReady
-        ? new ApartmentCharacter(agent.appearanceId ?? agent.id)
-        : new SpineCharacter(agent.id, agent.color)
-      if (this.spineChar.isReady) {
-        this.useSpine = true
-        this.spineChar.setAgentColor(agent.color)
-        this.spineChar.setFacing(agent.facing)
-        this.spineChar.setViewFacing(agent.viewFacing ?? 'front')
+    if (frameResourcesOwned && isApartmentReady(agent.appearanceId ?? agent.id)) {
+      this.character = new ApartmentCharacter(agent.appearanceId ?? agent.id)
+      if (this.character.isReady) {
+        this.character.setAgentColor(agent.color)
+        this.character.setFacing(agent.facing)
+        this.character.setViewFacing(agent.viewFacing ?? 'front')
         this.syncCharacterState()
-        this.addChild(this.spineChar, this.statusLabel, this.bubble)
+        this.addChild(this.character, this.statusLabel, this.bubble)
       } else {
-        this.spineChar.destroy()
-        this.spineChar = null
+        this.character.destroy()
+        this.character = null
         this.initFallbackGraphics()
       }
     } else {
@@ -84,13 +77,13 @@ export class AgentEntity extends Container {
       else this.bubble.hide()
     }
 
-    if (this.useSpine && this.spineChar) {
-      if (this.spineChar instanceof ApartmentCharacter) this.spineChar.setAtDesk(shouldSitAtDesk(this.agent))
+    if (this.character) {
+      this.character.setAtDesk(shouldSitAtDesk(this.agent))
       if (patch.viewFacing != null && patch.viewFacing !== prevViewFacing) {
-        this.spineChar.setViewFacing(patch.viewFacing)
+        this.character.setViewFacing(patch.viewFacing)
       }
       if (patch.facing != null && patch.facing !== prevFacing) {
-        this.spineChar.setFacing(patch.facing)
+        this.character.setFacing(patch.facing)
       }
       if (
         (patch.state != null && patch.state !== prevState) ||
@@ -99,7 +92,7 @@ export class AgentEntity extends Container {
         this.syncCharacterState()
       }
       if (patch.color != null && patch.color !== prevColor) {
-        this.spineChar.setAgentColor(patch.color)
+        this.character.setAgentColor(patch.color)
       }
       this.updateOverlayPositions()
     } else {
@@ -116,14 +109,14 @@ export class AgentEntity extends Container {
   showBubble(text: string, duration = 4) {
     this.agent.bubbleText = text
     this.bubble.show(text, duration)
-    if (this.spineChar instanceof ApartmentCharacter) this.spineChar.setSpeechText(text)
+    this.character?.setSpeechText(text)
     this.updateOverlayPositions()
   }
 
   hideBubble() {
     this.agent.bubbleText = undefined
     this.bubble.hide()
-    if (this.spineChar instanceof ApartmentCharacter) this.spineChar.setSpeechText(undefined)
+    this.character?.setSpeechText(undefined)
   }
 
   playCustomAnimation(animation: string, task?: string) {
@@ -142,10 +135,10 @@ export class AgentEntity extends Container {
       bubbleText: undefined,
     }
 
-    if (this.useSpine && this.spineChar) {
-      this.spineChar.setViewFacing('front')
-      this.spineChar.setFacing(1)
-      this.spineChar.playAnimation(animation)
+    if (this.character) {
+      this.character.setViewFacing('front')
+      this.character.setFacing(1)
+      this.character.playAnimation(animation)
       this.updateOverlayPositions()
       return
     }
@@ -154,16 +147,14 @@ export class AgentEntity extends Container {
   }
 
   setWorkSurface(surface?: WorkSurface) {
-    if (this.spineChar instanceof ApartmentCharacter) {
-      this.spineChar.setWorkSurface(surface && transformWorkSurface(surface, 1, -this.agent.x, -this.agent.y))
-    }
+    this.character?.setWorkSurface(surface && transformWorkSurface(surface, 1, -this.agent.x, -this.agent.y))
   }
 
   updateVisuals(state: AgentState, dt: number) {
     const distanceMoved = Math.hypot(this.agent.x - this.animationX, this.agent.y - this.animationY)
     this.animationX = this.agent.x
     this.animationY = this.agent.y
-    if (this.useSpine && this.spineChar) {
+    if (this.character) {
       if (
         state === 'walking' &&
         this.agent.targetX != null &&
@@ -179,16 +170,16 @@ export class AgentEntity extends Container {
           )
         this.agent.viewFacing = viewFacing
         this.agent.facing = viewFacingToLR(viewFacing)
-        this.spineChar.setViewFacing(viewFacing)
-        this.spineChar.setFacing(this.agent.facing)
+        this.character.setViewFacing(viewFacing)
+        this.character.setFacing(this.agent.facing)
       } else if ((state === 'working' || state === 'thinking') && this.agent.seated !== true) {
         if (this.agent.viewFacing !== 'back') {
           this.agent.viewFacing = 'back'
-          this.spineChar.setViewFacing('back')
+          this.character.setViewFacing('back')
         }
       }
       this.syncCharacterState(state)
-      if (this.spineChar instanceof ApartmentCharacter) this.spineChar.update(dt, distanceMoved)
+      this.character.update(dt, distanceMoved)
     } else {
       this.walkPhase += dt * 8
       this.drawFallbackBody(state, 0)
@@ -203,9 +194,7 @@ export class AgentEntity extends Container {
   }
 
   private updateOverlayPositions() {
-    const crownTopY = this.useSpine && this.spineChar
-      ? this.spineChar.getHeadOffsetY()
-      : -58
+    const crownTopY = this.character?.getHeadOffsetY() ?? -58
     this.statusLabel.layout(crownTopY)
     const labelTopY = this.statusLabel.getLabelTopY(crownTopY)
     const gapAboveLabel = 24
@@ -216,12 +205,10 @@ export class AgentEntity extends Container {
   }
 
   private syncCharacterState(state = this.agent.state) {
-    if (this.spineChar instanceof ApartmentCharacter) {
-      this.spineChar.setAtDesk(shouldSitAtDesk(this.agent))
-      this.spineChar.setSeatTransition(this.agent.seatTransition)
-      this.spineChar.setSpeechText(this.agent.bubbleText)
-    }
-    this.spineChar?.playState(state, this.agent.customAnimation)
+    this.character?.setAtDesk(shouldSitAtDesk(this.agent))
+    this.character?.setSeatTransition(this.agent.seatTransition)
+    this.character?.setSpeechText(this.agent.bubbleText)
+    this.character?.playState(state, this.agent.customAnimation)
   }
 
   private syncVisual() {
@@ -235,11 +222,11 @@ export class AgentEntity extends Container {
     if (this.agent.bubbleText) {
       this.bubble.show(this.agent.bubbleText)
     }
-    if (this.useSpine && this.spineChar) {
+    if (this.character) {
       this.syncCharacterState()
-      this.spineChar.setFacing(this.agent.facing)
-      this.spineChar.setViewFacing(this.agent.viewFacing ?? 'front')
-      this.spineChar.setAgentColor(this.agent.color)
+      this.character.setFacing(this.agent.facing)
+      this.character.setViewFacing(this.agent.viewFacing ?? 'front')
+      this.character.setAgentColor(this.agent.color)
     } else {
       this.drawFallbackBody(this.agent.state, 0)
     }
@@ -250,7 +237,6 @@ export class AgentEntity extends Container {
     this.fallbackBody = new Graphics()
     this.fallbackScarf = new Graphics()
     this.addChild(this.fallbackBody, this.fallbackScarf, this.statusLabel, this.bubble)
-    this.useSpine = false
   }
 
   private drawFallbackBody(state: AgentState, bob: number) {

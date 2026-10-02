@@ -1,4 +1,4 @@
-import type { ChibiFacing } from '@/scene/characters/chibiAgentPresets'
+import type { CharacterFacing } from '@/scene/characters/characterFacing'
 import type { SeatTransition } from '@/runtime/model'
 
 export type AgentState =
@@ -55,8 +55,8 @@ export interface Agent {
   seatTransition?: SeatTransition
   /** 简笔 fallback 左右翻转 */
   facing: 1 | -1
-  /** Spine 四向：走路时按位移更新 */
-  viewFacing?: ChibiFacing
+  /** 四向朝向：走路时按位移更新 */
+  viewFacing?: CharacterFacing
   mission?: DeskVisitMission
 }
 

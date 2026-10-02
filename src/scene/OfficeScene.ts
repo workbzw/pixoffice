@@ -6,8 +6,7 @@ import { createOfficePropViews } from './views/propViews'
 import type { PropView, PropViewRegistry } from './views/propViews'
 import { loadOfficeBackground, loadOfficeFurniture } from './assets/loadOfficeAssets'
 import { loadWorkstationTrialAssets } from './assets/loadWorkstationTrialAssets'
-import { loadSpineAssets } from './assets/loadSpineAssets'
-import { loadApartmentAssets, supportsCharacterPose, usesApartmentCharacters } from './assets/loadApartmentAssets'
+import { loadApartmentAssets, supportsCharacterPose } from './assets/loadApartmentAssets'
 import { bindOfficeScene, unbindOfficeScene } from './officeSceneBridge'
 import { notifyVisitMissionActivity } from '@/services/officeActionDispatcher'
 import { setOfficeAgents } from '@/store/officeStore'
@@ -100,8 +99,7 @@ export class OfficeScene {
     this.world = new Container(); app.stage.addChild(this.world)
     this.resize(width, height)
     const characterIds = [...new Set(this.getAgents().map(agent => agent.appearanceId ?? agent.id))]
-    const frameCharacters = usesApartmentCharacters()
-    const total = 6 + (frameCharacters ? characterIds.length : 1), completed = new Set<string>()
+    const total = 6 + characterIds.length, completed = new Set<string>()
     const report = (resource?: string) => {
       if (this.destroyed) return
       if (resource) completed.add(resource)
@@ -121,16 +119,12 @@ export class OfficeScene {
       performance.mark('pixoffice:background-visible')
     })
     const charactersReady = (async () => {
-      const apartment = frameCharacters && await loadApartmentAssets(characterIds, id => report(`character:${id}`), {
+      const apartment = await loadApartmentAssets(characterIds, id => report(`character:${id}`), {
         preload: 'startup', clipsForPack: pack => this.getAgents().filter(agent => (agent.appearanceId ?? agent.id) === pack.manifest.id).map(agent => initialCharacterClip(agent, pack.manifest)),
       })
       if (this.destroyed) { if (apartment) apartment.release(); return }
       if (apartment) this.characterLease = apartment
-      else {
-        await loadSpineAssets()
-        if (frameCharacters) characterIds.forEach(id => report(`character:${id}`))
-        else report('characters')
-      }
+      else characterIds.forEach(id => report(`character:${id}`))
     })()
     await Promise.all([
       backgroundShown, charactersReady,
@@ -143,7 +137,8 @@ export class OfficeScene {
     this.layer = new Container(); this.layer.sortableChildren = true; this.world.addChild(this.layer)
     for (const prop of data.props) this.mountProp(prop)
     this.getAgents().forEach(agent => {
-      const entity = new AgentEntity(agent)
+      // A failed group releases all leases; do not mount frame views from its idle cache.
+      const entity = new AgentEntity(agent, Boolean(this.characterLease))
       entity.on('pointertap', (event: FederatedPointerEvent) => {
         if (!this.actionsReady || this.runtime.isEditing) return
         event.stopPropagation()

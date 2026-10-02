@@ -1,11 +1,11 @@
-import type { ChibiFacing } from '@/scene/characters/chibiAgentPresets'
+import type { CharacterFacing } from '@/scene/characters/characterFacing'
 
 /**
  * 根据「朝目标移动」的位移判断四向（Pixi：x 右为正，y 下为正）
  * - 横向分量 ≥ 纵向 → 左跑 / 右跑
  * - 否则 → 上跑背面 / 下跑正面
  */
-export function resolveWalkViewFacing(dx: number, dy: number, previous: ChibiFacing = 'front'): ChibiFacing {
+export function resolveWalkViewFacing(dx: number, dy: number, previous: CharacterFacing = 'front'): CharacterFacing {
   const absDx = Math.abs(dx)
   const absDy = Math.abs(dy)
   // A nearly reached waypoint has no useful direction; retain the current pose.
@@ -17,7 +17,7 @@ export function resolveWalkViewFacing(dx: number, dy: number, previous: ChibiFac
   return dy < 0 ? 'back' : 'front'
 }
 
-export function viewFacingToLR(facing: ChibiFacing): 1 | -1 {
+export function viewFacingToLR(facing: CharacterFacing): 1 | -1 {
   return facing === 'left' ? -1 : 1
 }
 
@@ -29,7 +29,7 @@ export function resolveTalkViewFacing(
   fromY: number,
   targetX: number,
   targetY: number,
-): ChibiFacing {
+): CharacterFacing {
   const dx = targetX - fromX
   if (dx < -TALK_FACE_DX) return 'left'
   if (dx > TALK_FACE_DX) return 'right'
@@ -42,7 +42,7 @@ export function talkFacingToward(
   fromY: number,
   targetX: number,
   targetY: number,
-): { viewFacing: ChibiFacing; facing: 1 | -1 } {
+): { viewFacing: CharacterFacing; facing: 1 | -1 } {
   const viewFacing = resolveTalkViewFacing(fromX, fromY, targetX, targetY)
   return { viewFacing, facing: viewFacingToLR(viewFacing) }
 }

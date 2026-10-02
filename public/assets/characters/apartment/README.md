@@ -9,9 +9,6 @@ Six original AI-generated sprite sheets, created with the built-in OpenAI
 `image_gen` tool (not the CLI) on 2026-09-25, based on the apartment concept
 image from this project's design discussion. No external character pack was used.
 
-The original Spine assets remain in `../chibi-stickers/`. Add
-`?characters=classic` to the application URL to compare them.
-
 ## Files and identities
 
 | File | Identity / clothing | Generation output ID |
@@ -33,9 +30,8 @@ The original Spine assets remain in `../chibi-stickers/`. Add
 4. Front: waving, thinking, surprised.
 
 The renderer detects transparent row/column gutters and trims each pose at load time.
-These are prototype sequence frames, not rigged Spine characters. Emotes are
-distinct static poses; the original pack's other expressions and typing
-animations have not been recreated. Walk cycles use the two steps and idle.
+These are prototype sequence frames. Emotes are distinct static poses;
+walk cycles use the two steps and idle.
 AI-generated details may vary slightly between poses.
 
 ## Active Frame Animation
@@ -51,47 +47,6 @@ selected in Character Preview. Wang Ming's back-view comparison shows indoor
 walking beside the former running gait; other directions retain the historical
 eight-frame comparison. Missing walking assets fall back to the original sheets.
 Exact prompts and provenance: [indoor-back-walk-v1.md](./indoor-back-walk-v1.md).
-
-## Archived Reference Walk, Version 6
-
-This experiment is retained as source history but is not loaded by `anim-frame`.
-It was specific to Wang Ming (`marvis`). Each direction has 60 frames baked from
-a fixed cutout puppet, rather than independently generated poses:
-
-- `marvis-walk-v6-front.png`
-- `marvis-walk-v6-right.png`
-- `marvis-walk-v6-back.png`
-- `marvis-walk-v6-left.png` (independent motion, mirrored side artwork)
-- `marvis-walk-v6.json`: frame rectangles, scale, ground, content bounds and duration.
-
-The original complete-frame walk supplies the artwork reference. Arms and trouser
-legs are now continuous cutouts, bent along smooth cloth centerlines with Pixi
-MeshPlane during baking. There are no separate elbow/knee texture connections.
-The rig maps resolved source joint positions with one uniform scale and offset.
-Source limb lengths, torso/head affine transforms, shoe transforms, body bounce
-and squash are not damped or replaced. Cloth bends around the actual elbow/knee
-and follows source width/shear. There is no per-frame floor correction,
-invented foot-roll curve or sole crossfade.
-All directions share a fixed crop and scale across the entire cycle. Runtime
-still uses ordinary Pixi sprites, not live meshes or a new Spine/Rive runtime.
-The original one-second clock advances each 60-frame cycle, subject to display
-refresh rate. Changing direction retains phase; leaving the walking state stops
-the walk. Distance traveled no longer changes its timing.
-
-Version 6 uses 60 Hz world transforms from the project's
-legacy trot AFTER its constraints resolve. This is motion transfer, not a
-claim of wholly original motion. It reuses our version 3 artwork, with no legacy
-character texture. The bake consumes the numeric reference, not a Spine skeleton
-or runtime; the app consumes only the resulting PNGs. See
-[walk-v6.md](../../../../art/characters/marvis/walk-v6.md) for precise provenance.
-
-This was a 2D cutout trial: front/back limb perspective is approximated,
-not a full 3D rig, and standing/sitting transitions remain simplified.
-
-Source parts, generation prompts, provenance and reproduction instructions:
-[art/characters/marvis/README.md](../../../../art/characters/marvis/README.md).
-Version 3 artwork and exact prompts are documented in
-[walk-v3.md](../../../../art/characters/marvis/walk-v3.md).
 
 ## Previous eight-frame trial
 

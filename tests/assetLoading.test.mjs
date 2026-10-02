@@ -61,6 +61,19 @@ test('a failed character group releases late successful leases before rejecting'
   assert.deepEqual(released.sort(), ['early', 'late'])
 })
 
+test('missing frame packs report the failure and return the procedural-placeholder path', async t => {
+  const server = await createTestServer(); t.after(() => server.close())
+  const { characterAssets, loadApartmentAssets } = await server.ssrLoadModule('/src/scene/assets/loadApartmentAssets.ts')
+  const requested = [], errors = [], failure = new Error('missing frame pack')
+  t.mock.method(characterAssets, 'acquire', async id => { requested.push(id); throw failure })
+  t.mock.method(console, 'error', (...args) => errors.push(args))
+  t.mock.method(Assets, 'load', () => assert.fail('missing frame packs must not load an alternate character renderer'))
+  assert.equal(await loadApartmentAssets(['marvis'], undefined, { preload: 'startup' }), undefined)
+  assert.deepEqual(requested, ['marvis'])
+  assert.equal(errors.length, 1)
+  assert.equal(errors[0][1], failure)
+})
+
 test('default character acquisition waits for full actions and releases every lease if action preparation fails', async t => {
   const server = await createTestServer(); t.after(() => server.close())
   const { characterAssets, acquireCharacterPacks } = await server.ssrLoadModule('/src/scene/assets/loadApartmentAssets.ts')
@@ -109,11 +122,13 @@ test('office textures fall back to retained PNGs when WebP cannot load', async t
 test('scene paints white and then the background without waiting for characters or furniture', async t => {
   const server = await createTestServer(); t.after(() => server.close())
   const { OfficeScene } = await server.ssrLoadModule('/src/scene/OfficeScene.ts')
+  const { characterAssets } = await server.ssrLoadModule('/src/scene/assets/loadApartmentAssets.ts')
   const remaining = deferred(), backgroundVisible = deferred(), progress = [], frames = []
+  const released = []
   const background = new Texture({ source: new TextureSource({ width: 1402, height: 1122 }) })
   t.after(() => background.destroy(true))
   const previousWindow = globalThis.window
-  globalThis.window = { devicePixelRatio: 1, location: { search: '?characters=classic' } }
+  globalThis.window = { devicePixelRatio: 1 }
   t.after(() => { if (previousWindow === undefined) delete globalThis.window; else globalThis.window = previousWindow })
   t.mock.method(Application.prototype, 'init', async function ({ width, height }) {
     this.renderer = { canvas: { style: {} }, screen: { width, height }, resize(width, height) { this.screen = { width, height } } }
@@ -122,6 +137,10 @@ test('scene paints white and then the background without waiting for characters 
   t.mock.method(Application.prototype, 'render', function () { frames.push(this.stage.children[0]?.children.length) })
   t.mock.method(Application.prototype, 'destroy', () => {})
   t.mock.method(Assets, 'load', async alias => alias === 'office-background' ? background : remaining.promise)
+  t.mock.method(characterAssets, 'acquire', async id => {
+    await remaining.promise
+    return { value: { manifest: { id, clips: {} }, ensureClips() {} }, release: () => released.push(id) }
+  })
   const scene = new OfficeScene({ onLoadProgress: value => {
     progress.push(value)
     if (value.completed === 1) backgroundVisible.resolve()
@@ -131,7 +150,7 @@ test('scene paints white and then the background without waiting for characters 
   await backgroundVisible.promise
   assert.deepEqual(frames, [0, 1], 'first white frame, then office background')
   assert.equal(scene.layer, null, 'actors and furniture are still loading')
-  assert.deepEqual(progress.at(-1), { completed: 1, total: 7 })
+  assert.deepEqual(progress.at(-1), { completed: 1, total: 12 })
   scene.resize(800, 600)
   assert.equal(scene.app.screen.width, 800)
   assert.deepEqual(frames, [0, 1, 1], 'resizing during loading repaints the background')
@@ -139,4 +158,5 @@ test('scene paints white and then the background without waiting for characters 
   await pending
   assert.deepEqual(frames, [0, 1, 1], 'late assets cannot draw after scene destruction')
   assert.equal(scene.app, null)
+  assert.deepEqual(released.sort(), scene.getAgents().map(agent => agent.appearanceId ?? agent.id).sort(), 'late frame packs are released after scene destruction')
 })
