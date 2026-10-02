@@ -1,0 +1,21 @@
+# PixOffice Identity v2
+
+Primary direction: a small person working at a computer.
+Palette: coral #DC6656, charcoal #2E3531, white #FFFFFF.
+
+`preview.png` is a concept presentation, including the horizontal wordmark,
+an application icon, a monochrome symbol, and a small-size example.
+It is not a production sprite sheet. Existing application assets are unchanged.
+
+Created with the built-in imagegen tool. The first draft explored a P-shaped
+workstation; the selected refinement simplifies the furniture so the person
+and the working posture are easier to recognize.
+
+## Initial prompt
+
+Use case: logo-brand. Asset type: a polished horizontal primary logo for PixOffice, a software workspace where small AI office characters work together. Create ONE original finished logo lockup on a genuinely transparent background. On the left, an exceptionally simple, memorable geometric symbol showing ONE SMALL PERSON SEATED AT A DESK USING A COMPUTER. The person must be recognizable immediately: a single round head, a compact seated body and one simple arm reaching to the tabletop. Integrate the person's upright body as the stem, with the desk/monitor forming a subtle capital P silhouette. The human working at a workstation is the primary reading, the letter P is a clever secondary reading. Use a few bold, solid modular shapes with gently softened pixel corners; generous negative space; balanced visual weight. Do not draw detailed hands, fingers, facial features, chair mechanisms, keyboard keys or room scenery. The emblem must still work at 24px. On the right, render the exact wordmark 'PixOffice', spelled P-i-x-O-f-f-i-c-e, in a refined, moderately bold contemporary rounded sans-serif, sentence case with uppercase P and O. Match the warmth of the geometric symbol. Palette: warm coral red #DC6656 for the symbol, dark charcoal #2E3531 for the wordmark. Flat uniform color, crisp vector-style edges, strict 2D. Wide composition about 3:1, centered horizontal lockup with 10 percent safe padding, icon visually proportional to the wordmark cap height (about 1.4 times the cap height), harmonious spacing. No gradient, no surface texture, no glow, no cast shadow, no 3D, no mockup, no tagline, no extra text, no watermark, no surrounding frame, no badge, no contact sheet. Design the mark as a cohesive identity, not a generic office clip-art illustration.
+
+## Refinement prompt
+
+Use case: logo-brand. Refine the attached PixOffice logo into a cleaner, more distinctive professional identity. Attached image is a DESIGN REFERENCE, preserve the coral and charcoal palette and the exact word 'PixOffice', but simplify the symbol deliberately. Make the primary symbol show ONE seated small office person using a computer: round head; single strong bent seated-body silhouette; one forearm reaches to a clean straight desk surface; one small SIMPLE RECTANGULAR computer monitor. Remove the huge curved letter P around the monitor entirely. A subtle P relationship may remain in the geometry but do not draw a separate letter P or wrap furniture around the monitor. Maximum five to six large geometric shapes; softly rounded block geometry, no tiny details, no facial features, no keyboard keys, no detailed chair, no perspective. The person must look calmly seated at an ordinary desk, not on a toilet, not operating a machine. The posture must be human-readable and balanced. Solid uniform warm coral #DC6656 symbol; solid charcoal #2E3531 wordmark. The exact 'PixOffice' wordmark in clean moderately bold contemporary rounded sans serif to the right of the symbol. Make a single polished compact identity presentation on a pure white canvas, wide landscape. One large centered horizontal primary lockup across the upper two-thirds. In a quiet lower row, show three small faithful applications of EXACTLY the same symbol: a coral rounded-square app tile with white symbol, a charcoal monochrome standalone symbol, a 32px-style miniature coral symbol. No captions, no slogans, no extra writing beyond the main word 'PixOffice'. Large comfortable whitespace and carefully controlled proportions. STRICT flat vector graphic, crisp solid fills and clean edges. No gradient, no texture, no shadows, no glow, no 3D, no fine outlines, no tinted background. The final should feel friendly, capable and polished, suitable for a clean white AI office product.
+

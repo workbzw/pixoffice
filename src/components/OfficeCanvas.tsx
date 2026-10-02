@@ -59,7 +59,7 @@ const EMOTE_ACTIONS = [
   { label: '挥手', animation: 'emotes/wave' },
 ] as const
 
-export function OfficeCanvas({ runtime, mapView, setMapView }: { runtime: OfficeRuntime; mapView?: MapView; setMapView?: Dispatch<SetStateAction<MapView>> }) {
+export function OfficeCanvas({ runtime, mapView, setMapView, covered = false }: { runtime: OfficeRuntime; mapView?: MapView; setMapView?: Dispatch<SetStateAction<MapView>>; covered?: boolean }) {
   useSyncExternalStore(runtime.subscribe, runtime.getRevision)
   const [localView, setLocalView] = useState(initialMapView)
   const hostRef = useRef<HTMLDivElement>(null)
@@ -136,8 +136,8 @@ export function OfficeCanvas({ runtime, mapView, setMapView }: { runtime: Office
   }, [runtime])
 
   useEffect(() => {
-    sceneRef.current?.setRenderingSuspended(previewOpen)
-  }, [previewOpen, loaded, runtime])
+    sceneRef.current?.setRenderingSuspended(previewOpen || covered)
+  }, [previewOpen, covered, loaded, runtime])
 
   useEffect(() => {
     const close = (event: PointerEvent) => {

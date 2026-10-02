@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="1440" height="960" viewBox="0 0 1440 960">
+  <defs>
+    <path id="mark" fill-rule="evenodd" d="M22 6h22a4 4 0 0 1 4 4v4h4a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4h-4v4a4 4 0 0 1-4 4H26a2 2 0 0 0-2 2v4a4 4 0 0 1-4 4h-8a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4h4a2 2 0 0 0 2-2v-2a4 4 0 0 1 4-4Zm4 16a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2H26Z"/>
+  </defs>
+  <rect width="1440" height="960" fill="#F3F4F3"/>
+  <rect x="40" y="40" width="1360" height="520" rx="32" fill="#FFFFFF"/>
+  <g font-family="Helvetica Neue,Arial,sans-serif">
+    <text x="88" y="102" font-size="18" fill="#939A95">PixOffice / Identity v1</text>
+    <g transform="translate(355 193) scale(2.65)"><use xlink:href="#mark" fill="#DC6656"/></g>
+    <text x="565" y="317" fill="#2E3531" font-size="108" font-weight="600">PixOffice</text>
+    <text x="720" y="429" text-anchor="middle" fill="#A0A6A1" font-size="20">pixoffice.online</text>
+    <rect x="40" y="584" width="437" height="336" rx="24" fill="#FFFFFF"/>
+    <text x="80" y="635" font-size="15" fill="#939A95">APPLICATION ICON</text>
+    <rect x="184" y="688" width="148" height="148" rx="36" fill="#DC6656"/>
+    <g transform="translate(209 713) scale(1.54)"><use xlink:href="#mark" fill="#FFFFFF"/></g>
+    <rect x="501" y="584" width="437" height="336" rx="24" fill="#FFFFFF"/>
+    <text x="541" y="635" font-size="15" fill="#939A95">MONOCHROME</text>
+    <g transform="translate(614 706) scale(1.65)"><use xlink:href="#mark" fill="#2E3531"/></g>
+    <rect x="754" y="715" width="90" height="90" rx="21" fill="#2E3531"/>
+    <g transform="translate(767 728)"><use xlink:href="#mark" fill="#FFFFFF"/></g>
+    <rect x="962" y="584" width="438" height="336" rx="24" fill="#FFFFFF"/>
+    <text x="1002" y="635" font-size="15" fill="#939A95">SMALL SIZES</text>
+    <g transform="translate(1040 753) scale(.25)"><use xlink:href="#mark" fill="#DC6656"/></g>
+    <g transform="translate(1110 749) scale(.375)"><use xlink:href="#mark" fill="#DC6656"/></g>
+    <g transform="translate(1188 745) scale(.5)"><use xlink:href="#mark" fill="#DC6656"/></g>
+    <g transform="translate(1274 737) scale(.75)"><use xlink:href="#mark" fill="#DC6656"/></g>
+    <g font-size="14" fill="#A0A6A1" text-anchor="middle">
+      <text x="1048" y="822">16</text><text x="1122" y="822">24</text><text x="1204" y="822">32</text><text x="1298" y="822">48</text>
+    </g>
+  </g>
+</svg>

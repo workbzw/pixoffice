@@ -1,7 +1,7 @@
 import '@esotericsoftware/spine-pixi-v8'
 import { Assets } from 'pixi.js'
 
-/** AI 办公室小人动画资源包 */
+/** PixOffice 小人动画资源包 */
 export type SpineCharacterPack = 'chibi-stickers'
 
 let loaded = false

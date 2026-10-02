@@ -14,9 +14,8 @@
 .runtime-workspace button:focus-visible, .runtime-workspace input:focus-visible, .runtime-workspace textarea:focus-visible, .runtime-workspace select:focus-visible { outline: 2px solid #4f876e; outline-offset: 2px; }
 .runtime-sidebar, .runtime-inspector { min-width: 0; min-height: 0; background: #fafbfa; }
 .runtime-sidebar { display: flex; flex-direction: column; gap: 16px; overflow: auto; padding: 18px 14px 15px; border-right: 1px solid #e2e5e2; }
-.runtime-brand { display: flex; align-items: center; gap: 11px; padding: 2px 7px 5px; white-space: nowrap; }
-.runtime-brand strong { font-size: 17px; font-weight: 650; }
-.runtime-brand-mark { display: grid; place-items: center; width: 35px; height: 35px; color: #fff; background: #dc6656; border-radius: 9px; }
+.runtime-brand { display: flex; align-items: center; min-height: 60px; padding: 0 4px; }
+.runtime-brand-title { display: block; width: 180px; max-width: 100%; height: auto; }
 .runtime-search { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 38px; padding: 0 10px; color: #959d97; background: #fff; border: 1px solid #e0e4e0; border-radius: 9px; }
 .runtime-search input { width: 100%; min-width: 0; border: 0; outline: 0; color: #303632; background: transparent; font-size: 12px; }
 .runtime-search input::placeholder { color: #afb5af; }

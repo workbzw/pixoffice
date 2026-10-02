@@ -1,5 +1,5 @@
 Use case: identity-preserve
-Asset type: transparent full-body sprite sheet for six existing AI Office characters typing while seated, BACK view.
+Asset type: transparent full-body sprite sheet for six existing PixOffice characters typing while seated, BACK view.
 Reference roles: the attached contact sheet contains SIX exact seated identity references in THREE columns and TWO rows. Read reference figures left to right, top to bottom. These six figures define output rows 1 through 6, respectively. Preserve the matching reference's hair, head silhouette and size, skin, outfit, shoes, body proportions, and camera angle in every cell. Do not mix identities between rows.
 Layout: FOUR columns and SIX rows, 24 isolated complete sprites, read row-major. Use a tall large-resolution canvas with generous transparent gutters. Each row contains one character in four tiny consecutive keyboard-typing poses. All four figures in each row are exactly the same scale, have the same head shape and head position, identical bent seated legs and shoe position. Draw only the character, without chair or desk.
 Row 1: reference top-left, light-brown short hair, cream hoodie, dark trousers (Wang Ming).

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="296" height="80" viewBox="0 0 296 80" fill="none">
+  <title>PixOffice</title>
+  <g transform="translate(0 8)">
+    <path fill="#DC6656" fill-rule="evenodd" d="M22 6h22a4 4 0 0 1 4 4v4h4a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4h-4v4a4 4 0 0 1-4 4H26a2 2 0 0 0-2 2v4a4 4 0 0 1-4 4h-8a4 4 0 0 1-4-4V18a4 4 0 0 1 4-4h4a2 2 0 0 0 2-2v-2a4 4 0 0 1 4-4Zm4 16a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2H26Z" clip-rule="evenodd"/>
+  </g>
+  <text x="80" y="58" fill="#2E3531" font-family="Helvetica Neue,Arial,sans-serif" font-size="48" font-weight="600">PixOffice</text>
+</svg>

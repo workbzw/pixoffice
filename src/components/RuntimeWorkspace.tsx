@@ -1,5 +1,5 @@
 import { useMemo, useState, useSyncExternalStore } from 'react'
-import { Braces, Download, FileJson, House, ListTodo, Monitor, Plug, Search, SlidersHorizontal, Users } from 'lucide-react'
+import { Braces, Download, FileJson, House, ListTodo, Plug, Search, SlidersHorizontal, Users } from 'lucide-react'
 import type { DashboardAction, DashboardSnapshot, DashboardTask, OfficeDataSource } from '@/dashboard/contract'
 import { dashboardMetrics } from '@/dashboard/selectors'
 import type { OfficeRuntime } from '@/runtime/OfficeRuntime'
@@ -7,6 +7,8 @@ import { OfficeCanvas } from './OfficeCanvas'
 import { CharacterAvatar } from './CharacterArtwork'
 import { SceneControlPanel, type ScenePanel } from './SceneControlPanel'
 import { initialMapView } from './map-editor/commands'
+import { OfficeChat } from './OfficeChat'
+import type { OfficeChatSource } from '@/chat/contract'
 import './RuntimeWorkspace.css'
 
 type Section = 'overview' | 'tasks' | 'employees' | ScenePanel
@@ -25,7 +27,7 @@ function formatTime(value: string) {
   return Number.isNaN(date.getTime()) ? '' : date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false })
 }
 
-export function RuntimeWorkspace({ runtime, connection, dashboard, dashboardError, sceneLinkError, dataMode, executeAction }: {
+export function RuntimeWorkspace({ runtime, connection, dashboard, dashboardError, sceneLinkError, dataMode, executeAction, chatSource }: {
   runtime: OfficeRuntime
   connection: string
   dashboard: DashboardSnapshot | null
@@ -33,6 +35,7 @@ export function RuntimeWorkspace({ runtime, connection, dashboard, dashboardErro
   sceneLinkError: string | null
   dataMode: OfficeDataSource['kind']
   executeAction: (action: DashboardAction) => Promise<void>
+  chatSource: OfficeChatSource
 }) {
   const revision = useSyncExternalStore(runtime.subscribe, runtime.getRevision)
   const scene = useMemo(() => { void revision; return runtime.snapshot() }, [runtime, revision])
@@ -42,6 +45,7 @@ export function RuntimeWorkspace({ runtime, connection, dashboard, dashboardErro
   const [actionError, setActionError] = useState<string | null>(null)
   const [busyTaskId, setBusyTaskId] = useState<string | null>(null)
   const [mapView, setMapView] = useState(initialMapView)
+  const [chatExpanded, setChatExpanded] = useState(false)
   const metrics = dashboard && dashboardMetrics(dashboard)
   const employees = dashboard?.employees ?? []
   const query = search.trim().toLocaleLowerCase()
@@ -70,7 +74,7 @@ export function RuntimeWorkspace({ runtime, connection, dashboard, dashboardErro
 
   return <div className={`runtime-workspace ${scene.editor ? 'map-editing' : ''}`}>
     <aside className="runtime-sidebar">
-      <div className="runtime-brand"><span className="runtime-brand-mark"><Monitor size={20} /></span><strong>AI Office</strong></div>
+      <div className="runtime-brand" title="pixoffice.online"><img className="runtime-brand-title" src={`${import.meta.env.BASE_URL}brand/title.png`} width={2172} height={724} alt="PixOffice" /></div>
       <label className="runtime-search"><Search size={16} /><input aria-label="搜索任务或员工" placeholder="搜索任务、员工…" value={search} onChange={event => setSearch(event.target.value)} /></label>
       <nav aria-label="主导航" className="runtime-nav">{nav.map(item => <button key={item.id} type="button" className={section === item.id ? 'selected' : ''} aria-current={section === item.id ? 'page' : undefined} onClick={() => setSection(item.id)}><item.icon size={17} strokeWidth={1.8} /><span>{item.label}</span>{item.count !== undefined && item.count > 0 && <small>{item.count}</small>}</button>)}</nav>
 
@@ -93,7 +97,10 @@ export function RuntimeWorkspace({ runtime, connection, dashboard, dashboardErro
         <div className="runtime-stat runtime-system"><span>系统资源</span>{resource('CPU', dashboard?.system?.cpuPercent, 'cpu')}{resource('内存', dashboard?.system?.memoryPercent, 'memory')}<div className="runtime-resource-row"><span>网络</span><em>{dashboard?.system?.networkKbps == null ? '未提供' : `${dashboard.system.networkKbps} KB/s`}</em></div></div>
       </header>
       {(dashboardError || sceneLinkError || scene.persistenceError || actionError) && <div className="runtime-alert" role="alert"><span>{dashboardError && `业务数据：${dashboardError}`}{sceneLinkError && `场景同步：${sceneLinkError}`}{scene.persistenceError && `场景存档：${scene.persistenceError}`}{actionError && `操作失败：${actionError}`}</span>{scene.canRecoverLayout && <button onClick={() => { try { runtime.recoverLayout() } catch (cause) { setActionError(String(cause)) } }}>备份并恢复布局</button>}</div>}
-      <main className="office-main" aria-label="AI 办公室场景"><OfficeCanvas runtime={runtime} mapView={mapView} setMapView={setMapView} /></main>
+      <main className="office-main" aria-label="PixOffice 场景">
+        <div className="office-stage" inert={chatExpanded && !scene.editor}><OfficeCanvas runtime={runtime} mapView={mapView} setMapView={setMapView} covered={chatExpanded && !scene.editor} /></div>
+        <OfficeChat source={chatSource} expanded={chatExpanded && !scene.editor} onExpandedChange={setChatExpanded} hidden={!!scene.editor} leaderId={employees[0]?.sceneActorId ?? 'marvis'} leaderName={employees[0]?.name ?? '办公室负责人'} />
+      </main>
     </div>
 
     <aside className="runtime-inspector">

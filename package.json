@@ -2,6 +2,7 @@
   "name": "pixoffice",
   "private": true,
   "version": "0.1.0",
+  "homepage": "https://pixoffice.online/",
   "type": "module",
   "scripts": {
     "predev": "npm run characters:build",

@@ -1,14 +1,20 @@
 # PixOffice
 
+[官网：pixoffice.online](https://pixoffice.online/)
+
 ![PixOffice 页面预览](./docs/page-preview.jpeg)
 
-独立版 AI 办公室前端项目，Vite + React + Pixi。页面采用可替换的业务数据源展示指标、任务与员工；场景内核通过版本化协议和可信内置插件驱动人物、物品与活动。未接入业务服务时使用明确标识的示例数据。
+PixOffice 是独立的二维办公室前端项目，采用 Vite + React + Pixi。页面采用可替换的业务数据源展示指标、任务与员工；场景内核通过版本化协议和可信内置插件驱动人物、物品与活动。未接入业务服务时使用明确标识的示例数据。
 
 保留原有人物帧动画、坐姿和办公室素材，支持工位拜访、多人会议、持续专注、白板内容、插件启停和网格拖放布局。
 
 地图与人物行走统一使用整数格：人物 1×1 格、桌椅 2×2 格、白板 2×1 格。家具通过入口格、使用格和资源预约驱动互动；平滑动画只在渲染层插值。当前命令协议为 `2.0`，详见[整数格与家具互动](./docs/integer-grid-and-interactions.md)。
 
 [业务页面数据接入](./docs/dashboard-integration.md) · [插件架构、场景协议与外部接入](./docs/plugin-runtime.md) · [地图编辑器与 AI 编辑协议](./docs/map-editor.md) · [长期协议设计草案](./docs/scene-protocol-v1.md)
+
+## 办公室对话
+
+动画区域底部提供悬浮输入框。发送消息后，对话面板向上展开；生成时输入框显示流动彩色边框，支持停止、收起和新建对话。默认是明确标注的交互预览，不调用模型或执行任务。通过 `VITE_PIXOFFICE_CHAT_URL` 或 `OfficeApp` 的 `chatSource` 接入真实流式服务，详见[聊天接入协议](./docs/chat-integration.md)。
 
 ## 地图编辑
 

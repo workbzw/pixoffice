@@ -3,3 +3,5 @@ export type { DashboardAction, DashboardSnapshot, OfficeDataSource } from './das
 export { dashboardSnapshotSchema, parseDashboardSnapshot } from './dashboard/contract'
 export { ExampleOfficeDataSource } from './dashboard/demoSource'
 export { HttpOfficeDataSource } from './dashboard/httpSource'
+export type { OfficeChatSource, ChatRequest, ChatEvent } from './chat/contract'
+export { HttpChatSource, PreviewChatSource } from './chat/sources'

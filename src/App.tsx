@@ -13,9 +13,12 @@ import type { OfficeDataSource } from '@/dashboard/contract'
 import { useOfficeDashboard } from '@/dashboard/useOfficeDashboard'
 import { DashboardSceneBridge } from '@/dashboard/sceneBridge'
 import type { OfficeRuntime } from '@/runtime/OfficeRuntime'
+import type { OfficeChatSource } from '@/chat/contract'
+import { createOfficeChatSource } from '@/chat/sources'
 import './App.css'
 
-export function OfficeApp({ dataSource, runtime: suppliedRuntime }: { dataSource: OfficeDataSource; runtime?: OfficeRuntime }) {
+export function OfficeApp({ dataSource, runtime: suppliedRuntime, chatSource: suppliedChatSource }: { dataSource: OfficeDataSource; runtime?: OfficeRuntime; chatSource?: OfficeChatSource }) {
+  const [defaultChatSource] = useState(createOfficeChatSource)
   const [runtime] = useState(() => suppliedRuntime ?? createOfficeRuntime({ persistence: browserPersistence(localStorage, 'office-1'), seatStepDuration: seatStepDurationMs, supportsPose: supportsCharacterPose }))
   const [bridge] = useState(() => new DashboardSceneBridge(runtime))
   const { snapshot: dashboard, error: dashboardError, execute } = useOfficeDashboard(dataSource)
@@ -34,7 +37,7 @@ export function OfficeApp({ dataSource, runtime: suppliedRuntime }: { dataSource
   return (
     <>
       <OfficeActionConnector />
-      <RuntimeWorkspace runtime={runtime} connection={connection} dashboard={dashboard} dashboardError={dashboardError} sceneLinkError={sceneLinkError} dataMode={dataSource.kind} executeAction={execute} />
+      <RuntimeWorkspace runtime={runtime} connection={connection} dashboard={dashboard} dashboardError={dashboardError} sceneLinkError={sceneLinkError} dataMode={dataSource.kind} executeAction={execute} chatSource={suppliedChatSource ?? defaultChatSource} />
     </>
   )
 }
