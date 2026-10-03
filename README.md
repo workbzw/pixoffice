@@ -2,7 +2,9 @@
 
 [官网：pixoffice.online](https://pixoffice.online/)
 
-![PixOffice 页面预览](./docs/page-preview.jpeg)
+![PixOffice 多人走动与工位交流演示](./docs/office-demo.gif)
+
+当前版本的场景演示：多人走动、工位拜访与对话。[查看高清静态预览](./docs/page-preview.jpeg)。
 
 PixOffice 是独立的二维办公室前端项目，采用 Vite + React + Pixi。页面采用可替换的业务数据源展示指标、任务与员工；场景内核通过版本化协议和可信内置插件驱动人物、物品与活动。未接入业务服务时使用明确标识的示例数据。
 
