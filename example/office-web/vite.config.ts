@@ -21,5 +21,10 @@ export default defineConfig({
   }],
   resolve: { dedupe: ['pixi.js', 'react', 'react-dom'] },
   server: { fs: { allow: [path.resolve(root, '../..')] } },
-  build: { outDir: path.resolve(root, '../../dist'), emptyOutDir: true },
+  build: {
+    outDir: path.resolve(root, '../../dist'), emptyOutDir: true,
+    rolldownOptions: {
+      input: { office: path.resolve(root, 'index.html'), minimal: path.resolve(root, 'minimal/index.html') },
+    },
+  },
 })

@@ -11,7 +11,7 @@
 .runtime-workspace button, .runtime-workspace input, .runtime-workspace textarea, .runtime-workspace select { font: inherit; }
 .runtime-workspace button { cursor: pointer; color: inherit; }
 .runtime-workspace button:disabled { cursor: not-allowed; opacity: .46; }
-.runtime-workspace button:focus-visible, .runtime-workspace input:focus-visible, .runtime-workspace textarea:focus-visible, .runtime-workspace select:focus-visible { outline: 2px solid #4f876e; outline-offset: 2px; }
+.runtime-workspace button:focus-visible, .runtime-workspace a:focus-visible, .runtime-workspace input:focus-visible, .runtime-workspace textarea:focus-visible, .runtime-workspace select:focus-visible { outline: 2px solid #4f876e; outline-offset: 2px; }
 .runtime-sidebar, .runtime-inspector { min-width: 0; min-height: 0; background: #fafbfa; }
 .runtime-sidebar { display: flex; flex-direction: column; gap: 16px; overflow: auto; padding: 18px 14px 15px; border-right: 1px solid #e2e5e2; }
 .runtime-brand { display: flex; align-items: center; min-height: 60px; padding: 0 4px; }
@@ -19,11 +19,11 @@
 .runtime-search { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 38px; padding: 0 10px; color: #959d97; background: #fff; border: 1px solid #e0e4e0; border-radius: 9px; }
 .runtime-search input { width: 100%; min-width: 0; border: 0; outline: 0; color: #303632; background: transparent; font-size: 12px; }
 .runtime-search input::placeholder { color: #afb5af; }
-.runtime-nav { display: flex; flex-direction: column; gap: 3px; }
-.runtime-nav button { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 37px; padding: 0 11px; border: 0; border-radius: 9px; background: transparent; text-align: left; color: #686f69; }
-.runtime-nav button:hover, .runtime-nav button.selected { background: #eceeeb; color: #303632; }
+.runtime-nav { display: flex; flex-direction: column; gap: 3px; scrollbar-width: none; }
+.runtime-nav :is(button, a) { display: flex; align-items: center; gap: 11px; width: 100%; min-height: 37px; padding: 0 11px; border: 0; border-radius: 9px; background: transparent; text-align: left; text-decoration: none; color: #686f69; }
+.runtime-nav :is(button, a):hover, .runtime-nav button.selected { background: #eceeeb; color: #303632; }
 .runtime-nav button.selected { font-weight: 600; }
-.runtime-nav button span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.runtime-nav :is(button, a) span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .runtime-nav button small { min-width: 19px; padding: 1px 5px; border-radius: 10px; color: #6c756e; background: #e0e4e0; font-size: 10px; text-align: center; }
 .runtime-sidebar-middle { display: flex; flex: 1; flex-direction: column; min-height: 180px; overflow: auto; padding-top: 10px; border-top: 1px solid #ebedeb; }
 .runtime-section-title { display: flex; justify-content: space-between; color: #9aa19b; font-size: 11px; padding: 0 9px 7px; }
@@ -143,4 +143,4 @@
 .runtime-scene-notice button { background: transparent; border: 0; }
 @media (max-width: 1130px) { .runtime-workspace { grid-template-columns: 184px minmax(0, 1fr) 260px; } .runtime-sidebar { padding: 14px 9px; } .runtime-center { padding: 10px; gap: 10px; } .runtime-stats { gap: 6px; } .runtime-stat { padding: 10px; } }
 @media (max-width: 930px) { .runtime-workspace { grid-template-columns: 180px minmax(0, 1fr); grid-template-rows: minmax(480px, 67dvh) auto; height: 100dvh; overflow: auto; } .runtime-sidebar { grid-row: 1 / 3; } .runtime-inspector { grid-column: 2; min-height: 320px; max-height: 510px; border-top: 1px solid #e2e5e2; } .runtime-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } .runtime-system { display: none; } }
-@media (max-width: 620px) { .runtime-workspace { display: flex; flex-direction: column; overflow-y: auto; } .runtime-sidebar { order: 1; flex: 0 0 auto; overflow: visible; padding: 10px; gap: 9px; } .runtime-brand, .runtime-sidebar-middle, .runtime-footer { display: none; } .runtime-nav { flex-direction: row; overflow-x: auto; } .runtime-nav button { flex: 0 0 auto; width: auto; min-height: 33px; padding: 0 9px; } .runtime-nav button small { display: none; } .runtime-center { order: 2; flex: 0 0 auto; height: 70dvh; min-height: 430px; padding: 8px; gap: 8px; } .runtime-stat { min-height: 75px; padding: 7px; } .runtime-stat > strong { font-size: 20px; } .runtime-stat > small { font-size: 9px; } .runtime-inspector { order: 3; flex: 0 0 auto; min-height: 310px; max-height: none; border-left: 0; } .runtime-stats { gap: 5px; } }
+@media (max-width: 620px) { .runtime-workspace { display: flex; flex-direction: column; overflow-y: auto; } .runtime-sidebar { order: 1; flex: 0 0 auto; overflow: visible; padding: 10px; gap: 9px; } .runtime-brand, .runtime-sidebar-middle, .runtime-footer { display: none; } .runtime-nav { flex-direction: row; overflow-x: auto; } .runtime-nav :is(button, a) { flex: 0 0 auto; width: auto; min-height: 33px; padding: 0 9px; } .runtime-nav button small { display: none; } .runtime-center { order: 2; flex: 0 0 auto; height: 70dvh; min-height: 430px; padding: 8px; gap: 8px; } .runtime-stat { min-height: 75px; padding: 7px; } .runtime-stat > strong { font-size: 20px; } .runtime-stat > small { font-size: 9px; } .runtime-inspector { order: 3; flex: 0 0 auto; min-height: 310px; max-height: none; border-left: 0; } .runtime-stats { gap: 5px; } }

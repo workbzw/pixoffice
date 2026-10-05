@@ -1,5 +1,5 @@
 import { useMemo, useState, useSyncExternalStore } from 'react'
-import { Braces, Download, FileJson, House, ListTodo, Plug, Search, SlidersHorizontal, Users } from 'lucide-react'
+import { Blocks, Braces, Download, FileJson, House, ListTodo, Plug, Search, SlidersHorizontal, Users } from 'lucide-react'
 import type { DashboardAction, DashboardSnapshot, DashboardTask, OfficeDataSource } from '../dashboard/contract.ts'
 import { dashboardMetrics } from '../dashboard/selectors.ts'
 import type { OfficeRuntime } from '@pixoffice/runtime/OfficeRuntime'
@@ -76,7 +76,10 @@ export function RuntimeWorkspace({ runtime, connection, dashboard, dashboardErro
     <aside className="runtime-sidebar">
       <div className="runtime-brand" title="pixoffice.online"><img className="runtime-brand-title" src={`${import.meta.env.BASE_URL}brand/title.png`} width={2172} height={724} alt="PixOffice" /></div>
       <label className="runtime-search"><Search size={16} /><input aria-label="搜索任务或员工" placeholder="搜索任务、员工…" value={search} onChange={event => setSearch(event.target.value)} /></label>
-      <nav aria-label="主导航" className="runtime-nav">{nav.map(item => <button key={item.id} type="button" className={section === item.id ? 'selected' : ''} aria-current={section === item.id ? 'page' : undefined} onClick={() => setSection(item.id)}><item.icon size={17} strokeWidth={1.8} /><span>{item.label}</span>{item.count !== undefined && item.count > 0 && <small>{item.count}</small>}</button>)}</nav>
+      <nav aria-label="主导航" className="runtime-nav">
+        {nav.map(item => <button key={item.id} type="button" className={section === item.id ? 'selected' : ''} aria-current={section === item.id ? 'page' : undefined} onClick={() => setSection(item.id)}><item.icon size={17} strokeWidth={1.8} /><span>{item.label}</span>{item.count !== undefined && item.count > 0 && <small>{item.count}</small>}</button>)}
+        <a href={`${import.meta.env.BASE_URL}minimal/`}><Blocks size={17} strokeWidth={1.8} /><span>最小装配</span></a>
+      </nav>
 
       <div className="runtime-sidebar-middle">
         <div className="runtime-section-title">工作空间</div>
