@@ -2,20 +2,24 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="%BASE_URL%brand/logo.png" />
-    <link rel="apple-touch-icon" href="%BASE_URL%brand/logo.png" />
+    <link rel="icon" type="image/png" href="/site/icon.png" />
+    <link rel="apple-touch-icon" href="/site/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="application-name" content="PixOffice" />
-    <meta name="description" content="PixOffice，可由外部系统驱动的二维办公室，支持人物互动、场景编辑与业务状态展示。" />
+    <meta name="description" content="PixOffice 是开源的二维办公室前端，让智能体的工作与协作变得看得见。支持人物互动、网格场景编辑、外部协议驱动与模块化扩展。" />
     <meta property="og:site_name" content="PixOffice" />
-    <meta property="og:title" content="PixOffice" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content="PixOffice · 可编程的二维办公室" />
+    <meta property="og:description" content="让智能体的工作与协作变得看得见。体验完整办公室，或从最小装配开始构建。" />
+    <meta property="og:image" content="https://pixoffice.online/site/office-preview.webp" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://pixoffice.online/" />
     <link rel="canonical" href="https://pixoffice.online/" />
-    <title>PixOffice</title>
+    <title>PixOffice · 可编程的二维办公室</title>
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <noscript>PixOffice 是开源的二维办公室 / An open-source 2D office. <a href="%BASE_URL%office/">完整办公室 / Full Office</a> · <a href="%BASE_URL%minimal/">最小装配 / Minimal Example</a> · <a href="https://github.com/workbzw/pixoffice">GitHub</a></noscript>
+    <script type="module" src="/src/website/main.tsx"></script>
   </body>
 </html>

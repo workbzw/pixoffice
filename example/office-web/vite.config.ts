@@ -24,7 +24,11 @@ export default defineConfig({
   build: {
     outDir: path.resolve(root, '../../dist'), emptyOutDir: true,
     rolldownOptions: {
-      input: { office: path.resolve(root, 'index.html'), minimal: path.resolve(root, 'minimal/index.html') },
+      input: {
+        website: path.resolve(root, 'index.html'),
+        office: path.resolve(root, 'office/index.html'),
+        minimal: path.resolve(root, 'minimal/index.html'),
+      },
     },
   },
 })

@@ -1,6 +1,10 @@
 # PixOffice
 
-[官网：pixoffice.online](https://pixoffice.online/)
+**简体中文** · [English](./README.en.md)
+
+[官网：pixoffice.online](https://pixoffice.online/?lang=zh)
+
+[完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/)
 
 ![PixOffice 多人走动与工位交流演示](./docs/office-demo.gif)
 
@@ -65,6 +69,8 @@ npm run characters:check  # 校验源素材与生成资源是否一致
 npm install
 npm run dev
 ```
+
+开发服务首页 `/` 为项目介绍，顶部菜单可进入完整办公室 `/office/` 和最小装配 `/minimal/`。`npm run build` 同时生成三个页面，部署时仍使用根目录 `dist/`。
 
 页面顶部指标、左侧员工、右侧任务流由业务数据源驱动。要接入一个独立的示例业务进程，另开终端执行 `npm run dashboard-example`，再以 `VITE_OFFICE_DASHBOARD_URL=http://127.0.0.1:18770 npm run dev` 启动页面。接口格式和自定义适配器见[业务页面数据接入](./docs/dashboard-integration.md)。
 
