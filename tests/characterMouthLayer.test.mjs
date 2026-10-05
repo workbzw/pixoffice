@@ -4,14 +4,14 @@ import { readFile } from 'node:fs/promises'
 import sharp from 'sharp'
 import { mouthRegistration } from '../scripts/characters/create-marvis-mouth-layer.mjs'
 import { officeMouthRegistrations } from '../scripts/characters/create-office-mouth-layers.mjs'
-import { CharacterSourceSchema, CharacterManifestSchema, sampleCharacterLayers, sampleCharacterClip, characterPreviewTimeline } from '../src/scene/characters/packSchema.ts'
+import { CharacterSourceSchema, CharacterManifestSchema, sampleCharacterLayers, sampleCharacterClip, characterPreviewTimeline } from '../example/office-web/src/scene/characters/packSchema.ts'
 import { characterPackFixture, legacyCharacterPackFixture } from './helpers/characterPack.mjs'
 import { createTestServer } from './helpers/vite.mjs'
 
 let server, ApartmentCharacter
 before(async () => {
   server = await createTestServer()
-  ;({ ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts'))
+  ;({ ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts'))
 })
 after(() => server?.close())
 

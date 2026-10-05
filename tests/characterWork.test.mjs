@@ -6,11 +6,11 @@ import { characterPackFixture } from './helpers/characterPack.mjs'
 let server, createOfficeRuntime, projectAgents, ApartmentCharacter, sampleCharacterClip, sampleCharacterLayers, transformWorkSurface
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts'))
-  ;({ projectAgents } = await server.ssrLoadModule('/src/runtime/adapters/legacy.ts'))
-  ;({ ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts'))
-  ;({ sampleCharacterClip, sampleCharacterLayers } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts'))
-  ;({ transformWorkSurface } = await server.ssrLoadModule('/src/scene/characters/workSurface.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ projectAgents } = await server.ssrLoadModule('/example/office-web/src/runtime/adapters/legacy.ts'))
+  ;({ ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts'))
+  ;({ sampleCharacterClip, sampleCharacterLayers } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts'))
+  ;({ transformWorkSurface } = await server.ssrLoadModule('/example/office-web/src/scene/characters/workSurface.ts'))
 })
 after(() => server?.close())
 

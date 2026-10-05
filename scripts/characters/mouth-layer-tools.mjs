@@ -3,7 +3,7 @@ import { rejectLegacyPublication } from './legacy-authoring.mjs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
-import { CharacterSourceSchema } from '../../src/scene/characters/packSchema.ts'
+import { CharacterSourceSchema } from '@pixoffice/animation-frame/packSchema'
 
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const canvas = { width: 256, height: 384 }, pivot = { x: 128, y: 192 }

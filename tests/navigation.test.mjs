@@ -6,9 +6,9 @@ import { distance } from './helpers/grid.mjs'
 let server, GridNavigation, createOfficeRuntime, compactPath
 before(async () => {
   server = await createTestServer()
-  ;({ GridNavigation } = await server.ssrLoadModule('/src/runtime/navigation.ts'))
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts'))
-  ;({ compactPath } = await server.ssrLoadModule('/src/runtime/orthogonalPath.ts'))
+  ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ compactPath } = await server.ssrLoadModule('/packages/runtime/src/orthogonalPath.ts'))
 })
 after(() => server?.close())
 function fixture(positions = [], footprint = { left: 0, top: 0, right: 1, bottom: 1 }) {

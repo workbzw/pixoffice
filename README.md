@@ -14,6 +14,18 @@ PixOffice 是独立的二维办公室前端项目，采用 Vite + React + Pixi�
 
 [业务页面数据接入](./docs/dashboard-integration.md) · [插件架构、场景协议与外部接入](./docs/plugin-runtime.md) · [地图编辑器与 AI 编辑协议](./docs/map-editor.md) · [长期协议设计草案](./docs/scene-protocol-v1.md)
 
+[场景扩展与动画架构](./docs/architecture/README.md)：当前办公室包、帧动画适配器、公共接入接口与后续迁移边界。教室和骨骼引擎尚未实现。
+
+## 包与示例
+
+项目使用 npm workspaces。五个包分别负责：`contracts` 公共契约、`runtime` 核心运行时、`renderer-pixi` 渲染宿主、`animation-frame` 帧播放器、`scene-office` 办公室场景。
+
+- [完整办公室](./example/office-web)：保留当前 React 界面、聊天、编辑器与 HTTP 接入。
+- [最小装配](./example/minimal-vanilla)：只通过公开包入口拼装办公室，不依赖 React。
+- [架构与分工](./docs/architecture/README.md)：依赖方向、资源交付、骨骼/场景开发入口。
+
+`npm run packages:build` 构建包；`npm run packages:check` 检查边界；`npm run packages:smoke` 将 tgz 安装到仓库之外验证。代码包目前只在仓库内开发，未发布 npm。素材独立部署，可用 `npm run assets:export -- /absolute/path/to/new-public-directory` 导出。
+
 ## 办公室对话
 
 动画区域底部提供悬浮输入框。发送消息后，对话面板向上展开；生成时输入框显示流动彩色边框，支持停止、收起和新建对话。默认是明确标注的交互预览，不调用模型或执行任务。通过 `VITE_PIXOFFICE_CHAT_URL` 或 `OfficeApp` 的 `chatSource` 接入真实流式服务，详见[聊天接入协议](./docs/chat-integration.md)。

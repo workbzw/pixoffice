@@ -51,10 +51,19 @@ async function licenseDocuments(root, directory, pkg) {
 export async function collectThirdPartyNotices(root = projectRoot) {
   const lock = await readJson(path.join(root, 'package-lock.json'))
   if (lock.lockfileVersion !== 3 || !lock.packages) throw new Error('A version 3 npm lockfile is required')
+  const workspaces = new Set()
+  const workspacePatterns = lock.packages['']?.workspaces ?? []
+  for (const directory of Object.keys(lock.packages)) {
+    if (!workspacePatterns.some(pattern => pattern.endsWith('/*') && directory.startsWith(pattern.slice(0, -1)) && !directory.slice(pattern.length - 1).includes('/'))) continue
+    const pkg = await readJson(path.join(root, directory, 'package.json'))
+    if (!pkg.name?.startsWith('@pixoffice/') || pkg.version !== lock.packages[directory].version || !pkg.private && pkg.license !== 'MIT') throw new Error(`Unreviewed workspace: ${directory}`)
+    workspaces.add(directory)
+  }
   const packages = []
   // Include the full production dependency tree, even when tree-shaking omits a module.
   for (const [directory, entry] of Object.entries(lock.packages).sort(([a], [b]) => a.localeCompare(b, 'en'))) {
     if (!directory || entry.dev) continue
+    if (workspaces.has(directory) || entry.link && workspaces.has(entry.resolved)) continue
     if (!directory.startsWith('node_modules/') || entry.link) throw new Error(`Unreviewed dependency location: ${directory}`)
     const installedDirectory = path.join(root, directory)
     const pkg = await readJson(path.join(installedDirectory, 'package.json'))

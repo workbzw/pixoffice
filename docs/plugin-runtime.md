@@ -24,26 +24,27 @@ npm run dev:vite
 ## 已实现的模块
 
 ```text
-src/runtime/
+packages/runtime/src/
   protocol.ts            Zod 协议、推导类型、JSON Schema、错误与回执
   model.ts               世界、人物、物品、模板、阶段、活动、检查点
-  OfficeRuntime.ts       唯一状态写入入口、调度、取消、持久化协调
+  SceneRuntime.ts        唯一状态写入入口、调度、取消、持久化协调
   plugins.ts             可信内置插件注册、依赖检查、启停、能力发现
   resources.ts           容量、原子预约、释放
   navigationAdapter.ts   可注入的寻路接口，不绑定算法或渲染器
   navigation.ts          默认四方向网格 A*、静态占地与可达性检查
   orthogonalPath.ts      横竖路径连接、简化与距离比较
   movement.ts            就近选位、人物间距、停步与动态重规划
-  cellMovement.ts        相邻整数格移动与两端格预约\n  seatInteraction.ts     通用家具入口/使用格、局部通道与姿态过渡
+  cellMovement.ts        相邻整数格移动与两端格预约
+  seatInteraction.ts     通用家具入口/使用格、局部通道与姿态过渡
   builtin/primitives.ts   不依赖工位的通用移动与发言
-  builtin/officePack.ts   办公室数据包和行为插件
-  adapters/              旧命令转换、HTTP、浏览器存储、受限嵌入消息
+  adapters/              HTTP、浏览器存储、受限嵌入消息
   index.ts               可供应用程序集成的 TypeScript 入口
 
-src/scene/OfficeScene.ts  Pixi 场景适配与短暂拖动预览，不回写人物状态
-src/runtime/map/         地图文档、共享编辑草稿、撤销重做与校验
-src/components/map-editor/  图层、属性面板和画布编辑交互
-src/scene/views/          可注册的物品视图工厂，未知视图使用占位
+packages/scene-office/src/core/  办公室数据包和行为插件
+packages/renderer-pixi/src/SceneView.ts  Pixi 场景适配与短暂拖动预览
+packages/runtime/src/map/       地图文档、共享编辑草稿、撤销重做与校验
+example/office-web/src/components/map-editor/  画布编辑 UI
+packages/scene-office/src/pixi/views/  办公室物品视图工厂
 scripts/scene-gateway.mjs 可替换的本地开发网关
 ```
 
@@ -196,13 +197,13 @@ const runtime = createOfficeRuntime({
 
 将工厂返回值换成其他 `NavigationAdapter` 即可替换算法，不改人物和行为插件。每条路径不包含起点，以精确目标格结束，相邻点必须是上下左右一格；无路抛出 `SceneFault('NO_ROUTE', ...)`，适配器不得修改世界。
 
-地图、人物占地、家具占地、寻路和编辑器现在统一成整数格，不再保留独立的精细行走网格。两格之间的平滑位移只由 `src/scene/gridProjection.ts` 投影。逐格预约、家具互动、排队、取消收尾和迁移规则见[整数格与家具互动](./integer-grid-and-interactions.md)。
+地图、人物占地、家具占地、寻路和编辑器现在统一成整数格，不再保留独立的精细行走网格。两格之间的平滑位移只由 `packages/scene-office/src/pixi/projection.ts` 投影。逐格预约、家具互动、排队、取消收尾和迁移规则见[整数格与家具互动](./integer-grid-and-interactions.md)。
 
 ## 编辑与存储
 
 椅子保持固定；人物通过 `rising → exiting → 行走 → aligning → entering → sitting` 完成离座与入座。视图继续播放现有完整人物帧图，不新增骨骼运行时，也不重做人物素材。工位绑定和编辑方式保持不变。
 
-自动演示由 `src/scene/systems/officeDemo.ts` 生成轮转搭档：默认六人分成三组并行互访，下一轮交换访客与接待人，再更换搭档。十轮覆盖全部 30 种有方向的同事组合，每个人都会走动、接待与回应。每组使用正式 `office.visit` 命令，共用资源锁、避让、座位交互及口型逻辑，不直接修改人物坐标。奇数人数每轮留一人待命，随后轮换；未绑定工位的人物不参与工位演示。
+自动演示由 `example/office-web/src/scene/systems/officeDemo.ts` 生成轮转搭档：默认六人分成三组并行互访，下一轮交换访客与接待人，再更换搭档。十轮覆盖全部 30 种有方向的同事组合，每个人都会走动、接待与回应。每组使用正式 `office.visit` 命令，共用资源锁、避让、座位交互及口型逻辑，不直接修改人物坐标。奇数人数每轮留一人待命，随后轮换；未绑定工位的人物不参与工位演示。
 
 演示仅在手动开启后运行；等待已有活动、排队命令与座位清理结束才开始下一轮。停止演示后不再派新轮次，已开始的交接正常收尾；命令被拒绝或执行失败时停止并显示错误。它是动作演示，不代表真实业务任务。
 

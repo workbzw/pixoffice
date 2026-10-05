@@ -6,12 +6,12 @@ import { createTestServer } from './helpers/vite.mjs'
 let server, createOfficeRuntime, OfficeRuntime, PluginHost, ResourceManager, GridNavigation, pack
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts'))
-  ;({ OfficeRuntime } = await server.ssrLoadModule('/src/runtime/OfficeRuntime.ts'))
-  ;({ PluginHost } = await server.ssrLoadModule('/src/runtime/plugins.ts'))
-  ;({ ResourceManager } = await server.ssrLoadModule('/src/runtime/resources.ts'))
-  ;({ GridNavigation } = await server.ssrLoadModule('/src/runtime/navigation.ts'))
-  pack = await server.ssrLoadModule('/src/runtime/builtin/officePack.ts')
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ OfficeRuntime } = await server.ssrLoadModule('/packages/runtime/src/OfficeRuntime.ts'))
+  ;({ PluginHost } = await server.ssrLoadModule('/packages/runtime/src/plugins.ts'))
+  ;({ ResourceManager } = await server.ssrLoadModule('/packages/runtime/src/resources.ts'))
+  ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
+  pack = await server.ssrLoadModule('/example/office-web/src/runtime/builtin/officePack.ts')
 })
 after(() => server?.close())
 
@@ -405,11 +405,11 @@ test('resources are acquired atomically, never partially held while waiting', ()
 })
 
 test('headless core never imports rendering, browser APIs, adapters, or legacy scene globals', () => {
-  for (const name of readdirSync('src/runtime').filter(p => p.endsWith('.ts'))) {
-    const source = readFileSync(`src/runtime/${name}`, 'utf8')
+  for (const name of readdirSync('packages/runtime/src').filter(p => p.endsWith('.ts'))) {
+    const source = readFileSync(`packages/runtime/src/${name}`, 'utf8')
     assert.doesNotMatch(source, /from ['"](?:pixi|react|@\/scene|.*adapters\/)|\b(?:document|window|localStorage)\b/, name)
   }
-  assert.doesNotMatch(readFileSync('src/runtime/OfficeRuntime.ts', 'utf8'), /GridNavigation|pathfinding/)
+  assert.doesNotMatch(readFileSync('packages/runtime/src/SceneRuntime.ts', 'utf8'), /GridNavigation|pathfinding/)
 })
 
 test('runtime uses the injected navigation adapter for validation, anchors and movement', () => {

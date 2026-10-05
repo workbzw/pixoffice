@@ -5,11 +5,11 @@ import { createTestServer } from './helpers/vite.mjs'
 let server, createOfficeRuntime, mapDocumentSchema, editFromUI, furnitureCells, snapFurniture, checkFurniturePlacement, furnitureFootprint, validateFurnitureFootprints, FURNITURE_CELL_SIZE
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts'))
-  ;({ mapDocumentSchema } = await server.ssrLoadModule('/src/runtime/map/schema.ts'))
-  ;({ editMap: editFromUI } = await server.ssrLoadModule('/src/components/map-editor/commands.ts'))
-  ;({ furnitureCells, snapFurniture, checkFurniturePlacement } = await server.ssrLoadModule('/src/runtime/map/placement.ts'))
-  ;({ furnitureFootprint, validateFurnitureFootprints, FURNITURE_CELL_SIZE } = await server.ssrLoadModule('/src/runtime/map/furnitureGrid.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ mapDocumentSchema } = await server.ssrLoadModule('/packages/runtime/src/map/schema.ts'))
+  ;({ editMap: editFromUI } = await server.ssrLoadModule('/example/office-web/src/components/map-editor/commands.ts'))
+  ;({ furnitureCells, snapFurniture, checkFurniturePlacement } = await server.ssrLoadModule('/packages/runtime/src/map/placement.ts'))
+  ;({ furnitureFootprint, validateFurnitureFootprints, FURNITURE_CELL_SIZE } = await server.ssrLoadModule('/packages/runtime/src/map/furnitureGrid.ts'))
 })
 after(() => server?.close())
 let counter = 0

@@ -19,8 +19,8 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["example/office-web/src/*"]
     }
   },
-  "include": ["src"]
+  "include": ["example/office-web/src", "example/minimal-vanilla/src"]
 }

@@ -5,8 +5,8 @@ import { createTestServer } from './helpers/vite.mjs'
 let server, ChatSession, HttpChatSource
 before(async () => {
   server = await createTestServer()
-  ;({ ChatSession } = await server.ssrLoadModule('/src/chat/ChatSession.ts'))
-  ;({ HttpChatSource } = await server.ssrLoadModule('/src/chat/sources.ts'))
+  ;({ ChatSession } = await server.ssrLoadModule('/example/office-web/src/chat/ChatSession.ts'))
+  ;({ HttpChatSource } = await server.ssrLoadModule('/example/office-web/src/chat/sources.ts'))
 })
 after(() => server?.close())
 

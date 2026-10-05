@@ -6,7 +6,7 @@ async function setup(t, mode = 'queue') {
   t.mock.method(console, 'info', () => {})
   const server = await createTestServer(mode)
   t.after(() => server.close())
-  const load = path => server.ssrLoadModule(`/src/${path}.ts`)
+  const load = path => server.ssrLoadModule(`/example/office-web/src/${path}.ts`)
   const dispatcher = await load('services/officeActionDispatcher')
   const bridge = await load('scene/officeSceneBridge')
   const store = await load('store/officeStore')

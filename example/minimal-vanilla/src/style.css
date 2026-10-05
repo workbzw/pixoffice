@@ -1,0 +1,10 @@
+:root { font-family: system-ui, sans-serif; color: #303737; background: #ededeb; }
+* { box-sizing: border-box; }
+body { margin: 0; height: 100dvh; display: flex; flex-direction: column; padding: 12px; gap: 12px; }
+header { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; padding: 12px 18px; background: white; border-radius: 20px; }
+form { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+select, button { min-height: 34px; font: inherit; border: 1px solid #ddd; background: white; border-radius: 6px; padding: 4px 12px; }
+button { cursor: pointer; }
+button:disabled { color: #999; cursor: default; }
+output { margin-left: auto; color: #65746c; font-size: 13px; }
+main { flex: 1; min-height: 0; overflow: hidden; background: white; border-radius: 24px; }

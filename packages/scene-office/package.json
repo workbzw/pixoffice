@@ -1,0 +1,102 @@
+{
+  "name": "@pixoffice/scene-office",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "exports": {
+    ".": { "types": "./dist/core/index.d.ts", "import": "./dist/core/index.js" },
+    "./pixi": {
+      "types": "./dist/pixi/index.d.ts",
+      "import": "./dist/pixi/index.js"
+    },
+    "./core/poseSupport": {
+      "types": "./dist/core/poseSupport.d.ts",
+      "import": "./dist/core/poseSupport.js"
+    },
+    "./adapters/office": {
+      "types": "./dist/adapters/office.d.ts",
+      "import": "./dist/adapters/office.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js"
+    },
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
+    "./core/officeFloor": {
+      "types": "./dist/core/officeFloor.d.ts",
+      "import": "./dist/core/officeFloor.js"
+    },
+    "./core/pack": {
+      "types": "./dist/core/pack.d.ts",
+      "import": "./dist/core/pack.js"
+    },
+    "./core/migrateLegacy": {
+      "types": "./dist/core/migrateLegacy.d.ts",
+      "import": "./dist/core/migrateLegacy.js"
+    },
+    "./pixi/assets/loadOfficeAssets": {
+      "types": "./dist/pixi/assets/loadOfficeAssets.d.ts",
+      "import": "./dist/pixi/assets/loadOfficeAssets.js"
+    },
+    "./pixi/assets/loadOfficeTexture": {
+      "types": "./dist/pixi/assets/loadOfficeTexture.d.ts",
+      "import": "./dist/pixi/assets/loadOfficeTexture.js"
+    },
+    "./pixi/assets/loadWorkstationTrialAssets": {
+      "types": "./dist/pixi/assets/loadWorkstationTrialAssets.d.ts",
+      "import": "./dist/pixi/assets/loadWorkstationTrialAssets.js"
+    },
+    "./pixi/posePolicy": {
+      "types": "./dist/pixi/posePolicy.d.ts",
+      "import": "./dist/pixi/posePolicy.js"
+    },
+    "./pixi/views/DeskEntity": {
+      "types": "./dist/pixi/views/DeskEntity.d.ts",
+      "import": "./dist/pixi/views/DeskEntity.js"
+    },
+    "./pixi/projection": {
+      "types": "./dist/pixi/projection.d.ts",
+      "import": "./dist/pixi/projection.js"
+    },
+    "./core/roster": {
+      "types": "./dist/core/roster.d.ts",
+      "import": "./dist/core/roster.js"
+    },
+    "./pixi/workstationArtwork": {
+      "types": "./dist/pixi/workstationArtwork.d.ts",
+      "import": "./dist/pixi/workstationArtwork.js"
+    },
+    "./pixi/workstationSurface": {
+      "types": "./dist/pixi/workstationSurface.d.ts",
+      "import": "./dist/pixi/workstationSurface.js"
+    },
+    "./pixi/depth": {
+      "types": "./dist/pixi/depth.d.ts",
+      "import": "./dist/pixi/depth.js"
+    },
+    "./pixi/views": {
+      "types": "./dist/pixi/views/index.d.ts",
+      "import": "./dist/pixi/views/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@pixoffice/contracts": "0.1.0",
+    "@pixoffice/runtime": "0.1.0",
+    "@pixoffice/renderer-pixi": "0.1.0",
+    "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "pixi.js": "^8.18.1"
+  }
+}

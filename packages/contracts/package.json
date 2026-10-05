@@ -1,0 +1,40 @@
+{
+  "name": "@pixoffice/contracts",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./animation": {
+      "types": "./dist/animation.d.ts",
+      "import": "./dist/animation.js"
+    },
+    "./animationSupport": {
+      "types": "./dist/animationSupport.d.ts",
+      "import": "./dist/animationSupport.js"
+    },
+    "./contactSurface": {
+      "types": "./dist/contactSurface.d.ts",
+      "import": "./dist/contactSurface.js"
+    },
+    "./presentation": {
+      "types": "./dist/presentation.d.ts",
+      "import": "./dist/presentation.js"
+    },
+    "./facing": {
+      "types": "./dist/facing.d.ts",
+      "import": "./dist/facing.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "zod": "^4.6.5"
+  }
+}

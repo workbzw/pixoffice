@@ -5,12 +5,12 @@ import { createTestServer } from './helpers/vite.mjs'
 let server, demo, contract, selectors, bridge, runtimeFactory, http
 before(async () => {
   server = await createTestServer()
-  demo = await server.ssrLoadModule('/src/dashboard/demoSource.ts')
-  contract = await server.ssrLoadModule('/src/dashboard/contract.ts')
-  selectors = await server.ssrLoadModule('/src/dashboard/selectors.ts')
-  bridge = await server.ssrLoadModule('/src/dashboard/sceneBridge.ts')
-  runtimeFactory = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts')
-  http = await server.ssrLoadModule('/src/dashboard/httpSource.ts')
+  demo = await server.ssrLoadModule('/example/office-web/src/dashboard/demoSource.ts')
+  contract = await server.ssrLoadModule('/example/office-web/src/dashboard/contract.ts')
+  selectors = await server.ssrLoadModule('/example/office-web/src/dashboard/selectors.ts')
+  bridge = await server.ssrLoadModule('/example/office-web/src/dashboard/sceneBridge.ts')
+  runtimeFactory = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts')
+  http = await server.ssrLoadModule('/example/office-web/src/dashboard/httpSource.ts')
 })
 after(() => server?.close())
 

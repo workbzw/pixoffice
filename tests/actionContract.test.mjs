@@ -7,14 +7,14 @@ import { base, move, visit, completed, until, noClaims } from './helpers/grid.mj
 let server, createOfficeRuntime, OfficeRuntime, GridNavigation, MovementController, ApartmentCharacter, CharacterManifestSchema, resolveCharacterClip, characterPoseClip, supportsOfficePose, pack
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts'))
-  ;({ OfficeRuntime } = await server.ssrLoadModule('/src/runtime/OfficeRuntime.ts'))
-  ;({ GridNavigation } = await server.ssrLoadModule('/src/runtime/navigation.ts'))
-  ;({ MovementController } = await server.ssrLoadModule('/src/runtime/movement.ts'))
-  ;({ ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts'))
-  ;({ CharacterManifestSchema, resolveCharacterClip } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts'))
-  ;({ characterPoseClip, supportsOfficePose } = await server.ssrLoadModule('/src/contracts/characterPose.ts'))
-  pack = await server.ssrLoadModule('/src/runtime/builtin/officePack.ts')
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ OfficeRuntime } = await server.ssrLoadModule('/packages/runtime/src/OfficeRuntime.ts'))
+  ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
+  ;({ MovementController } = await server.ssrLoadModule('/packages/runtime/src/movement.ts'))
+  ;({ ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts'))
+  ;({ CharacterManifestSchema, resolveCharacterClip } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts'))
+  ;({ characterPoseClip, supportsOfficePose } = await server.ssrLoadModule('/example/office-web/src/contracts/characterPose.ts'))
+  pack = await server.ssrLoadModule('/example/office-web/src/runtime/builtin/officePack.ts')
 })
 after(() => server?.close())
 

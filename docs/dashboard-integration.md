@@ -48,10 +48,10 @@ VITE_OFFICE_DASHBOARD_URL=http://127.0.0.1:18770 npm run dev
 
 另外三种类型为 `task.start`、`task.block`、`task.complete`，消息体包含 `type` 和 `taskId`。不要把场景动作命令发到这个接口。
 
-HTTP 适配器每 3 秒轮询；业务源也可直接实现 [`OfficeDataSource`](../src/dashboard/contract.ts) 的 `getSnapshot`、`subscribe`、`execute`，再传入 [`OfficeApp`](../src/App.tsx) 的 `dataSource` 属性，不必采用 HTTP 或修改场景内核。可从 [`src/office.ts`](../src/office.ts) 导入组件、类型和内置适配器。`kind` 是开放字符串，方便标识自定义来源。当前仍是单仓库源码入口，尚未发布 npm 包。
+HTTP 适配器每 3 秒轮询；业务源也可直接实现 [`OfficeDataSource`](../example/office-web/src/dashboard/contract.ts) 的 `getSnapshot`、`subscribe`、`execute`，再传入 [`OfficeApp`](../example/office-web/src/App.tsx) 的 `dataSource` 属性，不必采用 HTTP 或修改场景内核。可从 [`office.ts`](../example/office-web/src/office.ts) 导入组件、类型和内置适配器。`kind` 是开放字符串，方便标识自定义来源。业务 UI 保留为示例源码，内核和渲染能力已拆成五个包；均尚未发布 npm。
 
 ## 边界
 
-[`sceneBridge.ts`](../src/dashboard/sceneBridge.ts) 只把业务状态投影为人物显示文本，并在新分配事件出现时触发一次工位拜访。人物抵达、说话或动画结束**不会**自动将业务任务标为完成；业务系统仍是任务状态唯一权威。场景协议与地图编辑接口见[插件运行时文档](./plugin-runtime.md)。
+[`sceneBridge.ts`](../example/office-web/src/dashboard/sceneBridge.ts) 只把业务状态投影为人物显示文本，并在新分配事件出现时触发一次工位拜访。人物抵达、说话或动画结束**不会**自动将业务任务标为完成；业务系统仍是任务状态唯一权威。场景协议与地图编辑接口见[插件运行时文档](./plugin-runtime.md)。
 
 此仓库的示例服务仅用于本地联调，没有用户认证、持久化或生产权限控制。接入真实数据时，这些必须由宿主业务服务提供。

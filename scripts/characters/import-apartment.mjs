@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 import { createServer } from 'vite'
-import { CharacterSourceSchema } from '../../src/scene/characters/packSchema.ts'
+import { CharacterSourceSchema } from '@pixoffice/animation-frame/packSchema'
 import { registerMarvisPoses } from './register-marvis-poses.mjs'
 import { rejectLegacyPublication } from './legacy-authoring.mjs'
 
@@ -20,9 +20,9 @@ for (const id of ids) {
   try { await access(path.join(destination, id)); throw new Error(`Refusing to overwrite existing source pack: ${id}`) }
   catch (error) { if (error.code !== 'ENOENT') throw error }
 }
-const server = await createServer({ root, server: { middlewareMode: true }, appType: 'custom' })
+const server = await createServer({ root, configFile: false, server: { middlewareMode: true }, appType: 'custom' })
 try {
-  const { detectApartmentFrames, registerWalkFrames, BACK_WALK_FRAMES } = await server.ssrLoadModule('/src/scene/characters/apartmentFrames.ts')
+  const { detectApartmentFrames, registerWalkFrames, BACK_WALK_FRAMES } = await server.ssrLoadModule('/example/office-web/src/scene/characters/apartmentFrames.ts')
   async function read(name, rows, columns = 3) {
     const file = path.join(legacy, name)
     const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true })

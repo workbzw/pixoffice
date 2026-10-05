@@ -8,10 +8,10 @@ import { characterPackFixture, legacyCharacterPackFixture } from './helpers/char
 let server, ApartmentCharacter, sampleCharacterClip, createOfficeRuntime, projectAgents
 before(async () => {
   server = await createTestServer()
-  ;({ ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts'))
-  ;({ sampleCharacterClip } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts'))
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts'))
-  ;({ projectAgents } = await server.ssrLoadModule('/src/runtime/adapters/legacy.ts'))
+  ;({ ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts'))
+  ;({ sampleCharacterClip } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ projectAgents } = await server.ssrLoadModule('/example/office-web/src/runtime/adapters/legacy.ts'))
 })
 after(() => server?.close())
 

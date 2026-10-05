@@ -20,10 +20,10 @@ const durations = recipe.frameDurationsMs ?? [160, 160, 160, 160]
 if (!/^work\/typing-back(?:-v\d+)?$/.test(outputDirectory) || durations.length !== 4 || durations.some(duration => !Number.isInteger(duration) || duration <= 0)) throw new Error('Invalid typing output or timing')
 const file = path.join(art, recipe.source)
 const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
-const server = await createServer({ server: { middlewareMode: true } })
+const server = await createServer({ root, configFile: false, server: { middlewareMode: true } })
 let crops
 try {
-  const { detectApartmentFrames } = await server.ssrLoadModule('/src/scene/characters/apartmentFrames.ts')
+  const { detectApartmentFrames } = await server.ssrLoadModule('/example/office-web/src/scene/characters/apartmentFrames.ts')
   crops = detectApartmentFrames(data, info.width, info.height, 6, 4)
 } finally { await server.close() }
 

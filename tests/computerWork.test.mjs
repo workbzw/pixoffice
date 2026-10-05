@@ -7,12 +7,12 @@ import { Assets, Texture, TextureSource } from 'pixi.js'
 let server, animation, schema, surfaceModule, furniture, ApartmentCharacter, DeskEntity
 before(async () => {
   server = await createTestServer()
-  animation = await server.ssrLoadModule('/src/scene/characters/workAnimation.ts')
-  schema = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
-  surfaceModule = await server.ssrLoadModule('/src/scene/characters/workSurface.ts')
-  furniture = await server.ssrLoadModule('/src/scene/layout/workstationSurface.ts')
-  ;({ ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts'))
-  ;({ DeskEntity } = await server.ssrLoadModule('/src/scene/entities/DeskEntity.ts'))
+  animation = await server.ssrLoadModule('/example/office-web/src/scene/characters/workAnimation.ts')
+  schema = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
+  surfaceModule = await server.ssrLoadModule('/example/office-web/src/scene/characters/workSurface.ts')
+  furniture = await server.ssrLoadModule('/example/office-web/src/scene/layout/workstationSurface.ts')
+  ;({ ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts'))
+  ;({ DeskEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/DeskEntity.ts'))
 })
 after(() => server?.close())
 const ids = ['marvis', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']
@@ -92,8 +92,8 @@ test('legacy rig packs still use preview transforms and reject unreachable surfa
 })
 
 test('furniture landmarks translate with the desk and use the mounted artwork, not the requested unavailable artwork', async t => {
-  const { loadOfficeAssets } = await server.ssrLoadModule('/src/scene/assets/loadOfficeAssets.ts')
-  const { loadWorkstationTrialAssets } = await server.ssrLoadModule('/src/scene/assets/loadWorkstationTrialAssets.ts')
+  const { loadOfficeAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadOfficeAssets.ts')
+  const { loadWorkstationTrialAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadWorkstationTrialAssets.ts')
   const make = (width, height) => new Texture({ source: new TextureSource({ width, height }) })
   const textures = { 'office-background': make(1402, 1122), 'office-desk': make(920, 582), 'office-chair': make(474, 492),
     'office-workstation-trial-v1-desk': make(1536, 1024), 'office-workstation-trial-v1-chair': make(1214, 1295), 'office-workstation-trial-v1-computer': make(1536, 1024) }

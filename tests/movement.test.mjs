@@ -5,12 +5,12 @@ import { base, visit, move, safeTick, until, completed, noClaims } from './helpe
 let server, createOfficeRuntime, MovementController, GridNavigation, pack, advanceCell, actorPixels
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts'))
-  ;({ MovementController } = await server.ssrLoadModule('/src/runtime/movement.ts'))
-  ;({ GridNavigation } = await server.ssrLoadModule('/src/runtime/navigation.ts'))
-  ;({ advanceCell } = await server.ssrLoadModule('/src/runtime/cellMovement.ts'))
-  ;({ actorPixels } = await server.ssrLoadModule('/src/scene/gridProjection.ts'))
-  pack = await server.ssrLoadModule('/src/runtime/builtin/officePack.ts')
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ MovementController } = await server.ssrLoadModule('/packages/runtime/src/movement.ts'))
+  ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
+  ;({ advanceCell } = await server.ssrLoadModule('/packages/runtime/src/cellMovement.ts'))
+  ;({ actorPixels } = await server.ssrLoadModule('/example/office-web/src/scene/gridProjection.ts'))
+  pack = await server.ssrLoadModule('/example/office-web/src/runtime/builtin/officePack.ts')
 })
 after(() => server?.close())
 function fixture() {

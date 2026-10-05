@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
 import { buildCharacter, buildCharacters } from '../scripts/characters/build.mjs'
-import { CharacterSourceSchema, CharacterManifestSchema, resolveCharacterClip, sampleCharacterClip, characterFrameDependencies } from '../src/scene/characters/packSchema.ts'
-import { ResourceLeaseCache } from '../src/scene/assets/ResourceLeaseCache.ts'
+import { CharacterSourceSchema, CharacterManifestSchema, resolveCharacterClip, sampleCharacterClip, characterFrameDependencies } from '../example/office-web/src/scene/characters/packSchema.ts'
+import { ResourceLeaseCache } from '../example/office-web/src/scene/assets/ResourceLeaseCache.ts'
 import { characterPackFixture } from './helpers/characterPack.mjs'
 
 async function temporary(t) {

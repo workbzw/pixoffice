@@ -13,13 +13,13 @@ const art = path.join(root, 'art/characters/office-computer-work-v1')
 const staging = path.join(root, '.character-staging/computer-work-v1')
 const recipe = JSON.parse(await readFile(path.join(art, 'registration.json'), 'utf8'))
 const json = value => JSON.stringify(value, null, 2) + '\n'
-const server = await createServer({ server: { middlewareMode: true } })
+const server = await createServer({ root, configFile: false, server: { middlewareMode: true } })
 try {
-  const { detectApartmentFrames } = await server.ssrLoadModule('/src/scene/characters/apartmentFrames.ts')
-  const { CharacterSourceSchema } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
-  const { workstationSurface } = await server.ssrLoadModule('/src/scene/layout/workstationSurface.ts')
-  const { transformWorkSurface } = await server.ssrLoadModule('/src/scene/characters/workSurface.ts')
-  const { canUseWorkSurface } = await server.ssrLoadModule('/src/scene/characters/workAnimation.ts')
+  const { detectApartmentFrames } = await server.ssrLoadModule('/example/office-web/src/scene/characters/apartmentFrames.ts')
+  const { CharacterSourceSchema } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
+  const { workstationSurface } = await server.ssrLoadModule('/example/office-web/src/scene/layout/workstationSurface.ts')
+  const { transformWorkSurface } = await server.ssrLoadModule('/example/office-web/src/scene/characters/workSurface.ts')
+  const { canUseWorkSurface } = await server.ssrLoadModule('/example/office-web/src/scene/characters/workAnimation.ts')
   const sheets = {}
   for (const name of ['body', 'arms']) {
     const file = path.join(art, `${name}-source.png`)

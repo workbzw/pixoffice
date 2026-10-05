@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { createHash } from 'node:crypto'
 import sharp from 'sharp'
 import { MaxRectsPacker } from 'maxrects-packer'
-import { CharacterSourceSchema, CharacterManifestSchema, CharacterRegistrySchema, characterFrameDependencies, sampleCharacterLayers } from '../../src/scene/characters/packSchema.ts'
+import { CharacterSourceSchema, CharacterManifestSchema, CharacterRegistrySchema, characterFrameDependencies, sampleCharacterLayers } from '@pixoffice/animation-frame/packSchema'
 import { validateCharacterStandard } from './standard.mjs'
 import { assertCharacterAdmission } from './quality.mjs'
 

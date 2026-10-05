@@ -5,7 +5,7 @@ import { base, visit, completed } from './helpers/grid.mjs'
 let server, createOfficeRuntime
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
 })
 after(() => server?.close())
 function legacy() {

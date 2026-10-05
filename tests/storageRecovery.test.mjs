@@ -5,7 +5,7 @@ import { createTestServer } from './helpers/vite.mjs'
 let server, browserPersistence
 before(async () => {
   server = await createTestServer()
-  ;({ browserPersistence } = await server.ssrLoadModule('/src/runtime/adapters/storage.ts'))
+  ;({ browserPersistence } = await server.ssrLoadModule('/packages/runtime/src/adapters/storage.ts'))
 })
 after(() => server?.close())
 

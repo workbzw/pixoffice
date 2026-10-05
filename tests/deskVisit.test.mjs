@@ -11,10 +11,10 @@ let movement
 
 before(async () => {
   server = await createTestServer()
-  const layout = await server.ssrLoadModule('/src/scene/layout/officeLayout.ts')
-  const visits = await server.ssrLoadModule('/src/scene/simulation/deskVisit.ts')
-  const { OfficeSimulator } = await server.ssrLoadModule('/src/scene/simulation/OfficeSimulator.ts')
-  const { MovementSystem } = await server.ssrLoadModule('/src/scene/systems/MovementSystem.ts')
+  const layout = await server.ssrLoadModule('/example/office-web/src/scene/layout/officeLayout.ts')
+  const visits = await server.ssrLoadModule('/example/office-web/src/scene/simulation/deskVisit.ts')
+  const { OfficeSimulator } = await server.ssrLoadModule('/example/office-web/src/scene/simulation/OfficeSimulator.ts')
+  const { MovementSystem } = await server.ssrLoadModule('/example/office-web/src/scene/systems/MovementSystem.ts')
   initialAgents = layout.INITIAL_AGENTS
   startDeskVisit = visits.startDeskVisit
   startReturnToDesk = visits.startReturnToDesk

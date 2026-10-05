@@ -1,0 +1,104 @@
+{
+  "name": "@pixoffice/runtime",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "exports": {
+    "./adapters/storage": {
+      "types": "./dist/adapters/storage.d.ts",
+      "import": "./dist/adapters/storage.js"
+    },
+    "./adapters/http": {
+      "types": "./dist/adapters/http.d.ts",
+      "import": "./dist/adapters/http.js"
+    },
+    "./adapters/embed": {
+      "types": "./dist/adapters/embed.d.ts",
+      "import": "./dist/adapters/embed.js"
+    },
+    "./OfficeRuntime": {
+      "types": "./dist/OfficeRuntime.d.ts",
+      "import": "./dist/OfficeRuntime.js"
+    },
+    "./SceneRuntime": {
+      "types": "./dist/SceneRuntime.d.ts",
+      "import": "./dist/SceneRuntime.js"
+    },
+    "./protocol": {
+      "types": "./dist/protocol.d.ts",
+      "import": "./dist/protocol.js"
+    },
+    "./model": {
+      "types": "./dist/model.d.ts",
+      "import": "./dist/model.js"
+    },
+    "./createSceneRuntime": {
+      "types": "./dist/createSceneRuntime.d.ts",
+      "import": "./dist/createSceneRuntime.js"
+    },
+    "./map/MapDraft": {
+      "types": "./dist/map/MapDraft.d.ts",
+      "import": "./dist/map/MapDraft.js"
+    },
+    "./map/placement": {
+      "types": "./dist/map/placement.d.ts",
+      "import": "./dist/map/placement.js"
+    },
+    "./map/schema": {
+      "types": "./dist/map/schema.d.ts",
+      "import": "./dist/map/schema.js"
+    },
+    "./map/furnitureGrid": {
+      "types": "./dist/map/furnitureGrid.d.ts",
+      "import": "./dist/map/furnitureGrid.js"
+    },
+    "./navigation": {
+      "types": "./dist/navigation.d.ts",
+      "import": "./dist/navigation.js"
+    },
+    "./walkableArea": {
+      "types": "./dist/walkableArea.d.ts",
+      "import": "./dist/walkableArea.js"
+    },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./actionContract": {
+      "types": "./dist/actionContract.d.ts",
+      "import": "./dist/actionContract.js"
+    },
+    "./scenePack": {
+      "types": "./dist/scenePack.d.ts",
+      "import": "./dist/scenePack.js"
+    },
+    "./navigationAdapter": {
+      "types": "./dist/navigationAdapter.d.ts",
+      "import": "./dist/navigationAdapter.js"
+    },
+    "./plugins": {
+      "types": "./dist/plugins.d.ts",
+      "import": "./dist/plugins.js"
+    },
+    "./builtin/primitives": {
+      "types": "./dist/builtin/primitives.d.ts",
+      "import": "./dist/builtin/primitives.js"
+    },
+    "./cellMovement": {
+      "types": "./dist/cellMovement.d.ts",
+      "import": "./dist/cellMovement.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "pathfinding": "^0.4.18",
+    "zod": "^4.6.5"
+  }
+}

@@ -139,4 +139,4 @@ OfficeRuntime -> MapDraft -> MapDocument / 原子操作
                        Pixi OfficeScene
 ```
 
-`src/runtime/map/` 不依赖 React、Pixi 或浏览器存储；`components/map-editor/` 只负责交互；`OfficeScene` 只投影草稿及短暂拖动预览。可继续沿现有模板、能力插件、导航适配器扩展物品与行为。
+`packages/runtime/src/map/` 不依赖 React、Pixi 或浏览器存储；`example/office-web/src/components/map-editor/` 只负责交互；`SceneView` 只投影草稿及短暂拖动预览，编辑命令通过应用注入的 dispatchCommand 执行。可继续沿现有模板、能力插件、导航适配器扩展物品与行为。

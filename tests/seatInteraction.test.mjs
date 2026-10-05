@@ -5,12 +5,12 @@ import { base, visit, use, safeTick, until, completed, noClaims, distance } from
 let server, createOfficeRuntime, OfficeRuntime, GridNavigation, SeatInteractions, PluginHost, pack
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts'))
-  ;({ OfficeRuntime } = await server.ssrLoadModule('/src/runtime/OfficeRuntime.ts'))
-  ;({ GridNavigation } = await server.ssrLoadModule('/src/runtime/navigation.ts'))
-  ;({ SeatInteractions } = await server.ssrLoadModule('/src/runtime/seatInteraction.ts'))
-  ;({ PluginHost } = await server.ssrLoadModule('/src/runtime/plugins.ts'))
-  pack = await server.ssrLoadModule('/src/runtime/builtin/officePack.ts')
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ OfficeRuntime } = await server.ssrLoadModule('/packages/runtime/src/OfficeRuntime.ts'))
+  ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
+  ;({ SeatInteractions } = await server.ssrLoadModule('/packages/runtime/src/seatInteraction.ts'))
+  ;({ PluginHost } = await server.ssrLoadModule('/packages/runtime/src/plugins.ts'))
+  pack = await server.ssrLoadModule('/example/office-web/src/runtime/builtin/officePack.ts')
 })
 after(() => server?.close())
 test('furniture entrances and use paths contain adjacent whole cells only', () => {

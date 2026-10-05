@@ -42,8 +42,8 @@ test('quiet work changes only generated finger regions and preserves the working
 
 test('all other employees play their own complete quiet-work frames', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { characterPreviewTimeline, sampleCharacterLayers } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
+  const { characterPreviewTimeline, sampleCharacterLayers } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
   const recipe = JSON.parse(await readFile(new URL('../art/characters/office-quiet-work-v4/registration.json', import.meta.url), 'utf8'))
   const reference = JSON.parse(await readFile(new URL('character.json', root), 'utf8')).clips['work.quiet-back']
   for (const id of ['code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']) {
@@ -92,8 +92,8 @@ test('all other employees play their own complete quiet-work frames', async t =>
 
 test('working fingertips stay above the actual trial desktop front, not down beside the lap', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { workstationSurface } = await server.ssrLoadModule('/src/scene/layout/workstationSurface.ts')
-  const { WORKSTATION_SEAT_Y } = await server.ssrLoadModule('/src/scene/layout/workstationArtwork.ts')
+  const { workstationSurface } = await server.ssrLoadModule('/example/office-web/src/scene/layout/workstationSurface.ts')
+  const { WORKSTATION_SEAT_Y } = await server.ssrLoadModule('/example/office-web/src/scene/layout/workstationArtwork.ts')
   const surface = workstationSurface('trial')
   const front = 344 + (surface.bounds.front - WORKSTATION_SEAT_Y) / .3
   for (const n of ['001', '002', '003', '004']) {
@@ -111,8 +111,8 @@ test('working fingertips stay above the actual trial desktop front, not down bes
 
 test('quiet work uses complete frames, pauses on the working pose and exits for walking, seating or conversation', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
-  const { sampleCharacterLayers, sampleCharacterClip, characterPreviewTimeline } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
+  const { sampleCharacterLayers, sampleCharacterClip, characterPreviewTimeline } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
   const pack = await characterPackFixture(), character = new ApartmentCharacter('marvis')
   character.pack = pack; t.after(() => { character.destroy(); pack.dispose() })
   character.setAtDesk(true); character.setViewFacing('back'); character.playState('working')

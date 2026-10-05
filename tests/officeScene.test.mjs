@@ -6,14 +6,14 @@ import { createTestServer } from './helpers/vite.mjs'
 async function loadScene(t) {
   const server = await createTestServer()
   t.after(() => server.close())
-  return server.ssrLoadModule('/src/scene/OfficeScene.ts')
+  return server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts')
 }
 
 test('tabletop and legs share artwork but keep stable independent ground depths', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { loadOfficeAssets } = await server.ssrLoadModule('/src/scene/assets/loadOfficeAssets.ts')
-  const { DeskEntity } = await server.ssrLoadModule('/src/scene/entities/DeskEntity.ts')
+  const { loadOfficeAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadOfficeAssets.ts')
+  const { DeskEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/DeskEntity.ts')
   const table = new Texture({ source: new TextureSource({ width: 920, height: 582 }) })
   const chair = new Texture({ source: new TextureSource({ width: 474, height: 492 }) })
   t.mock.method(Assets, 'load', async alias => alias === 'office-chair' ? chair : table)
@@ -47,10 +47,10 @@ test('tabletop and legs share artwork but keep stable independent ground depths'
 test('the new workstation artwork applies to every desk and remains reversible without changing the map', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { loadOfficeAssets } = await server.ssrLoadModule('/src/scene/assets/loadOfficeAssets.ts')
-  const { loadWorkstationTrialAssets } = await server.ssrLoadModule('/src/scene/assets/loadWorkstationTrialAssets.ts')
-  const { createOfficePropViews } = await server.ssrLoadModule('/src/scene/views/propViews.ts')
-  const { createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts')
+  const { loadOfficeAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadOfficeAssets.ts')
+  const { loadWorkstationTrialAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadWorkstationTrialAssets.ts')
+  const { createOfficePropViews } = await server.ssrLoadModule('/example/office-web/src/scene/views/propViews.ts')
+  const { createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts')
   const make = (width, height) => new Texture({ source: new TextureSource({ width, height }) })
   const textures = {
     'office-background': make(1402, 1122), 'office-desk': make(920, 582), 'office-chair': make(474, 492),

@@ -13,7 +13,7 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 5))
 
 async function resources(t) {
   const server = await createTestServer(); t.after(() => server.close())
-  const { CharacterPackResources } = await server.ssrLoadModule('/src/scene/assets/CharacterPackResources.ts')
+  const { CharacterPackResources } = await server.ssrLoadModule('/example/office-web/src/scene/assets/CharacterPackResources.ts')
   const full = await characterPackFixture()
   const pageTextures = full.manifest.pages.map(page => new Texture({ source: new TextureSource({ width: page.width, height: page.height }) }))
   const pack = new CharacterPackResources(full.manifest, pageTextures.map((_, index) => `/test-${index}.webp`))
@@ -85,8 +85,8 @@ test('old manifests without page groups still load fully and invalid page dimens
 
 test('partial character poses retain the previous complete body and mouth until all new layers exist', async t => {
   const { server, full } = await resources(t)
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
-  const { sampleCharacterLayers } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
+  const { sampleCharacterLayers } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
   const character = new ApartmentCharacter('marvis'); character.pack = full
   t.after(() => character.destroy())
   character.setViewFacing('front'); character.update(0)
@@ -106,14 +106,14 @@ test('partial character poses retain the previous complete body and mouth until 
 
 test('scene keeps current animations ticking but gates simulation and gateway until actions are ready, including retry', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { OfficeScene } = await server.ssrLoadModule('/src/scene/OfficeScene.ts')
-  const { isOfficeSceneReady } = await server.ssrLoadModule('/src/scene/officeSceneBridge.ts')
+  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts')
+  const { isOfficeSceneReady } = await server.ssrLoadModule('/example/office-web/src/scene/officeSceneBridge.ts')
   const states = [], scene = new OfficeScene({ onActionProgress: state => states.push(state) })
   scene.firstFrameReady = true
   t.after(() => scene.destroy())
   const gate = deferred()
   let failed = true, released = 0
-  scene.characterLease = { packs: [{ manifest: { id: 'marvis' }, isComplete: false, ensureAll: async () => { await gate.promise; if (failed) throw new Error('offline') } }], release: () => { released++ } }
+  scene.characterLease = { size: 1, completed: 0, isComplete: false, prepareAll: async () => { await gate.promise; if (failed) throw new Error('offline') }, release: () => { released++ } }
   const ticks = t.mock.method(scene.runtime, 'tick', () => {}), visuals = t.mock.method(scene, 'syncActors', () => {})
   const preparing = scene.prepareActions()
   scene.onTick({ deltaTime: 1 })
@@ -136,12 +136,12 @@ test('scene keeps current animations ticking but gates simulation and gateway un
 
 test('destroyed scenes cannot publish late action readiness or bind the gateway', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { OfficeScene } = await server.ssrLoadModule('/src/scene/OfficeScene.ts')
-  const { isOfficeSceneReady } = await server.ssrLoadModule('/src/scene/officeSceneBridge.ts')
+  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts')
+  const { isOfficeSceneReady } = await server.ssrLoadModule('/example/office-web/src/scene/officeSceneBridge.ts')
   const gate = deferred(), started = deferred(), states = []
   const scene = new OfficeScene({ onActionProgress: state => states.push(state) })
   scene.firstFrameReady = true
-  scene.characterLease = { packs: [{ manifest: { id: 'marvis' }, isComplete: false, ensureAll: async () => { started.resolve(); await gate.promise } }], release() {} }
+  scene.characterLease = { size: 1, completed: 0, isComplete: false, prepareAll: async () => { started.resolve(); await gate.promise }, release() {} }
   const pending = scene.prepareActions(); await started.promise
   scene.destroy(); const count = states.length
   gate.resolve(); await pending
@@ -151,8 +151,8 @@ test('destroyed scenes cannot publish late action readiness or bind the gateway'
 
 test('preparing actions before the first office frame cannot expose an uninitialized gateway', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { OfficeScene } = await server.ssrLoadModule('/src/scene/OfficeScene.ts')
-  const { isOfficeSceneReady } = await server.ssrLoadModule('/src/scene/officeSceneBridge.ts')
+  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts')
+  const { isOfficeSceneReady } = await server.ssrLoadModule('/example/office-web/src/scene/officeSceneBridge.ts')
   const scene = new OfficeScene(); t.after(() => scene.destroy())
   await scene.prepareActions()
   assert.equal(isOfficeSceneReady(), false)

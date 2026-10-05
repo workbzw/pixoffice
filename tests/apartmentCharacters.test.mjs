@@ -9,7 +9,7 @@ import { alphaBounds } from '../scripts/characters/build.mjs'
 async function loadFrames(t) {
   const server = await createTestServer()
   t.after(() => server.close())
-  return server.ssrLoadModule('/src/scene/characters/apartmentFrames.ts')
+  return server.ssrLoadModule('/example/office-web/src/scene/characters/apartmentFrames.ts')
 }
 
 test('all six residents retain the former four-pose back gait for running', async t => {
@@ -71,8 +71,8 @@ test('uneven atlas columns never clip hair or leak a neighboring character into 
 test('back walking displays the indoor textures without an added running bounce', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
-  const { sampleCharacterClip } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
+  const { sampleCharacterClip } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
   const pack = await characterPackFixture()
   const character = new ApartmentCharacter('marvis')
   character.pack = pack
@@ -148,7 +148,7 @@ test('desk residents sit while resting and type while working', async t => {
   const { shouldSitAtDesk, apartmentPoseForState } = await loadFrames(t)
   const server = await createTestServer()
   t.after(() => server.close())
-  const { INITIAL_AGENTS } = await server.ssrLoadModule('/src/scene/layout/officeLayout.ts')
+  const { INITIAL_AGENTS } = await server.ssrLoadModule('/example/office-web/src/scene/layout/officeLayout.ts')
   const agent = { ...INITIAL_AGENTS[0] }
   for (const state of ['idle', 'working', 'thinking']) {
     assert.equal(shouldSitAtDesk({ ...agent, state }), true)
@@ -185,8 +185,8 @@ test('the seated atlas trims six distinct poses in reading order', async t => {
 test('a seated character uses side-head frames for listening and speech, never a standing pose', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
-  const { sampleCharacterClip } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
+  const { sampleCharacterClip } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
   const pack = await characterPackFixture()
   const character = new ApartmentCharacter('marvis')
   character.pack = pack
@@ -213,8 +213,8 @@ test('a seated character uses side-head frames for listening and speech, never a
 test('legacy packs still loop registered typing frames only while working at their desk', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
-  const { sampleCharacterClip } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
+  const { sampleCharacterClip } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
   for (const id of ['marvis', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']) {
     const pack = await characterPackFixture(id)
     delete pack.manifest.work
@@ -257,8 +257,8 @@ test('legacy packs still loop registered typing frames only while working at the
 test('packs without a typing action retain the ordinary seated fallback', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
-  const { sampleCharacterClip } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
+  const { sampleCharacterClip } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
   const pack = await characterPackFixture()
   delete pack.manifest.clips['work.typing-back']
   delete pack.manifest.clips['work.quiet-back']
@@ -297,8 +297,8 @@ test('seat transitions use whole-body keyframes in reverse order for sitting', a
 test('seat keyframes override walking, stay registered and freeze with runtime progress', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
-  const { sampleCharacterClip } = await server.ssrLoadModule('/src/scene/characters/packSchema.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
+  const { sampleCharacterClip } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
   const pack = await characterPackFixture()
   const character = new ApartmentCharacter('marvis')
   character.pack = pack
@@ -327,7 +327,7 @@ test('seat keyframes override walking, stay registered and freeze with runtime p
 test('working and thinking cannot override a seated participant looking at their visitor', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
+  const { AgentEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/AgentEntity.ts')
   const entity = Object.create(AgentEntity.prototype)
   const facings = []
   Object.assign(entity, {
@@ -348,8 +348,8 @@ test('working and thinking cannot override a seated participant looking at their
 
 test('entity forwards speech, seat state and work surfaces to its picture-frame character', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
-  const { transformWorkSurface } = await server.ssrLoadModule('/src/scene/characters/workSurface.ts')
+  const { AgentEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/AgentEntity.ts')
+  const { transformWorkSurface } = await server.ssrLoadModule('/example/office-web/src/scene/characters/workSurface.ts')
   const entity = Object.create(AgentEntity.prototype), speech = [], poses = [], seats = [], desks = [], surfaces = []
   const transition = { stage: 'sitting', seatedAmount: .7 }
   Object.assign(entity, {
@@ -372,7 +372,7 @@ test('entity forwards speech, seat state and work surfaces to its picture-frame 
 
 test('procedural placeholders keep updating state and overlays when a frame pack is missing', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
+  const { AgentEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/AgentEntity.ts')
   const entity = Object.create(AgentEntity.prototype), drawn = [], labels = []
   Object.assign(entity, {
     character: null, agent: { x: 0, y: 0, currentTask: '整理信息' }, animationX: 0, animationY: 0, walkPhase: 0,
@@ -386,9 +386,9 @@ test('procedural placeholders keep updating state and overlays when a frame pack
 
 test('a failed scene group cannot mount frame textures from released idle leases', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
-  const { StatusLabel } = await server.ssrLoadModule('/src/scene/ui/StatusLabel.ts')
-  const { characterAssets } = await server.ssrLoadModule('/src/scene/assets/loadApartmentAssets.ts')
+  const { AgentEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/AgentEntity.ts')
+  const { StatusLabel } = await server.ssrLoadModule('/example/office-web/src/scene/ui/StatusLabel.ts')
+  const { characterAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadApartmentAssets.ts')
   t.mock.method(StatusLabel.prototype, 'paintStateDot', () => {})
   t.mock.method(StatusLabel.prototype, 'getLabelTopY', () => -80)
   t.mock.method(characterAssets, 'get', () => assert.fail('a scene without leases must not inspect cached frame textures'))
@@ -404,7 +404,7 @@ test('a failed scene group cannot mount frame textures from released idle leases
 test('walking preserves its facing at a subpixel waypoint instead of flashing to the front', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
+  const { AgentEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/AgentEntity.ts')
   const entity = Object.create(AgentEntity.prototype)
   const facings = []
   Object.assign(entity, {
@@ -428,10 +428,10 @@ test('walking preserves its facing at a subpixel waypoint instead of flashing to
 test('seat alignment never overrides the projected docking direction', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
-  const { createOfficeRuntime } = await server.ssrLoadModule('/src/runtime/createOfficeRuntime.ts')
-  const { SeatInteractions } = await server.ssrLoadModule('/src/runtime/seatInteraction.ts')
-  const { projectAgents } = await server.ssrLoadModule('/src/runtime/adapters/legacy.ts')
+  const { AgentEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/AgentEntity.ts')
+  const { createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts')
+  const { SeatInteractions } = await server.ssrLoadModule('/packages/runtime/src/seatInteraction.ts')
+  const { projectAgents } = await server.ssrLoadModule('/example/office-web/src/runtime/adapters/legacy.ts')
   const runtime = createOfficeRuntime()
   t.after(() => runtime.dispose())
   const seats = new SeatInteractions(runtime.navigation, { template: id => runtime.template(id) })

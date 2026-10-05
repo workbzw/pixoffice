@@ -1,0 +1,56 @@
+{
+  "name": "@pixoffice/animation-frame",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./FrameAdapter": {
+      "types": "./dist/FrameAdapter.d.ts",
+      "import": "./dist/FrameAdapter.js"
+    },
+    "./AssetLoadQueue": {
+      "types": "./dist/AssetLoadQueue.d.ts",
+      "import": "./dist/AssetLoadQueue.js"
+    },
+    "./CharacterPackResources": {
+      "types": "./dist/CharacterPackResources.d.ts",
+      "import": "./dist/CharacterPackResources.js"
+    },
+    "./resources/ResourceLeaseCache": {
+      "types": "./dist/resources/ResourceLeaseCache.d.ts",
+      "import": "./dist/resources/ResourceLeaseCache.js"
+    },
+    "./resources": {
+      "types": "./dist/resources.d.ts",
+      "import": "./dist/resources.js"
+    },
+    "./packSchema": {
+      "types": "./dist/packSchema.d.ts",
+      "import": "./dist/packSchema.js"
+    },
+    "./FrameSprite": {
+      "types": "./dist/FrameSprite.d.ts",
+      "import": "./dist/FrameSprite.js"
+    },
+    "./workAnimation": {
+      "types": "./dist/workAnimation.d.ts",
+      "import": "./dist/workAnimation.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@pixoffice/contracts": "0.1.0",
+    "zod": "^4.6.5"
+  },
+  "peerDependencies": {
+    "pixi.js": "^8.18.1"
+  }
+}

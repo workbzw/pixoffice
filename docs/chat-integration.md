@@ -34,7 +34,7 @@
 ## SDK 注入
 
 ```tsx
-import { OfficeApp, type OfficeChatSource } from './src/office'
+import { OfficeApp, type OfficeChatSource } from './example/office-web/src/office'
 
 const chatSource: OfficeChatSource = {
   kind: 'my-agent',
@@ -47,4 +47,4 @@ const chatSource: OfficeChatSource = {
 <OfficeApp dataSource={dataSource} chatSource={chatSource} />
 ```
 
-回复以纯文本安全展示，不执行 HTML、脚本或模型生成的场景命令。任务派发仍属于宿主业务系统，由宿主通过现有业务数据源和场景协议接入。
+这里的 OfficeApp 是完整示例应用的源码入口，不是已发布的 UI 包。回复以纯文本安全展示，不执行 HTML、脚本或模型生成的场景命令。任务派发仍属于宿主业务系统，由宿主通过现有业务数据源和场景协议接入。

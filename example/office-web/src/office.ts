@@ -1,0 +1,7 @@
+export { OfficeApp } from './App.tsx'
+export type { DashboardAction, DashboardSnapshot, OfficeDataSource } from './dashboard/contract.ts'
+export { dashboardSnapshotSchema, parseDashboardSnapshot } from './dashboard/contract.ts'
+export { ExampleOfficeDataSource } from './dashboard/demoSource.ts'
+export { HttpOfficeDataSource } from './dashboard/httpSource.ts'
+export type { OfficeChatSource, ChatRequest, ChatEvent } from './chat/contract.ts'
+export { HttpChatSource, PreviewChatSource } from './chat/sources.ts'

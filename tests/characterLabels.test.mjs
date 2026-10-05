@@ -5,8 +5,8 @@ import { characterPackFixture } from './helpers/characterPack.mjs'
 
 test('all six work loops keep names and bubbles fixed while complete picture frames change', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
-  const { AgentEntity } = await server.ssrLoadModule('/src/scene/entities/AgentEntity.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
+  const { AgentEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/AgentEntity.ts')
   for (const id of ['marvis', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']) {
     const pack = await characterPackFixture(id), character = new ApartmentCharacter(id)
     character.pack = pack
@@ -31,7 +31,7 @@ test('all six work loops keep names and bubbles fixed while complete picture fra
 
 test('fixed loop labels use the current clip, but seat transitions retain their changing height', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { ApartmentCharacter } = await server.ssrLoadModule('/src/scene/characters/ApartmentCharacter.ts')
+  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
   const pack = await characterPackFixture('code-agent'), character = new ApartmentCharacter('code-agent')
   character.pack = pack
   t.after(() => { character.destroy(); pack.dispose() })
