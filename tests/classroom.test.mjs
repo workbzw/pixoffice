@@ -5,9 +5,9 @@ import { classroomScenePack, classroomRoster } from '@pixoffice/scene-classroom'
 import { createClassroomPresentation } from '@pixoffice/scene-classroom/pixi'
 import { bindClassroomFrames, classroomAppearanceIds } from '@pixoffice/assets-classroom'
 import { visualAssetManifestSchema } from '@pixoffice/contracts'
-import { CharacterManifestSchema } from '@pixoffice/animation-frame/packSchema'
+import { CharacterManifestSchema, characterFrameDependencies } from '@pixoffice/animation-frame/packSchema'
 import { readFile } from 'node:fs/promises'
-import { Texture, TextureSource } from 'pixi.js'
+import { Assets, Texture, TextureSource } from 'pixi.js'
 import sharp from 'sharp'
 import { CLASSROOM_ARTWORK, CLASSROOM_CHARACTER, CLASSROOM_CONTENT_SCALE, CLASSROOM_SEATED_OFFSET, CLASSROOM_SEAT_RECESS, classroomActorGeometry, classroomCellCenter, classroomFurnitureLayout } from '../packages/scene-classroom/dist/pixi/alignment.js'
 import { createClassroomDeskView } from '../packages/scene-classroom/dist/pixi/deskView.js'
@@ -136,6 +136,40 @@ test('classroom manifests exclude office work clips and cover every projected te
       if (actor.intent.actionId === 'core.walk') assert.equal(actor.intent.speech, undefined)
     }
   })
+})
+
+test('classroom startup atlases contain only current poses; walking and unused portraits remain deferred', async t => {
+  const runtime = runtimeFor(t), pack = createClassroomPresentation('https://example.test/classroom/')
+  for (const actor of pack.projectActors(runtime)) {
+    const root = new URL(`../public/classroom-assets/${actor.appearanceId}/`, import.meta.url)
+    const appearance = JSON.parse(await readFile(new URL('visual.json', root), 'utf8'))
+    const manifest = CharacterManifestSchema.parse(JSON.parse(await readFile(new URL(appearance.source.uri, root), 'utf8')))
+    const variant = appearance.capabilities.variants.find(v => v.channel === 'base' && v.actionId === actor.intent.actionId && v.poseId === actor.intent.poseId && v.view === actor.intent.view)
+    assert(variant, `Initial pose must be supported: ${actor.id}`)
+    const dependencies = characterFrameDependencies(manifest, [appearance.source.bindings[variant.variantId].clip])
+    const startup = Object.entries(manifest.frames).filter(([, frame]) => manifest.pages[frame.page].group === 'startup').map(([key]) => key)
+    assert.deepEqual(startup.sort(), dependencies.sort(), `${actor.id}: first paint must not require unrelated poses`)
+    const walking = characterFrameDependencies(manifest, ['walk.front', 'walk.back'])
+    assert(walking.some(key => manifest.pages[manifest.frames[key].page].group === 'deferred'))
+    await readFile(new URL('portrait.webp', root))
+  }
+})
+
+test('classroom desk and chair downloads start together and report only when each completes', async t => {
+  const pack = createClassroomPresentation('https://example.test/classroom/'), calls = [], reports = [], gates = new Map()
+  const textures = new Map(Object.values(CLASSROOM_ARTWORK).map(art => [art.file, new Texture({ source: new TextureSource({ width: 512, height: 512 }) })]))
+  t.after(() => { for (const resolve of gates.values()) resolve(); for (const texture of textures.values()) texture.destroy(true) })
+  t.mock.method(Assets, 'load', url => {
+    const file = new URL(url).pathname.split('/').at(-1); calls.push(file)
+    return new Promise(resolve => gates.set(file, () => resolve(textures.get(file))))
+  })
+  const loading = pack.loadObjects(id => reports.push(id))
+  assert.deepEqual(calls, [CLASSROOM_ARTWORK.desk.file, CLASSROOM_ARTWORK.chair.file])
+  assert.deepEqual(reports, [])
+  gates.get(CLASSROOM_ARTWORK.chair.file)(); await Promise.resolve()
+  assert.deepEqual(reports, ['classroom.chair'])
+  gates.get(CLASSROOM_ARTWORK.desk.file)(); await loading
+  assert.deepEqual(reports, ['classroom.chair', 'classroom.desk'])
 })
 
 test('every student keeps one scale and distinct seated and standing contact points', t => {

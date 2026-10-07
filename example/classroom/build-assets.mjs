@@ -37,7 +37,9 @@ try {
     for (const file of new Set(Object.values(clips).flatMap(clip => clip.frames?.map(frame => frame.file) ?? []))) {
       await mkdir(path.dirname(path.join(directory, file)), { recursive: true }); await cp(path.join(sourceRoot, file), path.join(directory, file))
     }
-    const built = await buildCharacter(directory, { profile: { ...frameBuildProfile, startupClips: source => [source.portrait, 'idle.front', 'sit.back'] } })
+    const built = await buildCharacter(directory, { profile: { ...frameBuildProfile,
+      startupClips: () => index === 0 ? ['idle.front'] : ['sit.back'],
+    } })
     const target = path.join(staging, id); await mkdir(target)
     for (const [file, buffer] of built.outputs) await writeFile(path.join(target, file), buffer)
     const manifest = visualAssetManifestSchema.parse(bindClassroomFrames(built.manifest, `./${built.manifestFile}`))

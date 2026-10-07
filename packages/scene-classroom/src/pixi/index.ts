@@ -13,8 +13,11 @@ export function createClassroomPresentation(assetBaseUrl: string): ScenePresenta
     id: 'pixoffice.classroom', cellPixels: CELL, resourceCount: 3, cellCenter: center,
     loadBackground: () => Assets.load<Texture>(url('room.webp')),
     async loadObjects(report) {
-      deskTexture = await Assets.load<Texture>(url(CLASSROOM_ARTWORK.desk.file)); report('classroom.desk')
-      chairTexture = await Assets.load<Texture>(url(CLASSROOM_ARTWORK.chair.file)); report('classroom.chair')
+      const [desk, chair] = await Promise.all([
+        Assets.load<Texture>(url(CLASSROOM_ARTWORK.desk.file)).then(texture => { report('classroom.desk'); return texture }),
+        Assets.load<Texture>(url(CLASSROOM_ARTWORK.chair.file)).then(texture => { report('classroom.chair'); return texture }),
+      ])
+      deskTexture = desk; chairTexture = chair
     },
     createPropViews() {
       const registry = new PropViewRegistry(CELL)

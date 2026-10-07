@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowLeft, BookOpen, Check, ChevronRight, GraduationCap, MessageCircle, Play, RotateCcw, Square, Users, X } from 'lucide-react'
+import { ArrowLeft, BookOpen, Check, ChevronRight, GraduationCap, LoaderCircle, Maximize, MessageCircle, Minimize, Play, RotateCcw, Square, Users, X } from 'lucide-react'
 import { mountScene } from '@pixoffice/renderer-pixi'
 import type { SceneRuntime, SceneCommand } from '@pixoffice/runtime'
 import { RuntimeHttpClient } from '@pixoffice/runtime/adapters/http'
 import { classroomRoster } from '@pixoffice/scene-classroom'
 import { lessons } from './lessons.ts'
+import { createClassroomFocus } from './focusMode.ts'
 import './classroom.css'
 
 type Mounted = Awaited<ReturnType<typeof mountScene>>
@@ -15,7 +16,11 @@ const baseCommand = (runtime: SceneRuntime) => ({ protocolVersion: '2.0' as cons
 const isPending = (status: string) => status === 'running' || status === 'queued'
 
 export function ClassroomApp({ assetBaseUrl, homeUrl, officeUrl, gatewayUrl }: { assetBaseUrl: string; homeUrl?: string; officeUrl?: string; gatewayUrl?: string }) {
+  const app = useRef<HTMLDivElement>(null), focusButton = useRef<HTMLButtonElement>(null)
+  const focusMode = useRef<ReturnType<typeof createClassroomFocus> | null>(null), wasFocused = useRef(false)
+  const [focused, setFocused] = useState(false)
   const host = useRef<HTMLDivElement>(null), mounted = useRef<Mounted | null>(null)
+  const [loaded, setLoaded] = useState(false)
   const [ready, setReady] = useState(false), [loading, setLoading] = useState('正在准备教室…'), [error, setError] = useState('')
   const [transportStatus, setTransportStatus] = useState('未连接')
   const [lessonId, setLessonId] = useState<string>('solar'), [studentId, setStudentId] = useState<string>('student-1')
@@ -28,8 +33,24 @@ export function ClassroomApp({ assetBaseUrl, homeUrl, officeUrl, gatewayUrl }: {
   const lesson = lessons.find(l => l.id === lessonId) ?? lessons[0]
 
   useEffect(() => {
+    const mode = createClassroomFocus(app.current!, setFocused)
+    focusMode.current = mode
+    return () => { mode.dispose(); focusMode.current = null }
+  }, [])
+  useEffect(() => {
+    if (focused || wasFocused.current) focusButton.current?.focus({ preventScroll: true })
+    wasFocused.current = focused
+  }, [focused])
+
+  useEffect(() => {
     const controller = new AbortController()
     let scene: Mounted | undefined, client: RuntimeHttpClient | undefined, timer: ReturnType<typeof setInterval> | undefined
+    setLoaded(false); setReady(false); setError(''); setLoading('正在准备教室…'); actionReady.current = false
+    const connectGateway = () => {
+      if (gatewayUrl && scene?.view.areActionsReady && !client && !controller.signal.aborted) {
+        client = new RuntimeHttpClient(scene.runtime, gatewayUrl, setTransportStatus); client.connect()
+      }
+    }
     const refresh = () => {
       if (!scene) return
       const runtime = scene.runtime, phases = runtime.readActivePhases(), snapshot = runtime.snapshot()
@@ -56,23 +77,23 @@ export function ClassroomApp({ assetBaseUrl, homeUrl, officeUrl, gatewayUrl }: {
       return createClassroomAssembly(assetBaseUrl, signal)
     }, { signal: controller.signal, view: {
       onActorClick: ({ actorId }) => { if (students.some(s => s.id === actorId)) setStudentId(actorId) },
-      onLoadProgress: p => setLoading(`正在准备教室 ${p.completed}/${p.total}`),
+      onLoadProgress: p => { if (!controller.signal.aborted) setLoading(`正在准备教室 ${p.completed}/${p.total}`) },
       onActionProgress: p => {
+        if (controller.signal.aborted) return
         actionReady.current = p.ready
         setReady(p.ready && Boolean(mounted.current))
         setLoading(p.error ?? `正在准备动作 ${p.completed}/${p.total}`)
-        if (p.error) setError(p.error)
-      },
-    } }).then(async result => {
-      if (controller.signal.aborted) { result.dispose(); return }
-      scene = result; mounted.current = result; setReady(actionReady.current || result.view.areActionsReady)
-      refresh(); timer = setInterval(refresh, 250)
-      if (gatewayUrl) {
-        await result.view.prepareActions()
-        if (!controller.signal.aborted && result.view.areActionsReady) {
-          client = new RuntimeHttpClient(result.runtime, gatewayUrl, setTransportStatus); client.connect()
+        if (p.error) {
+          console.warn('[Classroom] 互动动作加载失败', p.error)
+          setError('互动动作加载失败，请检查网络后重试。')
         }
-      }
+        if (p.ready) connectGateway()
+      },
+    } }).then(result => {
+      if (controller.signal.aborted) { result.dispose(); return }
+      scene = result; mounted.current = result; setLoaded(true); setReady(actionReady.current || result.view.areActionsReady)
+      refresh(); timer = setInterval(refresh, 250)
+      connectGateway()
     }).catch(reason => { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : String(reason)) })
     return () => { client?.disconnect(); controller.abort(); clearInterval(timer); mounted.current = null; actionReady.current = false }
   }, [assetBaseUrl, gatewayUrl])
@@ -114,12 +135,16 @@ export function ClassroomApp({ assetBaseUrl, homeUrl, officeUrl, gatewayUrl }: {
     }
     setBusy(false); setPhase('已停止'); setError('')
   }
+  function retryActions() {
+    setError('')
+    void mounted.current?.view.prepareActions()
+  }
   function changeLesson(id: string) {
     const next = lessons.find(l => l.id === id)!
     if (updateBoard(next.title, next.board)) setLessonId(id)
   }
 
-  return <div className="classroom-app">
+  return <div className={`classroom-app${focused ? ' classroom-focused' : ''}`} ref={app}>
     <header className="classroom-header">
       <div className="classroom-brand"><GraduationCap size={25} /><strong>PixOffice</strong><span>教室</span></div>
       <nav aria-label="场景导航">
@@ -127,7 +152,7 @@ export function ClassroomApp({ assetBaseUrl, homeUrl, officeUrl, gatewayUrl }: {
         {officeUrl && <a href={officeUrl}>办公室</a>}
         <span aria-current="page">教育场景</span>
       </nav>
-      <span className="classroom-connection"><i />{ready ? gatewayUrl ? `外部驱动 · ${transportStatus}` : '场景就绪' : '场景准备中'}</span>
+      <span className="classroom-connection"><i />{ready ? gatewayUrl ? `外部驱动 · ${transportStatus}` : '场景就绪' : loaded ? '动作准备中' : '场景准备中'}</span>
     </header>
     <main className="classroom-layout">
       <section className="classroom-teacher" aria-label="教师">
@@ -142,9 +167,9 @@ export function ClassroomApp({ assetBaseUrl, homeUrl, officeUrl, gatewayUrl }: {
       </section>
       <aside className="classroom-sidebar">
         <section className="classroom-course">
-          <div className="classroom-section-title"><BookOpen size={17} /><h2>课程安排</h2><button type="button" onClick={() => { setDraftTitle(boardTitle); setDraftText(boardText); setBoardOpen(true) }} disabled={!ready || busy}>编辑黑板</button></div>
+          <div className="classroom-section-title"><BookOpen size={17} /><h2>课程安排</h2><button type="button" onClick={() => { setDraftTitle(boardTitle); setDraftText(boardText); setBoardOpen(true) }} disabled={!loaded || busy}>编辑黑板</button></div>
           <label className="classroom-sr" htmlFor="classroom-course">课程</label>
-          <select id="classroom-course" value={lessonId} disabled={!ready || busy} onChange={e => changeLesson(e.target.value)}>{lessons.map(l => <option key={l.id} value={l.id}>{l.subject} · {l.title}</option>)}</select>
+          <select id="classroom-course" value={lessonId} disabled={!loaded || busy} onChange={e => changeLesson(e.target.value)}>{lessons.map(l => <option key={l.id} value={l.id}>{l.subject} · {l.title}</option>)}</select>
           <p className="classroom-question">{lesson.question}</p>
         </section>
         <section className="classroom-roster">
@@ -160,18 +185,29 @@ export function ClassroomApp({ assetBaseUrl, homeUrl, officeUrl, gatewayUrl }: {
           <ol>{history.length ? history.map(entry => <li key={entry.id}><span>{entry.text}</span><time>{entry.time}</time></li>) : <li className="classroom-empty">还没有课堂活动</li>}</ol>
         </section>
       </aside>
-      <section className="classroom-scene" aria-label="教室动画区域">
+      <section className="classroom-scene" aria-label="教室动画区域" aria-busy={!loaded}>
+        <button type="button" className="classroom-focus-toggle" ref={focusButton} aria-pressed={focused}
+          title={focused ? '退出专注课堂 (Esc)' : '专注课堂'} onClick={() => focused ? focusMode.current?.exit() : focusMode.current?.enter()}>
+          {focused ? <Minimize size={17} /> : <Maximize size={17} />}{focused ? '退出专注' : '专注课堂'}
+        </button>
         <div className="classroom-scene-status" role="status"><span className={busy ? 'classroom-pulse' : ''} />{phase}</div>
         <div className="classroom-canvas" ref={host} />
         {speech && <div className="classroom-caption" role="status"><strong>{speech.name}</strong><span>{speech.text}</span></div>}
-        {!ready && <div className="classroom-loading" role="status"><div>{error || loading}{error && <button type="button" onClick={() => window.location.reload()}>重新加载</button>}</div></div>}
-        {error && ready && <div className="classroom-error" role="alert">{error}<button type="button" aria-label="关闭错误" onClick={() => setError('')}><X size={15} /></button></div>}
-        <div className="classroom-controls">
+        {!loaded && <div className="classroom-loading" role="status"><div>{error || loading}{error && <button type="button" onClick={() => window.location.reload()}>重新加载</button>}</div></div>}
+        {loaded && !ready && !error && <div className="classroom-action-loading" role="status"><LoaderCircle size={14} />{loading}</div>}
+        {error && loaded && <div className="classroom-error" role="alert"><span>{error}</span>{!ready
+          ? <button type="button" onClick={retryActions}><RotateCcw size={16} />重试动作</button>
+          : <button type="button" aria-label="关闭错误" onClick={() => setError('')}><X size={15} /></button>}</div>}
+        <div className="classroom-controls" role="group" aria-label="课堂操作">
+          {focused ? <button type="button" className="primary" disabled={!ready} onClick={() => busy ? stop() : start('demo')}>
+            {busy ? <Square size={17} /> : <Play size={17} />}{busy ? '停止课堂' : '开始上课'}
+          </button> : <>
           <button type="button" className="primary" disabled={!ready || busy} onClick={() => start('demo')}><Play size={17} />开始课堂演示</button>
           <button type="button" disabled={!ready || busy} onClick={() => start('lecture')}><BookOpen size={17} />讲课</button>
           <button type="button" disabled={!ready || busy} onClick={() => start('answer')}><MessageCircle size={17} />点名回答</button>
           <button type="button" title="返回座位" aria-label="返回座位" disabled={!ready || busy} onClick={() => start('settle')}><RotateCcw size={18} /></button>
           <button type="button" title="停止课堂活动" aria-label="停止课堂活动" disabled={!ready || !busy} onClick={stop}><Square size={17} /></button>
+          </>}
         </div>
       </section>
     </main>
