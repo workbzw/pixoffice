@@ -47,8 +47,12 @@ export function createClassroomPresentation(assetBaseUrl: string): ScenePresenta
       return (preview?.actors ?? runtime.readActors()).map(actor => {
         const step = actor.step
         const transition = actor.seatTransition, sitting = transition?.stage === 'sitting', rising = transition?.stage === 'rising'
-        const seated = actor.posture === 'seated' && !step
-        const actionId = sitting ? 'core.sit-down' : rising ? 'core.stand-up' : step ? 'core.walk' : 'core.idle'
+        // A completed cell clears step for one tick; the movement intent still owns the gait.
+        const walking = Boolean(step || (transition
+          ? (transition.stage === 'entering' || transition.stage === 'exiting') && !transition.waiting
+          : actor.motion && actor.motion.index < actor.motion.path.length && !actor.motion.waiting))
+        const seated = actor.posture === 'seated' && !walking
+        const actionId = sitting ? 'core.sit-down' : rising ? 'core.stand-up' : walking ? 'core.walk' : 'core.idle'
         const phase = phases.find(p => p.participants.includes(actor.id))
         const { position, depth } = classroomActorGeometry(actor)
         return {
@@ -56,8 +60,8 @@ export function createClassroomPresentation(assetBaseUrl: string): ScenePresenta
           displayHeight: actor.id === 'teacher' ? CLASSROOM_CHARACTER.teacherHeight : CLASSROOM_CHARACTER.height,
           intent: { actionId, poseId: sitting || rising ? 'transition' : seated ? 'seated' : 'standing',
             view: sitting || rising ? 'back' : actor.facing, ...(sitting || rising ? { progress: transition!.progress } : {}),
-            speech: !step && !transition ? actor.speech?.text : undefined },
-          status: step ? 'walking' : phase ? 'working' : 'idle',
+            speech: !walking && !transition ? actor.speech?.text : undefined },
+          status: walking ? 'walking' : phase ? 'working' : 'idle',
           bubble: actor.speech?.text,
           ...(actor.homeId ? { furniture: { propId: actor.homeId, seated, transitioning: Boolean(transition) } } : {}),
         }

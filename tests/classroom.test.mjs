@@ -11,6 +11,7 @@ import { Assets, Texture, TextureSource } from 'pixi.js'
 import sharp from 'sharp'
 import { CLASSROOM_ARTWORK, CLASSROOM_CHARACTER, CLASSROOM_CONTENT_SCALE, CLASSROOM_SEATED_OFFSET, CLASSROOM_SEAT_RECESS, classroomActorGeometry, classroomCellCenter, classroomFurnitureLayout } from '../packages/scene-classroom/dist/pixi/alignment.js'
 import { createClassroomDeskView } from '../packages/scene-classroom/dist/pixi/deskView.js'
+import { AnimationPresenter } from '../packages/renderer-pixi/dist/presentation/AnimationPresenter.js'
 
 const base = (runtime, id) => ({ protocolVersion: '2.0', sceneId: runtime.sceneId, commandId: id })
 const participants = classroomRoster.map(p => ({ entityId: p.id, role: p.role }))
@@ -63,6 +64,75 @@ for (const student of classroomRoster.filter(p => p.role === 'student')) test(`$
   const actor = runtime.readActors().find(a => a.id === student.id)
   assert(reachedBoard && spoke); assert.deepEqual(actor.position, start); assert.equal(actor.posture, 'seated'); assert.equal(actor.facing, 'back')
   assert(!runtime.snapshot().resources.some(r => r.holders.length))
+})
+
+for (const fps of [30, 60, 120]) for (const student of classroomRoster.filter(p => p.role === 'student')) test(`${student.id} keeps the walking cycle across cells and seat passages at ${fps} fps`, async t => {
+  const runtime = runtimeFor(t), pack = createClassroomPresentation('https://example.test/classroom/')
+  const presenter = new AnimationPresenter(), command = answer(runtime, student.id)
+  const actor = runtime.readActors().find(a => a.id === student.id)
+  const manifest = visualAssetManifestSchema.parse(JSON.parse(await readFile(new URL(`../public/classroom-assets/${actor.templateId}/visual.json`, import.meta.url), 'utf8')))
+  runtime.submit(command)
+  let previous, movementBoundaries = 0, passageBoundaries = 0, turns = 0
+  for (let i = 0; i < fps * 180 && runtime.getRecord(command.commandId).status === 'running'; i++) {
+    runtime.tick(1000 / fps)
+    const raw = runtime.readActors().find(a => a.id === student.id)
+    const projected = pack.projectActors(runtime).find(a => a.id === student.id)
+    const sample = presenter.sample(projected, manifest, 1 / fps), body = sample.actions[0]
+    if (!raw.step && !raw.seatTransition && raw.motion && !raw.motion.waiting && raw.motion.index < raw.motion.path.length) {
+      movementBoundaries++; assert.equal(projected.intent.actionId, 'core.walk', 'A cell boundary must not flash an idle pose')
+    }
+    if (!raw.step && ['entering', 'exiting'].includes(raw.seatTransition?.stage) && !raw.seatTransition.waiting) {
+      passageBoundaries++; assert.equal(projected.intent.actionId, 'core.walk', 'A seat passage boundary must not flash an idle pose')
+    }
+    if (projected.intent.actionId === 'core.walk') {
+      assert.equal(projected.status, 'walking'); assert.equal(projected.intent.speech, undefined)
+      assert.equal(body.clock.mode, 'distance')
+      if (previous?.action === 'core.walk') {
+        assert.equal(body.instanceId, previous.body.instanceId, 'The gait instance must survive cell boundaries and turns')
+        assert(body.clock.travelledDu >= previous.body.clock.travelledDu, 'Travelled distance must not reset while walking')
+        if (projected.intent.view !== previous.view) turns++
+      }
+    }
+    previous = { action: projected.intent.actionId, view: projected.intent.view, body }
+  }
+  assert.equal(runtime.getRecord(command.commandId).status, 'completed')
+  assert(movementBoundaries > 0 && passageBoundaries > 0 && turns > 0, 'Exercise cells, seat passages and turns')
+  const settled = pack.projectActors(runtime).find(a => a.id === student.id)
+  assert.equal(settled.intent.actionId, 'core.idle'); assert.equal(settled.intent.poseId, 'seated')
+})
+
+test('classroom distinguishes continuous movement from blocked, aligning and posture-changing states', t => {
+  const runtime = runtimeFor(t), pack = createClassroomPresentation('https://example.test/classroom/')
+  const world = runtime.readWorld(), actor = world.actors.find(a => a.id === 'student-1')
+  const next = { x: actor.position.x + 1, y: actor.position.y }
+  const step = { from: actor.position, to: next, elapsedMs: 100, durationMs: 480 }
+  const motion = { path: [next], index: 0 }
+  const transition = { propId: actor.homeId, seat: actor.position, approach: next, passage: [actor.position, next], progress: .5, seatedAmount: 0 }
+  const cases = [
+    ['moving', { motion }, 'core.walk'],
+    ['blocked', { motion: { ...motion, waiting: true } }, 'core.idle'],
+    ['finished path', { motion: { ...motion, index: 1 } }, 'core.idle'],
+    ['cancelled motion still finishing a step', { step }, 'core.walk'],
+    ['committed step with a waiting flag', { step, motion: { ...motion, waiting: true } }, 'core.walk'],
+    ...['entering', 'exiting'].flatMap(stage => [
+      [`${stage} between cells`, { seatTransition: { ...transition, stage } }, 'core.walk'],
+      [`${stage} blocked`, { seatTransition: { ...transition, stage, waiting: true } }, 'core.idle'],
+      [`${stage} committed step`, { step, seatTransition: { ...transition, stage, waiting: true } }, 'core.walk'],
+    ]),
+    ['aligning with pending movement', { motion, seatTransition: { ...transition, stage: 'aligning' } }, 'core.idle'],
+    ['rising with pending movement', { motion, seatTransition: { ...transition, stage: 'rising' } }, 'core.stand-up'],
+    ['sitting', { seatTransition: { ...transition, stage: 'sitting' } }, 'core.sit-down'],
+    ['stopped', {}, 'core.idle'],
+  ]
+  for (const [label, state, action] of cases) {
+    const projected = pack.projectActors(runtime, { ...world, actors: [{ ...actor, posture: 'standing', step: undefined, motion: undefined, seatTransition: undefined, speech: { text: '回答', remainingMs: 1000 }, ...state }] })[0]
+    assert.equal(projected.intent.actionId, action, label)
+    assert.equal(projected.status, action === 'core.walk' ? 'walking' : 'idle', label)
+    if (action === 'core.walk' || state.seatTransition) assert.equal(projected.intent.speech, undefined, label)
+    if (['core.stand-up', 'core.sit-down'].includes(action)) {
+      assert.equal(projected.intent.poseId, 'transition', label); assert.equal(projected.intent.progress, .5, label)
+    }
+  }
 })
 
 test('lecture and multiple answers execute in sequence and reserve the teaching area', t => {
@@ -313,7 +383,7 @@ test('all students leave from either side and reseat without scale changes or pr
         assert.equal(projected.displayHeight, previous.displayHeight)
         assert(Math.hypot(projected.position.x - previous.position.x, projected.position.y - previous.position.y) < 5, 'seat projection must not teleport')
         if (projected.intent.actionId === 'core.walk') {
-          assert.equal(projected.position.y, previous.position.y, 'docking walks along the floor, not diagonally onto the table')
+          if (previous.intent.actionId === 'core.walk') assert.equal(projected.position.y, previous.position.y, 'docking walks along the floor, not diagonally onto the table')
           assert.equal(projected.position.y, standing.y, 'walking uses the clear standing lane, never the recessed chair contact')
           const deskFront = furniture.desk.y + CLASSROOM_ARTWORK.desk.frontFootY * furniture.desk.scale
           const chairFront = furniture.chair.y + CLASSROOM_ARTWORK.chair.rearFootY * furniture.chair.scale
