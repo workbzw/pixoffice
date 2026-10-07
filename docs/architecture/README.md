@@ -2,9 +2,9 @@
 
 原则：**把变化限制在局部。** 通用执行规则留在中心，场景、素材、动画技术和业务页面在边缘分别演进。
 
-当前已拆为 npm workspaces，办公室通过 `example/` 装配。包可构建和 `npm pack`，尚未发布 npm；教室与真实骨骼播放器未实现。
+当前已拆为八个 npm workspace 包，办公室与教室通过 `example/` 分别装配。包可构建和 `npm pack`，尚未发布 npm；真实骨骼播放器未实现。
 
-本轮具体结果见 [拆包验收记录](./package-migration.md)。
+首次拆包见 [拆包验收记录](./package-migration.md)；当前增补见 [场景隔离与按需装配](./scene-isolation.md)。
 
 ## 目录与责任
 
@@ -14,11 +14,16 @@ packages/
   runtime/            状态、协议、寻路、占用、活动、取消、地图事务
   renderer-pixi/      Pixi 画布、人物/物品视图、标签、点击和动画宿主
   animation-frame/    完整图片帧播放、图集加载与共享资源租约
+  assets-office/      办公室帧素材标准、动作绑定与旧预览兼容
   scene-office/       办公室布局、家具、交互、投影与物品视图
+  assets-classroom/   教室动作要求、语义绑定与独立资源 ID
+  scene-classroom/    课桌、黑板、教学流程与独立场景表现
 example/
   office-web/         原有完整 React 页面、聊天、业务数据、编辑器、外部接入
   minimal-vanilla/    不使用 React 的办公室装配与拜访命令
-assets/office/        当前帧素材到语义动作的绑定，不是业务执行代码
+  isolated-scene/     不依赖办公室的独立运行、独立资源与构建示例
+  classroom/          独立教室应用、素材构建与部署
+assets/office/        办公室构建配置与旧路径转发，不是业务执行代码
 art/characters/      原始动作素材、准入记录
 public/               供宿主部署的资源；生成图集不提交 Git
 scripts/              包构建、素材构建、安装验证与开发工具
@@ -37,17 +42,20 @@ example/office-web、example/minimal-vanilla
     │     └── renderer-pixi（仅 /pixi 表现入口使用）
     ├── renderer-pixi ──→ runtime、contracts
     ├── animation-frame ──→ contracts
+    ├── assets-office/frame ──→ animation-frame、contracts
     └── runtime
 
 未来 animation-skeleton ──→ contracts + 所选骨骼引擎 + Pixi peer
-未来 scene-classroom    ──→ runtime、contracts、renderer-pixi
+scene-classroom         ──→ runtime、contracts、renderer-pixi
+assets-classroom        ──→ animation-frame、contracts
 ```
 
 - `runtime` 不依赖 React、Pixi、办公室或动画播放器。协议和场景插件接口目前由它导出，没有再拆成多个微型包。
+- 办公室与教室不互相引用。教室教学行为只发送语义动作，替换帧/骨骼素材不改变教师、学生岗位规则。
 - `scene-office` 的根入口与 `/core` 无 DOM/Pixi 执行依赖；`/pixi` 才加载画面实现。安装层仍是同一个包，所以宿主需要满足声明的依赖。
 - `scene-office` 与 `renderer-pixi` 不依赖 `animation-frame`。素材解析和注册适配器由应用装配。
 - `contracts` 不依赖任何 PixOffice 实现包，避免形成大而全的公共工具库。
-- Pixi 是三个视觉相关包的 peer dependency，由宿主提供同一版本，避免多个引擎实例和纹理缓存。
+- Pixi 是视觉相关包的 peer dependency，由宿主提供同一版本，避免多个引擎实例和纹理缓存。
 - 所有包只通过显式 `exports` 公开 API；生产示例读取编译后的包，不通过 alias 绕回源码。
 
 ## 三个扩展接口
@@ -62,9 +70,13 @@ example/office-web、example/minimal-vanilla
 
 详细契约见 [扩展接口](./extension-contracts.md)，可运行装配见 [最小示例](../../example/minimal-vanilla/src/main.ts)。
 
+也可使用 `mountScene`，传入延迟加载的 `SceneAssembly`；此入口统一拥有运行时、视图、缩放和取消清理。最小办公室与独立场景使用同一装配接口。
+
 ## 素材交付
 
 素材不混入 npm 代码包。`npm run assets:build` 生成图集及 `characters/visuals/*.json` 中立能力清单；清单的 `source.uri` 相对清单 URL，由宿主解析。
+
+生成的 `public/asset-packs/` 提供家具、每个人物和完整办公室的独立版本清单。`assets:export:pack` 按清单导出并校验哈希，`characters:build -- --ids ... --out ...` 可只制作指定人物。通用播放器不要求办公动作，专属规则由 `assets-office/frame` 提供。
 
 外部项目使用 `npm run assets:export -- /absolute/path/to/new-public-directory` 导出资源、版本摘要和许可证。目标必须不存在，防止覆盖已有目录。宿主可以部署在根路径、子路径或 CDN；跨域资源需要对应 CORS 配置。
 
@@ -80,6 +92,8 @@ npm run dev -w @pixoffice/example-minimal-vanilla -- --port 5174
 npm run packages:build
 npm run packages:check                # 依赖方向、显式入口、产物
 npm run packages:smoke                # 打 tgz，在临时目录真实安装、执行并检查类型
+npm run dev:isolated                  # 无办公室依赖的独立场景
+npm run build:isolated                # 只构建独立示例自己的资源与代码
 npm test
 npm run lint
 npm run build
@@ -98,6 +112,7 @@ npm run build
 | 场景开发 | scene-office 或新 scene-classroom | core 与 pixi 入口、布局与交互验证 |
 | 应用集成 | example/office-web | 页面、聊天、业务 API 和状态展示 |
 | 素材制作 | art、assets | 尺寸、注册点、动作、能力清单与视觉验收 |
+| 办公室素材集成 | assets-office | 办公动作要求、绑定、专属资源解析与预览兼容 |
 
 分工不要求一个人一个包。公共契约修改需先讨论，修改边缘实现不应要求其他成员同步改代码。
 
@@ -105,6 +120,6 @@ npm run build
 
 外部命令仍为 `2.0`，存档版本、ID、地面整数格、旧动作入口、图像内容及动作时序保持。原 `src/` 已迁移，依赖仓库内部路径的消费者需要改用包入口；示例保留少量转发文件供旧页面和素材测试使用，不是第二套内核。
 
-当前只验证办公室和帧实现；测试替身不等于真实骨骼支持。不支持热换场景/外观、远程安装任意插件、自动 IK 或任意家具接触适配。缺少动作能力应明确拒绝，不能换一个姿态冒充。
+当前验证办公室、独立行走示例和帧实现；测试替身不等于真实骨骼支持。不支持运行中世界热替换/外观热换、远程安装任意插件、自动 IK 或任意家具接触适配。缺少动作能力应明确拒绝，不能换一个姿态冒充。
 
 包版本暂统一 `0.1.0`；内部依赖使用精确版本。正式发布前需要确定 npm scope 权限、版本策略、真实骨骼兼容矩阵与发布流程。本次不会执行 publish。

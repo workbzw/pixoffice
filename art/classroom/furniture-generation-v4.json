@@ -1,0 +1,26 @@
+{
+  "createdAt": "2026-10-07",
+  "tool": "built-in image_gen",
+  "file": "desk-v4.png",
+  "generatedFile": "exec-49403fdc-98a9-4ed1-9d9e-485e0c68d988.png",
+  "inputs": ["desk-v3.png", "room.png"],
+  "steps": [
+    {
+      "generatedFile": "exec-44b844d7-ff93-4054-b24d-7f3d6af93e06.png",
+      "prompt": "Use case: precise-object-edit. Asset: a single isolated student classroom desk game sprite on true transparent background. Image 1 is the current desk/material reference; image 2 is the classroom camera/style reference. Redraw ONLY the desk asset, no chair, no room, no people. This desk is currently seen from a low camera and its legs look much too tall in the game. Render a NORMAL-height single-person school desk from a substantially elevated, centered, symmetric front camera, looking DOWN at the desktop (about 65-70 degrees above horizontal). Preserve warm pale maple top, rounded corners, slender matte white metal legs with small dark rubber feet, small shallow white storage tray, open notebook and one pencil. Normal physical furniture, not coffee table, not bench. Use high camera foreshortening rather than squashing the image: the desktop must be broad and clearly visible as a deep trapezoid, its near front edge approximately horizontal; projected vertical height of legs below the tabletop should be modest. Composition target: visible desktop width about 1200 px, visible desktop projected depth about 350 px, and projected height from near desktop edge to nearest feet about 220 px. Thus the desk visible total height is about half its visible width; most visible height is tabletop depth, NOT legs. Four legs, evenly planted, nearest pair beneath the near corners and far pair behind, no long dangling legs. Single student desk 80cm wide by 50cm deep by 60cm tall in real proportions, stylized clean softly shaded 3D furniture matching the bright miniature classroom. Camera centered, NO left-right yaw, NO rotated diagonal footprint. Entire object visible, clean alpha edges, no white halo, no ground shadow, no background, no other objects, no text. Important: do not preserve the low-angle perspective of image 1; adopt the elevated game camera of image 2."
+    },
+    {
+      "generatedFile": "exec-49403fdc-98a9-4ed1-9d9e-485e0c68d988.png",
+      "prompt": "Use case: precise-object-edit. Edit target: the isolated school desk in image 1. TWO precise fixes only. 1) The projected front legs are still twice too tall. Preserve exactly the wide, deep tabletop and notebook/pencil, preserve its position and dimensions, but shorten ONLY the white metal legs below it by 50 percent. The near tabletop edge is around y=460; nearest feet MUST end around y=680, not y=900. Far legs similarly finish around y=560. Keep all four legs, rubber feet, storage tray and open underside. Result must still look like a school desk, not a solid cabinet or bench. This is a high-angle game sprite proportion correction. Do NOT shrink/flatten the tabletop or the full image. 2) Remove ALL outer glow, beige haze, cast shadow, and soft luminous background surrounding and underneath the object. Every pixel not belonging to the solid desk/notebook/pencil must be fully transparent, including between legs and below tray. Crisp clean antialiased silhouette, no halo, no floor. Canvas and desktop unchanged. One desk only, no people/chair/room/text."
+    }
+  ],
+  "calibration": {
+    "sourceWidth": 1536,
+    "sourceHeight": 1024,
+    "visibleWidth": 1200,
+    "nearEdgeY": 460,
+    "nearestFootY": 713,
+    "displayWidth": 90,
+    "standingContactToDeskFeet": 10
+  }
+}

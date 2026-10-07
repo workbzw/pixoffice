@@ -3,7 +3,7 @@ import path from 'node:path'
 import { createHash } from 'node:crypto'
 import sharp from 'sharp'
 import { z } from 'zod'
-import { CharacterSourceSchema } from '@pixoffice/animation-frame/packSchema'
+import { CharacterSourceSchema } from '@pixoffice/assets-office/frame/packSchema'
 import { CharacterStandardSchema, measureFrame, validateCharacterStandard } from './standard.mjs'
 
 const fileName = z.string().regex(/^[a-zA-Z0-9_-]+(?:\/[a-zA-Z0-9_.-]+)*\.[a-zA-Z0-9]+$/)

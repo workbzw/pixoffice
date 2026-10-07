@@ -1,0 +1,23 @@
+{
+  "createdAt": "2026-10-07",
+  "tool": "built-in image_gen",
+  "file": "desk-v5.png",
+  "generatedFile": "exec-087aafc2-8ee4-4a15-b717-ff0e88efb0ec.png",
+  "sourceFile": "desk-v4.png",
+  "prompt": "Use case: precise-object-edit. Image 1 is the target desk with legs too short; image 2 is a rejected edit with legs too LONG. Create the same desk with leg length exactly HALFWAY between the two. Keep image 1 tabletop, notebook, pencil, tray, canvas size and tabletop position unchanged. Nearest rubber feet in image 1 end about y=713 and in image 2 end about y=908. In the requested output the nearest rubber feet must end about y=805, NOT y=900. The near tabletop edge remains about y=460. Far pair of feet should end about y=645. Only alter length of white legs, preserve leg width, rubber foot size, angle and spacing. This halfway geometry is essential. Do not copy the tall legs in image 2. Do not enlarge or shrink the tabletop. True transparent object-only background, no shadow, no floor, no glow. One desk, no other objects or furniture.",
+  "rejectedOutput": {
+    "generatedFile": "exec-fb374b51-cb98-4b6c-8d83-3d2e423ec966.png",
+    "reason": "Legs were extended too far.",
+    "prompt": "Use case: precise-object-edit. Edit target: the single classroom desk in image 1. Lengthen ONLY all four metal legs below the desktop by about 35 percent. Current near tabletop edge is around y=460 and near feet around y=713. New near feet should end around y=800, with far feet lengthened proportionally to around y=680. Keep the wooden tabletop, open notebook, pencil, storage tray, canvas size 1536x1024, desktop dimensions, desktop pixel position, perspective, lighting, material colors, leg thickness, and rubber foot caps unchanged. The desk must now read as a normal school desk with substantial open knee space, not a low coffee table or bench. Do not restore the previous excessively long dangling legs. Do not scale or squash the full image. Clean object-only true transparency including outside its silhouette and between its legs; no floor, no glow, no shadow, no chair, no people, no text. The only structural change is a modest extension of the existing legs."
+  },
+  "calibration": {
+    "sourceWidth": 1536,
+    "sourceHeight": 1024,
+    "visibleWidth": 1200,
+    "nearEdgeY": 460,
+    "nearestFootY": 823,
+    "displayWidth": 90,
+    "seatedSeatY": 351.5,
+    "seatedFootRecess": 5
+  }
+}

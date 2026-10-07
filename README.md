@@ -4,7 +4,7 @@
 
 [官网：pixoffice.online](https://pixoffice.online/?lang=zh)
 
-[完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/)
+[完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/) · [教室](./example/classroom/README.md)
 
 ![PixOffice 多人走动与工位交流演示](./docs/office-demo.gif)
 
@@ -14,21 +14,25 @@ PixOffice 是独立的二维办公室前端项目，采用 Vite + React + Pixi�
 
 保留原有人物帧动画、坐姿和办公室素材，支持工位拜访、多人会议、持续专注、白板内容、插件启停和网格拖放布局。
 
-地图与人物行走统一使用整数格：人物 1×1 格、桌椅 2×2 格、白板 2×1 格。家具通过入口格、使用格和资源预约驱动互动；平滑动画只在渲染层插值。当前命令协议为 `2.0`，详见[整数格与家具互动](./docs/integer-grid-and-interactions.md)。
+地图与人物行走统一使用整数格。办公室默认人物 1×1 格、桌椅 2×2 格、白板 2×1 格；教室使用独立的家具占地规格。家具通过入口格、使用格和资源预约驱动互动；平滑动画只在渲染层插值。当前命令协议为 `2.0`，详见[整数格与家具互动](./docs/integer-grid-and-interactions.md)。
 
 [业务页面数据接入](./docs/dashboard-integration.md) · [插件架构、场景协议与外部接入](./docs/plugin-runtime.md) · [地图编辑器与 AI 编辑协议](./docs/map-editor.md) · [长期协议设计草案](./docs/scene-protocol-v1.md)
 
-[场景扩展与动画架构](./docs/architecture/README.md)：当前办公室包、帧动画适配器、公共接入接口与后续迁移边界。教室和骨骼引擎尚未实现。
+[场景扩展与动画架构](./docs/architecture/README.md)：办公室与教室平级独立，复用公共运行时和帧动画适配器。教室已有讲课、点名回答和回座位；骨骼引擎尚未实现。
 
 ## 包与示例
 
-项目使用 npm workspaces。五个包分别负责：`contracts` 公共契约、`runtime` 核心运行时、`renderer-pixi` 渲染宿主、`animation-frame` 帧播放器、`scene-office` 办公室场景。
+项目使用 npm workspaces。四个通用包：`contracts` 公共契约、`runtime` 核心运行时、`renderer-pixi` 渲染宿主、`animation-frame` 帧播放器。办公室由 `scene-office`、`assets-office` 组成；教室由平级独立的 `scene-classroom`、`assets-classroom` 组成，场景之间不互相依赖。
 
 - [完整办公室](./example/office-web)：保留当前 React 界面、聊天、编辑器与 HTTP 接入。
 - [最小装配](./example/minimal-vanilla)：只通过公开包入口拼装办公室，不依赖 React。
+- [独立场景](./example/isolated-scene)：不安装办公室包，只装配一个可行走人物；`npm run dev:isolated`。
+- [独立教室](./example/classroom)：教师讲课、学生回答、黑板更新；`npm run dev:classroom`。独立部署用 `npm run build:classroom`，产物不含办公室资源。
 - [架构与分工](./docs/architecture/README.md)：依赖方向、资源交付、骨骼/场景开发入口。
 
 `npm run packages:build` 构建包；`npm run packages:check` 检查边界；`npm run packages:smoke` 将 tgz 安装到仓库之外验证。代码包目前只在仓库内开发，未发布 npm。素材独立部署，可用 `npm run assets:export -- /absolute/path/to/new-public-directory` 导出。
+
+场景通过 `SceneAssembly` 按需装配；家具和各人物可按版本清单单独导出，详见[场景隔离与按需交付](./docs/architecture/scene-isolation.md)。独立示例使用自己的 public 目录，完整官网仍包含办公室资源。
 
 ## 办公室对话
 
@@ -70,7 +74,7 @@ npm install
 npm run dev
 ```
 
-开发服务首页 `/` 为项目介绍，顶部菜单可进入完整办公室 `/office/` 和最小装配 `/minimal/`。`npm run build` 同时生成三个页面，部署时仍使用根目录 `dist/`。
+开发服务首页 `/` 为项目介绍，顶部菜单可进入完整办公室 `/office/`、最小装配 `/minimal/` 和教室 `/classroom/`。`npm run build` 同时生成四个页面，部署时仍使用根目录 `dist/`。
 
 页面顶部指标、左侧员工、右侧任务流由业务数据源驱动。要接入一个独立的示例业务进程，另开终端执行 `npm run dashboard-example`，再以 `VITE_OFFICE_DASHBOARD_URL=http://127.0.0.1:18770 npm run dev` 启动页面。接口格式和自定义适配器见[业务页面数据接入](./docs/dashboard-integration.md)。
 

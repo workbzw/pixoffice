@@ -1,0 +1,16 @@
+{
+  "createdAt": "2026-10-07",
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "file": "desk-v3.png",
+      "generatedFile": "exec-7845a0dd-ac75-4075-bf8f-f13c588fcb5f.png",
+      "prompt": "Use case: stylized-concept. ONE normal school desk, isolated sprite, real transparent background. Slightly elevated straight-on FRONT camera, symmetric, no isometric angle. IMPORTANT projected silhouette ratio: total visible WIDTH is exactly 1.6 times total visible HEIGHT, a normally proportioned wide classroom desk with long normal legs, NOT a low table. Thin rectangular pale birch tabletop, white tubular steel legs with gray foot caps, shallow white book tray under top. One small open notebook and pencil on tabletop. Camera elevation lets us see tabletop. Four straight clean legs, ample open knee space underneath, leg length about 60 percent of entire image object's height. Clean friendly 3D miniature furniture render, crisp silhouette, soft matte lighting. Entire object fits in canvas with small padding. No people, no chair, no floor, no shadows, no halo, no aura or haze, no background color. Empty surrounding alpha, including between legs."
+    },
+    {
+      "file": "chair-solid-v1.png",
+      "generatedFile": "exec-8cc5eee0-d73e-400d-bc89-c44c6897c1f9.png",
+      "prompt": "Use case: stylized-concept. Create ONE classroom chair as a clean isolated 3D game sprite on genuine transparent background. View the BACK of the chair, camera centered, slightly elevated looking down about 20 degrees, symmetrical straight rear view, NOT isometric. An ordinary modern school chair: one continuous SOLID opaque muted powder-blue molded shell, rounded rectangular backrest smoothly joining the seat with NO holes and NO gap between back and seat. Backrest not tall, shoulder-blade height. Four white metal legs at ordinary chair proportions, plain gray foot caps. Seat faces AWAY from camera. The rear of the smooth solid shell is what we see, no opening at lumbar area, no slats, no cutouts, no armrests, no cushion. Conventional school chair dimensions, tasteful miniature furniture render with soft matte materials, clean soft studio lighting but absolutely NO glow, aura, blur, cast shadow, floor plane, text, people or other furniture. Crisp object-only alpha. Entire chair visible, fills 85% of square canvas."
+    }
+  ]
+}

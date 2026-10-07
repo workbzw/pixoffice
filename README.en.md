@@ -4,7 +4,7 @@
 
 [Website: pixoffice.online](https://pixoffice.online/?lang=en)
 
-[Full Office](https://pixoffice.online/office/) · [Minimal Example](https://pixoffice.online/minimal/)
+[Full Office](https://pixoffice.online/office/) · [Minimal Example](https://pixoffice.online/minimal/) · [Classroom](./example/classroom/README.md)
 
 ![PixOffice demo: characters walking and talking at workstations](./docs/office-demo.gif)
 
@@ -18,19 +18,23 @@ Maps and character movement use integer grid cells: characters occupy 1×1 cell,
 
 [Dashboard Data Integration](./docs/dashboard-integration.md) · [Plugins, Scene Protocol, and External Integration](./docs/plugin-runtime.md) · [Map Editor and AI Editing Protocol](./docs/map-editor.md) · [Long-Term Protocol Draft](./docs/scene-protocol-v1.md)
 
-[Scene Extensions and Animation Architecture](./docs/architecture/README.md) covers the office scene package, frame animation adapter, public integration interfaces, and future migration boundaries. Classroom scenes and skeletal animation engines are not implemented yet.
+[Scene Extensions and Animation Architecture](./docs/architecture/README.md) covers independent office and classroom packages, the shared runtime, frame animation, and integration interfaces. The classroom supports lectures, student answers and returning to seats. A skeletal animation engine is not implemented yet.
 
 The website supports Chinese and English. The example interfaces, screenshots, and linked technical documentation are currently in Chinese.
 
 ## Packages and Examples
 
-The project uses npm workspaces. Five packages define the main boundaries: `contracts` for shared contracts, `runtime` for the core runtime, `renderer-pixi` for the rendering host, `animation-frame` for frame playback, and `scene-office` for the office scene.
+The project uses npm workspaces. Four generic packages define the core boundaries: `contracts`, `runtime`, `renderer-pixi`, and `animation-frame`. The optional office pair (`scene-office`, `assets-office`) and classroom pair (`scene-classroom`, `assets-classroom`) are peers and do not depend on each other.
 
 - [Full Office](./example/office-web): the React interface, chat, editor, and HTTP integration.
 - [Minimal Example](./example/minimal-vanilla): an office assembled only through public package exports, without React.
+- [Independent Scene](./example/isolated-scene): one walking character, without either office package. Run `npm run dev:isolated`.
+- [Independent Classroom](./example/classroom): lectures, student answers and a live blackboard. Run `npm run dev:classroom`; `npm run build:classroom` produces an independent deployment without office resources.
 - [Architecture and Responsibilities](./docs/architecture/README.md): dependency direction, asset delivery, and entry points for scene and skeletal animation development.
 
 Use `npm run packages:build` to build the packages, `npm run packages:check` to check boundaries, and `npm run packages:smoke` to install the packaged tarballs outside the repository for validation. The code packages are developed within this repository and have not been published to npm. Assets are deployed separately and can be exported with `npm run assets:export -- /absolute/path/to/new-public-directory`.
+
+Scenes are lazily assembled through `SceneAssembly`. Furniture and individual characters can be exported from versioned catalogs; see [Scene Isolation and Selective Delivery](./docs/architecture/scene-isolation.md). The independent example has its own public directory. The complete website still includes office resources.
 
 ## Office Chat
 
@@ -72,7 +76,7 @@ npm install
 npm run dev
 ```
 
-The development server serves the project website at `/`. Its top navigation opens the full office at `/office/` or the minimal example at `/minimal/`. `npm run build` generates all three pages in the root `dist/` directory for deployment.
+The development server serves the project website at `/`. Its navigation opens the full office at `/office/`, the minimal example at `/minimal/`, and the classroom at `/classroom/`. `npm run build` generates all four pages in the root `dist/` directory for deployment.
 
 The top metrics, employee sidebar, and task feed are driven by a business data source. To connect the standalone sample business process, run `npm run dashboard-example` in another terminal, then start the frontend with `VITE_OFFICE_DASHBOARD_URL=http://127.0.0.1:18770 npm run dev`. See [Dashboard Data Integration](./docs/dashboard-integration.md) for the interface format and custom adapters.
 

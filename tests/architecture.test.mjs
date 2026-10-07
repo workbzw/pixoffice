@@ -48,15 +48,26 @@ test('headless core cannot import office definitions, Pixi, React, application o
 })
 test('generic rendering and presentation do not import concrete scenes or frame players', async () => {
   const graph = await dependencies('renderer-pixi/src/index.ts')
-  assert(!graph.files.some(file => /^(scene-office|animation-frame)\//.test(file)), graph.files.join('\n'))
+  assert(!graph.files.some(file => /^(scene-office|assets-office|scene-classroom|assets-classroom|animation-frame)\//.test(file)), graph.files.join('\n'))
   assert(!graph.imports.some(id => id.startsWith('react')))
+})
+
+test('classroom and office are peer scenes; classroom core is headless and assets cannot pull in scene rules', async () => {
+  const core = await dependencies('scene-classroom/src/core/index.ts')
+  assert(!core.imports.some(id => /^(pixi|react)/.test(id)))
+  const presentation = await dependencies('scene-classroom/src/pixi/index.ts')
+  assert(!presentation.files.some(file => /^(scene-office|assets-office|animation-frame|assets-classroom)\//.test(file)))
+  const assets = await dependencies('assets-classroom/src/index.ts')
+  assert(!assets.files.some(file => /^(scene-|assets-office|runtime|renderer-pixi)/.test(file)))
+  const office = await dependencies('scene-office/src/core/index.ts')
+  assert(!office.files.some(file => /classroom/.test(file)))
 })
 test('office core is headless and the frame adapter has no office or UI imports', async () => {
   const office = await dependencies('scene-office/src/core/index.ts')
   assert(!office.imports.includes('pixi.js'))
   assert(!office.files.some(file => /^(renderer-pixi|animation-frame)\//.test(file)))
   const frame = await dependencies('animation-frame/src/FrameAdapter.ts')
-  assert(!frame.files.some(file => /^(scene-office|renderer-pixi|runtime)\//.test(file)), frame.files.join('\n'))
+  assert(!frame.files.some(file => /^(scene-office|assets-office|renderer-pixi|runtime)\//.test(file)), frame.files.join('\n'))
 })
 
 test('an independent scene runs without an office roster, fixed workstation or renderer', async t => {

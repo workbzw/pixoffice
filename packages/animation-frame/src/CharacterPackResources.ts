@@ -3,18 +3,20 @@ import { characterFrameDependencies, type CharacterManifest } from './packSchema
 import { textureLoadQueue } from './AssetLoadQueue.ts'
 
 /** Owns progressive atlas pages; callers retain the pack through ResourceLeaseCache. */
-export class CharacterPackResources {
-  readonly manifest: CharacterManifest
+export class CharacterPackResources<T extends CharacterManifest = CharacterManifest> {
+  readonly manifest: T
   readonly pageUrls: string[]
   readonly textures = new Map<string, Texture>()
   private pages = new Map<number, Texture>()
   private pending = new Map<number, Promise<void>>()
   private disposed = false
   private disposal?: Promise<void>
+  private dependencies: (manifest: T, names: string[]) => string[]
 
-  constructor(manifest: CharacterManifest, pageUrls: string[]) {
+  constructor(manifest: T, pageUrls: string[], dependencies: (manifest: T, names: string[]) => string[] = characterFrameDependencies) {
     this.manifest = manifest
     this.pageUrls = pageUrls
+    this.dependencies = dependencies
   }
 
   get isComplete() { return this.pages.size === this.manifest.pages.length }
@@ -24,7 +26,7 @@ export class CharacterPackResources {
     return this.ensurePages(this.manifest.pages.flatMap((page, index) => !grouped || page.group === 'startup' ? [index] : []))
   }
   ensureClips(names: string[]) {
-    return this.ensurePages(characterFrameDependencies(this.manifest, names).map(key => this.manifest.frames[key].page))
+    return this.ensurePages(this.dependencies(this.manifest, names).map(key => this.manifest.frames[key].page))
   }
   ensureAll() { return this.ensurePages(this.manifest.pages.map((_, index) => index)) }
 

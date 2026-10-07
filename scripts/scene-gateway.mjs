@@ -4,7 +4,8 @@ const canonical = value => Array.isArray(value) ? `[${value.map(canonical).join(
   ? `{${Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([k, v]) => `${JSON.stringify(k)}:${canonical(v)}`).join(',')}}` : JSON.stringify(value)
 
 // Loopback-only development relay. Production hosts own authentication and durable queues.
-export function createSceneGateway({ now = Date.now } = {}) {
+export function createSceneGateway({ now = Date.now, sceneId = 'office-1' } = {}) {
+  if (typeof sceneId !== 'string' || !/^[a-zA-Z0-9][a-zA-Z0-9._:-]{0,99}$/.test(sceneId)) throw new Error('Invalid configured scene ID')
   const pending = new Map()
   const commands = new Map()
   const events = new Map()
@@ -22,7 +23,7 @@ export function createSceneGateway({ now = Date.now } = {}) {
     try {
       if (url.pathname === '/scene/connect' && req.method === 'POST') {
         const body = JSON.parse(await readBody(req))
-        if (typeof body.runtimeId !== 'string' || body.runtimeId.length > 100 || body.sceneId !== 'office-1') throw new Error('Invalid scene/runtime')
+        if (typeof body.runtimeId !== 'string' || body.runtimeId.length > 100 || body.sceneId !== sceneId) throw new Error('Invalid scene/runtime')
         if (owner && owner.expiresAt > now() && owner.id !== body.runtimeId) throw Object.assign(new Error('Another runtime owns this scene'), { status: 409 })
         owner = { id: body.runtimeId, expiresAt: now() + 10000 }
         sendJson(res, 200, { leaseMs: 10000, serverTime: now(), epoch }); return true
@@ -30,7 +31,7 @@ export function createSceneGateway({ now = Date.now } = {}) {
       if (url.pathname === '/scene/commands' && req.method === 'POST') {
         const payload = JSON.parse(await readBody(req))
         const list = Array.isArray(payload?.commands) ? payload.commands : [payload]
-        if (!list.length || list.length > 32 || list.some(c => typeof c?.commandId !== 'string' || c.commandId.length > 100 || c.sceneId !== 'office-1')) throw new Error('Invalid command envelope')
+        if (!list.length || list.length > 32 || list.some(c => typeof c?.commandId !== 'string' || c.commandId.length > 100 || c.sceneId !== sceneId)) throw new Error('Invalid command envelope')
         if (new Set(list.map(c => c.commandId)).size !== list.length) throw new Error('Duplicate command IDs in batch')
         if (pending.size >= 128) throw Object.assign(new Error('Queue full'), { status: 429 })
         const prior = list.map(c => commands.get(c.commandId))

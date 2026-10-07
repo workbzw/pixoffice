@@ -3,17 +3,23 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "vite", "build": "vite build" },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
   "dependencies": {
     "@pixoffice/contracts": "0.1.0",
     "@pixoffice/runtime": "0.1.0",
     "@pixoffice/renderer-pixi": "0.1.0",
     "@pixoffice/animation-frame": "0.1.0",
     "@pixoffice/scene-office": "0.1.0",
+    "@pixoffice/scene-classroom": "0.1.0",
+    "@pixoffice/assets-classroom": "0.1.0",
     "lucide-react": "^1.48.0",
     "pixi.js": "^8.18.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "zod": "^4.6.5"
+    "zod": "^4.6.5",
+    "@pixoffice/assets-office": "0.1.0"
   }
 }

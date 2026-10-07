@@ -1,4 +1,4 @@
-import { FrameSprite } from '@pixoffice/animation-frame/FrameSprite'
+import { OfficeFrameSprite as FrameSprite } from '@pixoffice/assets-office/frame'
 import type { AgentState } from '@pixoffice/scene-office/types'
 import type { SeatTransition } from '@pixoffice/runtime/model'
 import type { CharacterFacing } from '@pixoffice/contracts/facing'

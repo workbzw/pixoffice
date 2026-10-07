@@ -1,0 +1,12 @@
+{
+  "name": "@pixoffice/example-classroom", "private": true, "type": "module",
+  "scripts": {
+    "assets": "node build-assets.mjs", "predev": "npm run assets", "dev": "vite --host 127.0.0.1",
+    "prebuild": "npm run assets", "build": "vite build"
+  },
+  "dependencies": {
+    "@pixoffice/contracts": "0.1.0", "@pixoffice/runtime": "0.1.0", "@pixoffice/renderer-pixi": "0.1.0",
+    "@pixoffice/animation-frame": "0.1.0", "@pixoffice/scene-classroom": "0.1.0", "@pixoffice/assets-classroom": "0.1.0",
+    "pixi.js": "^8.18.1", "react": "^19.2.6", "react-dom": "^19.2.6", "lucide-react": "^1.48.0"
+  }
+}

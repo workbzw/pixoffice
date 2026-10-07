@@ -3,7 +3,7 @@ import { createSceneGateway } from './scene-gateway.mjs'
 
 const port = Number(process.env.OFFICE_ACTION_GATEWAY_PORT ?? 8765)
 const actions = []
-const sceneGateway = createSceneGateway()
+const sceneGateway = createSceneGateway({ sceneId: process.env.PIXOFFICE_SCENE_ID ?? 'office-1' })
 
 function sendJson(res, status, data) {
   const body = JSON.stringify(data)

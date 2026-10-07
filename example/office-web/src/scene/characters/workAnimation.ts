@@ -1,1 +1,1 @@
-export * from '@pixoffice/animation-frame/workAnimation'
+export * from '@pixoffice/assets-office/frame/workAnimation'

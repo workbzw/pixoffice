@@ -1,4 +1,6 @@
 export { SceneView } from './SceneView.ts'
+export { mountScene, createAppearanceResolver } from './assembly.ts'
+export type { SceneAssembly, MountSceneOptions } from './assembly.ts'
 export { AnimationRegistry } from './animation/AnimationRegistry.ts'
 export type { SceneViewOptions } from './SceneView.ts'
 export type { ScenePresentationPack } from './ScenePresentationPack.ts'

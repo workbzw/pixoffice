@@ -3,7 +3,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 import { createServer } from 'vite'
-import { CharacterSourceSchema } from '@pixoffice/animation-frame/packSchema'
+import { CharacterSourceSchema } from '@pixoffice/assets-office/frame/packSchema'
 import { registerMarvisPoses } from './register-marvis-poses.mjs'
 import { rejectLegacyPublication } from './legacy-authoring.mjs'
 

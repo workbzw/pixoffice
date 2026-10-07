@@ -5,7 +5,7 @@ if (process.argv.includes('--publish')) rejectLegacyPublication()
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
-import { CharacterSourceSchema } from '@pixoffice/animation-frame/packSchema'
+import { CharacterSourceSchema } from '@pixoffice/assets-office/frame/packSchema'
 import { measureFrame, validateCharacterStandard } from './standard.mjs'
 import { buildCharacter } from './build.mjs'
 

@@ -3,15 +3,15 @@ import { test } from 'node:test'
 import { createSceneGateway } from '../scripts/scene-gateway.mjs'
 
 const command = id => ({ protocolVersion: '1.0', sceneId: 'office-1', commandId: id, type: 'actor.presentation.set', actorId: 'marvis', status: 'working', title: 'test', sourceRevision: 1 })
-function setup() {
+function setup(sceneId = 'office-1') {
   let now = 0
-  const handler = createSceneGateway({ now: () => now })
+  const handler = createSceneGateway({ now: () => now, sceneId })
   const request = async (path, method = 'GET', body, owner = 'runtime-one') => {
     let result
     await handler({ method, headers: { 'x-scene-runtime': owner } }, {}, new URL(path, 'http://localhost'), (_res, status, data) => { result = { status, data } }, async () => JSON.stringify(body))
     return result
   }
-  return { request, advance: ms => { now += ms }, connect: (owner = 'runtime-one') => request('/scene/connect', 'POST', { runtimeId: owner, sceneId: 'office-1' }, owner) }
+  return { request, advance: ms => { now += ms }, connect: (owner = 'runtime-one') => request('/scene/connect', 'POST', { runtimeId: owner, sceneId }, owner) }
 }
 
 test('relay command reads are non-destructive; receipts and final events are separate', async () => {
@@ -54,4 +54,16 @@ test('gateway restarts expose a new epoch so clients reset transport cursors', a
   const a = await setup().connect(), b = await setup().connect()
   assert.equal(typeof a.data.epoch, 'string')
   assert.notEqual(a.data.epoch, b.data.epoch)
+})
+
+test('a configured classroom relay accepts only its own scene while the default remains office-compatible', async () => {
+  const { request, connect } = setup('classroom')
+  assert.equal((await connect()).status, 200)
+  assert.equal((await request('/scene/commands', 'POST', command('foreign'))).status, 400)
+  const lesson = { protocolVersion: '2.0', sceneId: 'classroom', commandId: 'lesson', type: 'activity.start', capability: 'classroom.lecture', participants: [], params: { text: 'Hello' } }
+  assert.equal((await request('/scene/commands', 'POST', lesson)).status, 202)
+  assert.equal((await request('/scene/commands')).data.commands[0].payload.sceneId, 'classroom')
+  assert.equal((await request('/scene/connect', 'POST', { runtimeId: 'runtime-one', sceneId: 'office-1' })).status, 400)
+  assert.equal((await setup().connect()).status, 200)
+  assert.throws(() => createSceneGateway({ sceneId: '' }), /Invalid configured scene ID/)
 })

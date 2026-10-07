@@ -1,1 +1,1 @@
-export * from '@pixoffice/animation-frame/packSchema'
+export * from '@pixoffice/assets-office/frame/packSchema'

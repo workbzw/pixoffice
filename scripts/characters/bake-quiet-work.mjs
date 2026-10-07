@@ -1,7 +1,7 @@
 import { cp, mkdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import sharp from 'sharp'
-import { sampleQuietWork } from '@pixoffice/animation-frame/workAnimation'
+import { sampleQuietWork } from '@pixoffice/assets-office/frame/workAnimation'
 import { buildCharacter } from './build.mjs'
 
 if (process.argv.includes('--publish')) {

@@ -1,0 +1,11 @@
+* { box-sizing: border-box; }
+body { margin: 0; color: #343b38; background: #ededec; font: 14px system-ui, sans-serif; letter-spacing: 0; }
+main { max-width: 1100px; margin: 24px auto; padding: 0 16px; }
+header, footer { display: flex; align-items: center; gap: 12px; padding: 16px 0; flex-wrap: wrap; }
+h1 { font-size: 18px; margin: 0; }
+output { margin-left: auto; color: #66736b; }
+#scene { width: 100%; height: min(72vh, 640px); min-height: 260px; background: white; border-radius: 8px; overflow: hidden; }
+button { min-height: 40px; padding: 0 18px; background: white; color: inherit; border: 1px solid #cfd4d0; border-radius: 6px; cursor: pointer; font: inherit; }
+button:hover:enabled { background: #e7f2ed; }
+button:disabled { opacity: .45; cursor: default; }
+button:focus-visible { outline: 2px solid #328766; outline-offset: 3px; }

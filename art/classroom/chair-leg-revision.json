@@ -1,0 +1,8 @@
+{
+  "createdAt": "2026-10-07",
+  "tool": "built-in image_gen",
+  "file": "chair-solid-v2.png",
+  "reference": "chair-solid-v1.png",
+  "generatedFile": "exec-478f220b-7f68-4113-8a81-96da073b0dfd.png",
+  "prompt": "Use case: precise-object-edit. Edit the provided transparent classroom chair sprite. Make exactly ONE small change: shorten ONLY the visible white metal legs below the blue seat by 15 percent (new leg length 85% of original). Bring all four foot caps upward proportionally; keep their normal size, do not squash the caps. Keep the entire blue opaque backrest/seat shell EXACTLY the same size, shape, width, position, color and lighting. Keep the same chair width, tube thickness, camera, straight rear view, and image canvas size/transparent margins. Original solid shell extends approximately from y=85 to y=635; preserve this upper part. Original closest feet end near y=1188: new feet should end around y=1105. Do not shift, rescale, enlarge or regenerate the shell. No holes between back and seat. Do not shorten legs more than 15 percent. No other design change. Preserve genuine alpha transparency, clean edges, no shadow, no glow, no floor, no added objects or people."
+}

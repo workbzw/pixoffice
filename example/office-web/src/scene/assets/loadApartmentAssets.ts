@@ -1,10 +1,10 @@
 // Office defaults are retained only for legacy preview and integration callers.
 import { AGENT_ROSTER } from '../layout/officeLayout.ts'
-import { acquireCharacterPacks, getCharacterPack } from '@pixoffice/animation-frame/resources'
-import { resolveCharacterClip } from '@pixoffice/animation-frame/packSchema'
+import { acquireCharacterPacks, getCharacterPack } from '@pixoffice/assets-office/frame/resources'
+import { resolveCharacterClip } from '@pixoffice/assets-office/frame/packSchema'
 import { characterPoseClip, supportsOfficePose } from '../../contracts/characterPose.ts'
 import type { PoseSupport } from '@pixoffice/runtime/actionContract'
-export * from '@pixoffice/animation-frame/resources'
+export * from '@pixoffice/assets-office/frame/resources'
 
 export const supportsCharacterPose: PoseSupport = (id, posture, facing) => {
   const pack = getCharacterPack(id)

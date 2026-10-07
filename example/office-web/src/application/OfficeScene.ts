@@ -3,6 +3,7 @@ import type { SceneRuntime } from '@pixoffice/runtime'
 import type { Container } from 'pixi.js'
 import type { SceneViewOptions, SceneLoadProgress, SceneActionProgress } from '@pixoffice/renderer-pixi/SceneView'
 import { AnimationRegistry } from '@pixoffice/renderer-pixi/animation/AnimationRegistry'
+import { characterAssets } from '@pixoffice/assets-office/frame/resources'
 import { FrameAdapter } from '@pixoffice/animation-frame/FrameAdapter'
 import { createOfficePresentation } from '@pixoffice/scene-office/pixi'
 import { resolveOfficeAppearance } from './officeFrames.ts'
@@ -51,7 +52,7 @@ export class OfficeScene extends SceneView {
       onStep: elapsedMs => runtime.tick(elapsedMs),
       dispatchCommand: command => runtime.submit(command),
       pack: createOfficePresentation(() => artwork.enabled),
-      animations: options.animations ?? new AnimationRegistry<Container>().register(new FrameAdapter()),
+      animations: options.animations ?? new AnimationRegistry<Container>().register(new FrameAdapter(manifest => characterAssets.acquire(manifest.asset.id, manifest.source.uri))),
       resolveAppearance: async id => {
         const manifest = await (options.resolveAppearance ?? resolveOfficeAppearance)(id)
         manifests.set(id, manifest)

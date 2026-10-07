@@ -1,5 +1,7 @@
 # 拆包验收记录
 
+本文记录首次五包拆分。后续增加 `assets-office` 并完成独立场景验证，当前状态见 [场景隔离与按需装配](./scene-isolation.md)。
+
 实施项目：PixOffice；分支：`main`。代码版本以 Git 提交记录为准；npm 包尚未发布。
 
 ## 本轮完成

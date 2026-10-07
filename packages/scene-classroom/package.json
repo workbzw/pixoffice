@@ -1,0 +1,14 @@
+{
+  "name": "@pixoffice/scene-classroom",
+  "version": "0.1.0",
+  "type": "module",
+  "license": "MIT",
+  "files": ["dist", "LICENSE", "README.md"],
+  "exports": {
+    ".": { "types": "./dist/core/index.d.ts", "import": "./dist/core/index.js" },
+    "./pixi": { "types": "./dist/pixi/index.d.ts", "import": "./dist/pixi/index.js" }
+  },
+  "scripts": { "build": "tsc -p tsconfig.json" },
+  "dependencies": { "@pixoffice/contracts": "0.1.0", "@pixoffice/runtime": "0.1.0", "@pixoffice/renderer-pixi": "0.1.0", "zod": "^4.6.5" },
+  "peerDependencies": { "pixi.js": "^8.18.1" }
+}

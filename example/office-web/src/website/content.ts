@@ -7,7 +7,7 @@ const zh = {
     socialDescription: '让智能体的工作与协作变得看得见。体验完整办公室，或从最小装配开始构建。',
   },
   nav: {
-    home: '首页', office: '完整办公室', minimal: '最小装配', docs: '文档',
+    home: '首页', office: '完整办公室', minimal: '最小装配', classroom: '教室', docs: '文档',
     label: '官网导航', homeLabel: 'PixOffice 首页', returnHome: '返回 PixOffice 首页',
     openMenu: '打开导航菜单', closeMenu: '关闭导航菜单', language: '网站语言', skip: '跳至主要内容',
   },
@@ -29,15 +29,16 @@ const zh = {
     integration: { title: '连接你已有的系统', description: '通过协议驱动人物与物品，通过数据源连接任务和指标。无需绑定特定智能体或模型服务。' },
   },
   examples: {
-    eyebrow: '两个入口，同一套核心', title: '先体验，再开始构建。',
-    description: '完整产品界面，或只保留场景的轻量装配。\n选择适合你的起点。',
+    eyebrow: '三个入口，同一套核心', title: '先体验，再开始构建。',
+    description: '体验办公室与教室，或从最小装配开始。\n选择适合你的起点。',
     office: { label: 'React 应用', alt: '完整办公室的任务看板、员工列表与协作场景', description: '任务看板、人物互动、聊天与布局编辑，体验完整的办公室界面。', action: '打开完整办公室' },
-    minimal: { label: 'Vanilla TypeScript', alt: '最小装配中独立呈现的办公室场景', description: '只使用五个包的公开接口拼装场景，不依赖 React，适合作为集成起点。', action: '打开最小装配' },
+    classroom: { label: '独立教育场景', alt: '教室场景中的教师、五位学生、课桌与黑板', description: '教师讲课、学生起身回答、回到座位，体验独立场景包构建的课堂互动。', action: '进入教室' },
+    minimal: { label: 'Vanilla TypeScript', alt: '最小装配中独立呈现的办公室场景', description: '只使用公开包接口拼装场景，不依赖 React，适合作为集成起点。', action: '打开最小装配' },
     note: '示例界面目前为中文，任务与指标为演示数据；真实业务和模型服务由你的系统接入。',
   },
   architecture: {
     eyebrow: '为扩展留下空间', title: '让变化，留在它该在的地方。', action: '阅读架构文档',
-    note: '当前提供办公室场景与帧动画；新场景和骨骼播放器可沿接口扩展，尚未内置。',
+    note: '当前提供独立的办公室与教室场景，共用帧动画播放器；骨骼播放器可沿接口扩展，尚未内置。',
   },
   modules: {
     contracts: { title: '共同的语言', description: '命令、事件与资源契约' },
@@ -68,7 +69,7 @@ const en: typeof zh = {
     socialDescription: 'Make agent work and collaboration visible. Explore the full office or build from the minimal example.',
   },
   nav: {
-    home: 'Home', office: 'Full Office', minimal: 'Minimal Example', docs: 'Docs',
+    home: 'Home', office: 'Full Office', minimal: 'Minimal Example', classroom: 'Classroom', docs: 'Docs',
     label: 'Main navigation', homeLabel: 'PixOffice home', returnHome: 'Back to PixOffice home',
     openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu', language: 'Website language', skip: 'Skip to main content',
   },
@@ -90,15 +91,16 @@ const en: typeof zh = {
     integration: { title: 'Connect your own system', description: 'Drive characters and objects through a protocol. Connect tasks and metrics through data sources. No dependency on a specific agent or model provider.' },
   },
   examples: {
-    eyebrow: 'Two entry points. One shared core.', title: 'Explore first. Then make it yours.',
-    description: 'Start with the complete interface or a lightweight scene.\nChoose the starting point that fits your project.',
+    eyebrow: 'Three entry points. One shared core.', title: 'Explore first. Then make it yours.',
+    description: 'Explore the office and classroom, or start with the minimal example.\nChoose the starting point that fits your project.',
     office: { label: 'React application', alt: 'The full office interface with a task dashboard, employee list, and collaboration scene', description: 'Explore the full experience, with task dashboards, character interactions, chat, and layout editing.', action: 'Open the full office' },
-    minimal: { label: 'Vanilla TypeScript', alt: 'The standalone office scene in the minimal example', description: 'Assemble a scene using the public APIs of five packages. No React required. A small starting point for your integration.', action: 'Open the minimal example' },
+    classroom: { label: 'Independent education scene', alt: 'A classroom with a teacher, five students, desks, and a blackboard', description: 'Watch the teacher explain a lesson and students stand up, answer, and return to their seats in an independent scene.', action: 'Enter the classroom' },
+    minimal: { label: 'Vanilla TypeScript', alt: 'The standalone office scene in the minimal example', description: 'Assemble a scene using public package APIs. No React required. A small starting point for your integration.', action: 'Open the minimal example' },
     note: 'The examples currently use a Chinese interface and sample task data. Connect your own backend and model services for real workflows.',
   },
   architecture: {
     eyebrow: 'Room to grow', title: 'Keep change where it belongs.', action: 'Read the architecture docs',
-    note: 'An office scene and frame animation are included today. New scenes and skeletal players can implement the extension interfaces; they are not built in yet.',
+    note: 'Independent office and classroom scenes share the frame player. Skeletal players can implement the extension interfaces; they are not built in yet.',
   },
   modules: {
     contracts: { title: 'A shared language', description: 'Commands, events, and asset contracts' },

@@ -9,7 +9,10 @@
     "README.md"
   ],
   "exports": {
-    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./FrameAdapter": {
       "types": "./dist/FrameAdapter.d.ts",
       "import": "./dist/FrameAdapter.js"
@@ -37,10 +40,6 @@
     "./FrameSprite": {
       "types": "./dist/FrameSprite.d.ts",
       "import": "./dist/FrameSprite.js"
-    },
-    "./workAnimation": {
-      "types": "./dist/workAnimation.d.ts",
-      "import": "./dist/workAnimation.js"
     }
   },
   "scripts": {

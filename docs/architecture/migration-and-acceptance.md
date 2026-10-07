@@ -1,6 +1,6 @@
 # PixOffice 首轮模块整理验收记录
 
-本文保留拆包前的验收背景。当前已迁移到五个 npm workspace 包，`src/` 不再是根入口；当前目录、命令和限制以 [包架构](./README.md) 为准。新一轮拆包在原 323 项测试的基础上继续验证，包安装测试见 `npm run packages:smoke`。
+本文保留拆包前的验收背景。当前已迁移到六个 npm workspace 包，`src/` 不再是根入口；当前目录、命令和限制以 [包架构](./README.md) 为准。新一轮拆包在原 323 项测试的基础上继续验证，包安装测试见 `npm run packages:smoke`。
 
 ## 本轮范围
 

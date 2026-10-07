@@ -2,7 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { configureCharacterResources } from '@pixoffice/animation-frame'
+import { configureCharacterResources } from '@pixoffice/assets-office/frame/resources'
 import { textureLoadQueue } from '@pixoffice/animation-frame/AssetLoadQueue'
 import { configureOfficeAssets } from '@pixoffice/scene-office/pixi'
 

@@ -12,3 +12,9 @@ Assets select `adapterId: 'pixoffice.frame'` and `source.format: 'pixoffice-fram
 Use a URI-resolving appearance resolver, or configure the optional character registry with `configureCharacterResources(baseUrl)` before loading. A custom resource-acquisition callback can be passed to the constructor. Leases share resources while visual instances keep independent clocks; never destroy shared textures from an instance.
 
 Supports complete body frames plus an optional mouth layer. Dynamic contact retargeting, arbitrary gesture mixing and IK are not implemented; unsupported combinations fail explicitly.
+
+The frame schema has no required office, sitting, typing or walking actions. Scene-specific
+requirements belong to asset profiles. Office rules and legacy preview rigs moved to
+`@pixoffice/assets-office/frame`; do not import that package for an independent scene.
+`createCharacterResources` accepts a profile parser and frame dependency resolver when
+specialized assets need a separate, consistently owned resource store.

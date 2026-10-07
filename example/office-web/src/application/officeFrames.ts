@@ -1,4 +1,4 @@
-import { readCharacterManifest } from '@pixoffice/animation-frame/resources'
+import { readCharacterManifest } from '@pixoffice/assets-office/frame/resources'
 import { bindOfficeFrames } from '../../../../assets/office/frameBindings.ts'
 export { bindOfficeFrames }
 

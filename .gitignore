@@ -12,6 +12,10 @@ dist/
 
 # Generated character atlases (keep sources in art/characters/)
 /public/characters/
+/public/asset-packs/
+/example/isolated-scene/public/
+/example/classroom/public/
+/public/classroom-assets/
 /public/assets/office/**/*.webp
 /.character-staging/
 /.character-backups/

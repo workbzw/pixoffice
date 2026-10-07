@@ -1,4 +1,4 @@
-import { readdir, readFile } from 'node:fs/promises'
+import { readdir, readFile, rm } from 'node:fs/promises'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -18,5 +18,11 @@ while (pending.size) {
   const result = spawnSync(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc'), '-p', path.join(directory, 'tsconfig.json')], { cwd: root, stdio: 'inherit' })
   if (result.error) throw result.error
   if (result.status !== 0) process.exit(result.status ?? 1)
+  // Remove retired modules after emission, without temporarily breaking live dev imports.
+  const expected = new Set((await readdir(path.join(directory, 'src'), { recursive: true })).filter(file => /\.tsx?$/.test(file))
+    .flatMap(file => ['.js', '.js.map', '.d.ts'].map(extension => file.replace(/\.tsx?$/, extension))))
+  for (const file of await readdir(path.join(directory, 'dist'), { recursive: true })) {
+    if (/\.(js|d\.ts)(\.map)?$/.test(file) && !expected.has(file)) await rm(path.join(directory, 'dist', file))
+  }
   pending.delete(name)
 }

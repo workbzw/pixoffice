@@ -9,13 +9,18 @@ const allowed = {
   contracts: [], runtime: [],
   'renderer-pixi': ['contracts', 'runtime'],
   'animation-frame': ['contracts'],
+  'assets-office': ['contracts', 'animation-frame'],
   'scene-office': ['contracts', 'runtime', 'renderer-pixi'],
+  'scene-classroom': ['contracts', 'runtime', 'renderer-pixi'],
+  'assets-classroom': ['contracts', 'animation-frame'],
 }
 async function files(dir) {
   const entries = await readdir(dir, { withFileTypes: true })
   return (await Promise.all(entries.map(e => e.isDirectory() ? files(path.join(dir, e.name)) : path.join(dir, e.name)))).flat()
 }
 const manifests = new Map()
+const actual = (await readdir(path.join(root, 'packages'), { withFileTypes: true })).filter(entry => entry.isDirectory()).map(entry => entry.name).sort()
+assert.deepEqual(actual, Object.keys(allowed).sort(), 'Every package needs an explicit boundary policy')
 for (const name of Object.keys(allowed)) {
   manifests.set(name, JSON.parse(await readFile(path.join(root, 'packages', name, 'package.json'), 'utf8')))
 }
@@ -57,4 +62,4 @@ for (const [name, pkg] of manifests) {
   }
   if (pkg.peerDependencies?.['pixi.js']) assert(!pkg.dependencies?.['pixi.js'], `${name}: Pixi must be shared by the host`)
 }
-console.log('Package boundaries, declarations and explicit exports verified (5 packages).')
+console.log(`Package boundaries, declarations and explicit exports verified (${manifests.size} packages).`)

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork, Layers3, Menu, MessageCircle, Monitor, Move, Plug, Terminal, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork, GraduationCap, Layers3, Menu, MessageCircle, Monitor, Move, Plug, Terminal, X } from 'lucide-react'
 import { websiteContent, websiteReadme, websiteRepository as repository, websiteSnippets } from './content.ts'
 import { readWebsiteLocale, rememberWebsiteLocale, type WebsiteLocale } from './locale.ts'
 
@@ -68,6 +68,7 @@ export function Website() {
           <a href={homeHref} aria-current="page">{t.nav.home}</a>
           <a href={`${base}office/`}>{t.nav.office} <ArrowUpRight size={13} /></a>
           <a href={`${base}minimal/`}>{t.nav.minimal} <ArrowUpRight size={13} /></a>
+          <a href={`${base}classroom/`}>{t.nav.classroom} <ArrowUpRight size={13} /></a>
           <a href={docs} target="_blank" rel="noreferrer">{t.nav.docs}</a>
           <a className="site-github" href={readmeHref} target="_blank" rel="noreferrer"><GitFork size={17} /> GitHub <ArrowUpRight size={13} /></a>
         </nav>
@@ -113,6 +114,10 @@ export function Website() {
             <a className="site-example" href={`${base}office/`}>
               <div className="site-example-image"><img src={`${base}site/office-preview.webp`} width="1200" height="750" loading="lazy" alt={t.examples.office.alt} /></div>
               <div className="site-example-copy"><span className="site-example-label"><Monitor size={15} /> {t.examples.office.label}</span><h3>{t.nav.office} <ArrowUpRight size={23} /></h3><p>{t.examples.office.description}</p><span className="site-text-link">{t.examples.office.action} <ArrowRight size={16} /></span></div>
+            </a>
+            <a className="site-example" href={`${base}classroom/`}>
+              <div className="site-example-image"><img src={`${base}site/classroom-preview.webp`} width="1210" height="729" loading="lazy" alt={t.examples.classroom.alt} /></div>
+              <div className="site-example-copy"><span className="site-example-label"><GraduationCap size={15} /> {t.examples.classroom.label}</span><h3>{t.nav.classroom} <ArrowUpRight size={23} /></h3><p>{t.examples.classroom.description}</p><span className="site-text-link">{t.examples.classroom.action} <ArrowRight size={16} /></span></div>
             </a>
             <a className="site-example" href={`${base}minimal/`}>
               <div className="site-example-image minimal"><img src={`${base}site/office-scene.webp`} width="734" height="566" loading="lazy" alt={t.examples.minimal.alt} /></div>

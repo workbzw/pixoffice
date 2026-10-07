@@ -28,6 +28,7 @@ export default defineConfig({
         website: path.resolve(root, 'index.html'),
         office: path.resolve(root, 'office/index.html'),
         minimal: path.resolve(root, 'minimal/index.html'),
+        classroom: path.resolve(root, 'classroom/index.html'),
       },
     },
   },

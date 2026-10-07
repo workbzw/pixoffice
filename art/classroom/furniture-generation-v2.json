@@ -1,0 +1,24 @@
+{
+  "tool": "built-in image_gen",
+  "transparent_background": true,
+  "outputs": [
+    {
+      "file": "chair-v2.png",
+      "outputId": "exec-add54aba-bbe6-4e9d-9f0b-60bfdf86d3ac",
+      "references": ["chair.png", "../characters/packs/code-agent/standard-v2/sit/back/001.png"],
+      "prompt": "Use case: precise-object-edit. Create a replacement chair asset for PixOffice classroom. Image 1 is the furniture style and color reference; image 2 is the seated character proportion reference ONLY, DO NOT include any person in output. One empty compact classroom chair, viewed exactly straight from behind, elevated 25 degree orthographic camera, matching a miniature bright 3D classroom. Dusty muted blue seat and LOW lumbar backrest, white tubular metal frame, four short sturdy legs, no wheels, no arms, no logos. Adapt to a big-headed chibi character: broad seat, very LOW and shallow horizontal backrest reaching only the lower back, not shoulders. Visible chair silhouette width about 85% of total chair silhouette height. Backrest should occupy top 20% of total height, seat surface at around 42% of total height, remaining legs below. Rear posts at left and right edges, large unobstructed center below the seat, front legs tucked inward and farther back. Fully symmetric, no yaw, no perspective vanishing point tilt. Absolutely genuine transparent background, clean hard alpha edges, no glow, no ground, no cast shadow, no halo. Center entire chair with small transparent margins, every foot fully included. Keep original dusty-blue and off-white materials. Output only one complete chair, not a contact sheet or diagram."
+    },
+    {
+      "file": "chair-v3.png",
+      "outputId": "exec-52473dda-e248-484b-b9e2-9d0b60da17b7",
+      "references": ["chair-v2.png"],
+      "prompt": "Precise object edit of this single transparent chair. Keep the exact blue low backrest, blue seat, white frame style, camera view and all horizontal widths. ONLY shorten the four legs BELOW THE SEAT to about ONE HALF their current length, bringing the feet up. It must be a squat compact child/chibi chair, not an adult chair. Chair's total visible width should be slightly MORE than its total visible height after shortening legs. Seat top to floor vertical distance should be about 40% of the chair width. Keep the backrest low. NO people, NO floor, NO ground shadows, NO glow, no new objects. True transparent background, clean antialiased alpha. Center the entire shorter chair and leave small transparent margins. Output one single complete squat chair."
+    },
+    {
+      "file": "desk-v2.png",
+      "outputId": "exec-1113ca5a-5f30-481b-b988-36e836e1f56b",
+      "references": ["desk.png"],
+      "prompt": "Precise object edit: one matching compact school desk for a big-headed short-bodied chibi student. Preserve this desk's light birch tabletop, rounded tabletop corners, white tubular metal legs, gray under-desk tray, open exercise book and blue pencil, straight-on elevated orthographic student-side camera. Change ONLY the proportions and isolation: make the legs and tray below the tabletop much shorter, about half the current vertical length. Keep tabletop width and depth, and a thin tabletop edge, intact. Desired total visible desk silhouette width-to-height about 2.3:1. It must be a low compact single-student desk with four short legs and an open central knee space. No chair, no character, no classroom, no floor, no cast shadows, absolutely no glow or fog around the legs. Clean true transparent background everywhere outside the desk; no opaque rectangular backdrop. Center the full furniture with small transparent margins, all feet fully included, no text or logos. Output a single desk only."
+    }
+  ]
+}

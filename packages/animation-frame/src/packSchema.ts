@@ -1,8 +1,4 @@
 import { z } from 'zod'
-import { sampleComputerWork, sampleQuietWork, QUIET_WORK_CYCLE_MS, WORK_CYCLE_MS } from './workAnimation.ts'
-import { validWorkSurface, type WorkSurface } from '@pixoffice/contracts/contactSurface'
-// Existing office-profile files keep their admission requirements during migration.
-const OFFICE_SEATED_CLIPS = ['sit.back', 'talk.seated-left', 'talk.seated-right'] as const
 
 const id = z.string().regex(/^[a-z][a-z0-9-]{0,63}$/)
 const clipName = z.string().regex(/^[a-z][a-z0-9-]*(\.[a-z][a-z0-9-]*)+$/)
@@ -20,15 +16,6 @@ const mouthRig = z.object({
   pivot: point,
   views: z.record(id, z.object({ closed: clipName, speaking: clipName }).strict()),
 }).strict()
-const workPoint = z.object({ x: z.number().finite(), y: z.number().finite() }).strict()
-const armPart = z.object({ clip: clipName, root: workPoint, tip: workPoint }).strict()
-const workRig = z.object({
-  shoulders: z.object({ left: workPoint, right: workPoint }).strict(),
-  upper: armPart, forearm: armPart, hand: armPart,
-  previewSurface: z.object({ keyboardLeft: workPoint, keyboardRight: workPoint, mouse: workPoint,
-    bounds: z.object({ left: z.number().finite(), right: z.number().finite(), back: z.number().finite(), front: z.number().finite() }).strict(),
-  }).strict(),
-}).strict()
 const timing = z.object({ durationMs: z.number().int().positive().max(60000), mouth: mouthAttachment.optional() }).strict()
 const sourceClip = z.union([
   alias,
@@ -40,17 +27,16 @@ const packedClip = z.union([
 ])
 const common = {
   schemaVersion: z.literal(1), id, label: z.string().min(1).max(80),
-  profile: z.enum(['basic', 'office']), canvas: size, pivot: point,
+  profile: id, canvas: size, pivot: point,
   referenceHeight: z.number().positive().max(2048), displayHeight: z.number().positive().max(512),
-  portrait: clipName, mouth: mouthRig.optional(), work: workRig.optional(),
+  portrait: clipName, mouth: mouthRig.optional(),
 }
 
 type ClipGraph = Record<string, { alias: string; mirrorX: boolean } | { frames: { mouth?: z.infer<typeof mouthAttachment> }[]; loop: boolean }>
-function validateCommon(value: { canvas: { width: number; height: number }; pivot: { x: number; y: number }; referenceHeight: number; profile: string; portrait: string; clips: ClipGraph; mouth?: z.infer<typeof mouthRig>; work?: z.infer<typeof workRig> }, ctx: z.RefinementCtx) {
+export function validateFrameSource(value: { canvas: { width: number; height: number }; pivot: { x: number; y: number }; referenceHeight: number; profile: string; portrait: string; clips: ClipGraph; mouth?: z.infer<typeof mouthRig> }, ctx: z.RefinementCtx) {
   const problem = (message: string) => ctx.addIssue({ code: 'custom', message })
   if (value.pivot.x > value.canvas.width || value.pivot.y > value.canvas.height || value.referenceHeight > value.canvas.height) problem('Canvas, pivot and reference height are inconsistent')
-  const required = ['idle.front', 'idle.back', 'idle.left', 'idle.right', 'walk.front', 'walk.back', 'walk.left', 'walk.right', value.portrait]
-  if (value.profile === 'office') required.push(...OFFICE_SEATED_CLIPS, 'sit-down.back', 'stand-up.back')
+  const required = [value.portrait]
   for (const name of required) if (!Object.hasOwn(value.clips, name)) problem(`Missing required clip: ${name}`)
   for (const name of Object.keys(value.clips)) {
     let current = name
@@ -76,29 +62,16 @@ function validateCommon(value: { canvas: { width: number; height: number }; pivo
       if (!Object.hasOwn(value.clips, name)) problem(`Missing mouth clip: ${name}`)
     }
   }
-  if (value.work) {
-    if (!validWorkSurface(value.work.previewSurface)) problem('Invalid work preview surface')
-    if (!value.clips['work.computer-back']) problem('Missing computer work body clip')
-    for (const part of [value.work.upper, value.work.forearm, value.work.hand]) {
-      const clip = value.clips[part.clip]
-      if (!clip) problem(`Missing work part: ${part.clip}`)
-      else if (!('frames' in clip) || clip.frames.length !== 1) problem(`Work parts require a single direct frame: ${part.clip}`)
-      if (Math.hypot(part.tip.x - part.root.x, part.tip.y - part.root.y) < 1) problem(`Invalid work part length: ${part.clip}`)
-    }
-    for (const p of [...Object.values(value.work.shoulders), ...[value.work.upper, value.work.forearm, value.work.hand].flatMap(part => [part.root, part.tip])]) {
-      if (p.x < 0 || p.y < 0 || p.x > value.canvas.width || p.y > value.canvas.height) problem('Out-of-bounds work anchor')
-    }
-  }
 }
 
-export const CharacterSourceSchema = z.object({ ...common, clips: z.record(clipName, sourceClip) }).strict().superRefine(validateCommon)
+export const CharacterSourceSchema = z.object({ ...common, clips: z.record(clipName, sourceClip) }).strict().superRefine(validateFrameSource)
 export const CharacterManifestSchema = z.object({
   ...common, revision: z.string().regex(/^[a-f0-9]{16}$/),
   pages: z.array(size.extend({ image: atlasFile, group: z.enum(['startup', 'deferred']).optional() })).min(1).max(64),
   frames: z.record(relativeFile, z.object({ page: z.number().int().nonnegative(), rect, offset: point }).strict()),
   clips: z.record(clipName, packedClip),
-}).strict().superRefine((value, ctx) => {
-  validateCommon(value, ctx)
+}).strip().superRefine((value, ctx) => {
+  validateFrameSource(value, ctx)
   for (const [name, frame] of Object.entries(value.frames)) {
     const page = value.pages[frame.page]
     if (!page || frame.rect.x + frame.rect.width > page.width || frame.rect.y + frame.rect.height > page.height ||
@@ -147,16 +120,12 @@ export function resolveCharacterClip(manifest: Pick<CharacterManifest, 'clips'>,
   return clip && !('alias' in clip) ? { ...clip, name, requested, mirrorX, fallback } : undefined
 }
 
-/** Include every body, mouth and generated-work dependency before a pose can render. */
-export function characterFrameDependencies(manifest: Pick<CharacterManifest, 'clips' | 'mouth' | 'work'>, names: string[]) {
+/** Include every body and mouth dependency before a pose can render. */
+export function characterFrameDependencies(manifest: Pick<CharacterManifest, 'clips' | 'mouth'>, names: string[]) {
   const keys = new Set<string>(), visited = new Set<string>()
   const visit = (name: string) => {
     if (visited.has(name)) return
     visited.add(name)
-    if (manifest.work && (name === 'work.computer-back' || name === 'work.quiet-back' && !manifest.clips[name])) {
-      if (name === 'work.quiet-back') visit('work.computer-back')
-      for (const part of [manifest.work.upper, manifest.work.forearm, manifest.work.hand]) visit(part.clip)
-    }
     const clip = resolveCharacterClip(manifest, name)
     for (const frame of clip?.frames ?? []) {
       keys.add(frame.frame)
@@ -186,29 +155,17 @@ export function sampleCharacterClip(manifest: CharacterManifest, name: string, e
 }
 
 /** Body timing and speech timing are independent; attachments belong to the sampled body frame. */
-export function sampleCharacterLayers(manifest: CharacterManifest, name: string, elapsedMs = 0, progress?: number, speechElapsedMs?: number, surface?: WorkSurface) {
-  const generatedQuiet = name === 'work.quiet-back' && !manifest.clips[name] && Boolean(manifest.work)
-  const work = manifest.work && (generatedQuiet
-    ? sampleQuietWork(manifest.work, surface ?? manifest.work.previewSurface, elapsedMs)
-    : name === 'work.computer-back' ? sampleComputerWork(manifest.work, surface ?? manifest.work.previewSurface, elapsedMs) : undefined)
-  const bodyName = generatedQuiet ? work ? 'work.computer-back' : 'sit.back' : name === 'work.computer-back' && !work ? 'sit.back' : name
-  const body = sampleCharacterClip(manifest, bodyName, elapsedMs, progress)
+export function sampleCharacterLayers(manifest: CharacterManifest, name: string, elapsedMs = 0, progress?: number, speechElapsedMs?: number) {
+  const body = sampleCharacterClip(manifest, name, elapsedMs, progress)
   if (!body) return undefined
   const attachment = body.clip.frames[body.index].mouth
   const rig = manifest.mouth, view = attachment && rig?.views[attachment.view]
   const speechTime = speechElapsedMs ?? (name.startsWith('speak.') ? elapsedMs : undefined)
   const sample = view && sampleCharacterClip(manifest, speechTime == null ? view.closed : view.speaking, speechTime ?? 0)
-  return { body, mouth: sample && attachment && rig ? { ...sample, attachment, pivot: rig.pivot } : undefined,
-    work: work ? { ...work, parts: work.parts.flatMap(part => {
-      const sampled = sampleCharacterClip(manifest, part.clip)
-      return sampled ? [{ ...part, ...sampled }] : []
-    }) } : undefined }
+  return { body, mouth: sample && attachment && rig ? { ...sample, attachment, pivot: rig.pivot } : undefined }
 }
 
 export function characterPreviewTimeline(manifest: CharacterManifest, name: string) {
   const layers = sampleCharacterLayers(manifest, name)
-  if (name === 'work.quiet-back' && !manifest.clips[name] && manifest.work) return { loop: true, fallback: false,
-    frames: [...Array.from({ length: 12 }, () => ({ durationMs: 250 })), { durationMs: QUIET_WORK_CYCLE_MS - 3000 }] }
-  if (name === 'work.computer-back' && manifest.work) return { loop: true, fallback: false, frames: Array.from({ length: WORK_CYCLE_MS / 80 }, () => ({ durationMs: 80 })) }
   return name.startsWith('speak.') && layers?.mouth ? layers.mouth.clip : layers?.body.clip
 }

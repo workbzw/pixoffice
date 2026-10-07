@@ -1,8 +1,8 @@
 import { readFile, mkdir, writeFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
-import { bindOfficeFrames } from '../assets/office/frameBindings.ts'
-import { CharacterManifestSchema } from '@pixoffice/animation-frame/packSchema'
+import { bindOfficeFrames } from '@pixoffice/assets-office/frame/bindings'
+import { CharacterManifestSchema } from '@pixoffice/assets-office/frame/packSchema'
 const root = fileURLToPath(new URL('../public/characters/', import.meta.url))
 const registry = JSON.parse(await readFile(path.join(root, 'registry.json'), 'utf8'))
 await mkdir(path.join(root, 'visuals'), { recursive: true })

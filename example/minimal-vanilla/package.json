@@ -3,13 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "scripts": { "dev": "vite", "build": "vite build" },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
   "dependencies": {
     "@pixoffice/contracts": "0.1.0",
     "@pixoffice/runtime": "0.1.0",
     "@pixoffice/renderer-pixi": "0.1.0",
     "@pixoffice/animation-frame": "0.1.0",
     "@pixoffice/scene-office": "0.1.0",
-    "pixi.js": "^8.18.1"
+    "pixi.js": "^8.18.1",
+    "@pixoffice/assets-office": "0.1.0"
   }
 }
