@@ -105,17 +105,26 @@ a { color: inherit; text-decoration: none; }
 .classroom-app.classroom-focused { position: fixed; inset: 0; z-index: 10; height: 100dvh; min-height: 0; overflow: hidden; background: #fff; }
 .classroom-focused .classroom-header, .classroom-focused .classroom-teacher, .classroom-focused .classroom-stats, .classroom-focused .classroom-sidebar, .classroom-focused .classroom-scene-status { display: none; }
 .classroom-focused .classroom-layout { display: block; padding: 0; }
-.classroom-focused .classroom-scene { display: grid; grid-template-rows: minmax(0, 1fr) auto auto; width: 100%; height: 100%; border: 0; border-radius: 0; }
-.classroom-focused .classroom-canvas { position: relative; grid-row: 1; inset: auto; min-height: 0; margin: 12px; }
+/* Reserve subtitle/control space even when empty; speech must never resize the camera. */
+.classroom-focused .classroom-scene { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) 88px calc(68px + env(safe-area-inset-bottom)); width: 100%; height: 100%; border: 0; border-radius: 0; }
+.classroom-focused .classroom-canvas { position: relative; grid-row: 1; inset: auto; min-width: 0; min-height: 0; margin: 12px; }
 .classroom-focused .classroom-focus-toggle { top: max(16px, env(safe-area-inset-top)); right: max(16px, env(safe-area-inset-right)); }
-.classroom-focused .classroom-caption { position: static; grid-row: 2; justify-self: center; transform: none; margin: 4px 16px; max-width: min(720px, calc(100% - 32px)); background: transparent; font-size: 16px; overflow-wrap: anywhere; }
+.classroom-focused .classroom-caption { position: static; grid-row: 2; justify-self: center; align-self: center; transform: none; margin: 4px 16px; min-width: 0; min-height: 0; width: fit-content; max-height: calc(100% - 8px); max-width: min(720px, calc(100% - 32px)); padding: 6px 16px; background: transparent; font-size: 16px; overflow-wrap: anywhere; overflow: auto; pointer-events: auto; }
+.classroom-focused .classroom-caption > span { min-width: 0; }
 .classroom-focused .classroom-caption strong { font-size: 14px; }
-.classroom-focused .classroom-action-loading { position: static; grid-row: 2; justify-self: center; transform: none; margin: 4px 12px; }
-.classroom-focused .classroom-controls { position: static; grid-row: 3; justify-self: center; transform: none; margin: 8px 12px max(14px, env(safe-area-inset-bottom)); padding: 5px; }
+.classroom-focused .classroom-action-loading { position: static; grid-row: 2; justify-self: center; align-self: center; transform: none; margin: 4px 12px; }
+.classroom-focused .classroom-controls { position: static; grid-row: 3; justify-self: center; align-self: center; transform: none; margin: 0 12px env(safe-area-inset-bottom); padding: 5px; }
 .classroom-focused .classroom-controls button { min-height: 40px; padding: 0 22px; font-size: 13px; }
 @media (max-width: 700px) {
   .classroom-focus-toggle { top: 10px; right: 10px; min-height: 32px; font-size: 11px; padding: 0 10px; }
   .classroom-focused .classroom-canvas { margin: 8px 0 0; }
   .classroom-focused .classroom-caption { font-size: 14px; padding: 4px 8px; }
   .classroom-focused .classroom-caption strong { font-size: 12px; }
+}
+@media (max-height: 500px) {
+  .classroom-focused .classroom-scene { grid-template-rows: minmax(0, 1fr) 64px calc(56px + env(safe-area-inset-bottom)); }
+  .classroom-focused .classroom-canvas { margin: 8px; }
+  .classroom-focused .classroom-caption { padding: 2px 8px; font-size: 14px; }
+  .classroom-focused .classroom-controls { padding: 4px; }
+  .classroom-focused .classroom-controls button { min-height: 36px; }
 }

@@ -300,10 +300,16 @@ export class SceneView {
   resize(width: number, height: number) {
     if (!this.app || !this.world) return
     const data = this.runtime.readWorld(), scale = Math.min(width / (data.width * this.pack.cellPixels), height / (data.height * this.pack.cellPixels))
-    this.app.renderer.resize(width, height, renderResolution()); this.app.stage.hitArea = new Rectangle(0, 0, width, height)
-    this.world.scale.set(scale); this.world.position.set((width - data.width * this.pack.cellPixels * scale) / 2, (height - data.height * this.pack.cellPixels * scale) / 2)
+    const resolution = renderResolution(), x = (width - data.width * this.pack.cellPixels * scale) / 2, y = (height - data.height * this.pack.cellPixels * scale) / 2
+    const viewportChanged = this.app.screen.width !== width || this.app.screen.height !== height || this.app.renderer.resolution !== resolution
+    const transformChanged = this.world.scale.x !== scale || this.world.scale.y !== scale || this.world.x !== x || this.world.y !== y
+    if (!viewportChanged && !transformChanged && this.layer) return
+    if (viewportChanged) this.app.renderer.resize(width, height, resolution)
+    this.app.stage.hitArea = new Rectangle(0, 0, width, height)
+    this.world.scale.set(scale); this.world.position.set(x, y)
     Object.assign(this.app.canvas.style, { display: 'block', width: '100%', height: '100%' })
-    if (!this.layer && !this.renderingSuspended) this.app.render()
+    // Resizing clears the drawing buffer; repaint now instead of exposing a blank frame until the next tick.
+    if (!this.renderingSuspended) this.app.render()
   }
   destroy() {
     if (this.destroyed) return
