@@ -1,0 +1,194 @@
+{
+  "schemaVersion": 1,
+  "canvas": {
+    "width": 256,
+    "height": 384
+  },
+  "pivot": {
+    "x": 128,
+    "y": 344
+  },
+  "note": "Whole-body frames; one common scale; common foot baseline within each action; no body-part assembly.",
+  "frames": [
+    {
+      "file": "farm/plant/001.png",
+      "source": {
+        "left": 0,
+        "top": 0,
+        "width": 295,
+        "height": 443
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 20,
+        "y": 51
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/plant/002.png",
+      "source": {
+        "left": 295,
+        "top": 0,
+        "width": 296,
+        "height": 443
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 19,
+        "y": 51
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/plant/003.png",
+      "source": {
+        "left": 591,
+        "top": 0,
+        "width": 295,
+        "height": 443
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 20,
+        "y": 51
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/plant/004.png",
+      "source": {
+        "left": 886,
+        "top": 0,
+        "width": 296,
+        "height": 443
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 19,
+        "y": 51
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/water/001.png",
+      "source": {
+        "left": 0,
+        "top": 443,
+        "width": 295,
+        "height": 443
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 20,
+        "y": 57
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/water/002.png",
+      "source": {
+        "left": 295,
+        "top": 443,
+        "width": 296,
+        "height": 443
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 19,
+        "y": 57
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/water/003.png",
+      "source": {
+        "left": 591,
+        "top": 443,
+        "width": 295,
+        "height": 443
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 20,
+        "y": 57
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/water/004.png",
+      "source": {
+        "left": 886,
+        "top": 443,
+        "width": 296,
+        "height": 443
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 19,
+        "y": 57
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/harvest/001.png",
+      "source": {
+        "left": 0,
+        "top": 886,
+        "width": 295,
+        "height": 444
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 20,
+        "y": 61
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/harvest/002.png",
+      "source": {
+        "left": 295,
+        "top": 886,
+        "width": 296,
+        "height": 444
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 19,
+        "y": 61
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/harvest/003.png",
+      "source": {
+        "left": 591,
+        "top": 886,
+        "width": 295,
+        "height": 444
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 20,
+        "y": 61
+      },
+      "footY": 344
+    },
+    {
+      "file": "farm/harvest/004.png",
+      "source": {
+        "left": 886,
+        "top": 886,
+        "width": 296,
+        "height": 444
+      },
+      "scale": 0.735,
+      "translate": {
+        "x": 19,
+        "y": 61
+      },
+      "footY": 344
+    }
+  ]
+}

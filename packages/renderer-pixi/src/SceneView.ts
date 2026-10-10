@@ -11,7 +11,7 @@ import type { AnimationRegistry } from './animation/AnimationRegistry.ts'
 import { AnimationResources } from './presentation/AnimationResources.ts'
 import { ActorView } from './ActorView.ts'
 import type { PropView, PropViewRegistry } from './PropViewRegistry.ts'
-import type { ScenePresentationPack } from './ScenePresentationPack.ts'
+import type { SceneAmbientView, ScenePresentationPack } from './ScenePresentationPack.ts'
 import { renderResolution, watchPixelDensity } from './pixelDensity.ts'
 
 export type SceneLoadProgress = { completed: number; total: number }
@@ -25,6 +25,7 @@ export interface SceneViewOptions {
   resolveAppearance(id: string): Promise<VisualAssetManifest>
   propViews?: PropViewRegistry
   onActorClick?: (event: { actorId: string; clientX: number; clientY: number }) => void
+  onPropClick?: (event: { propId: string; clientX: number; clientY: number }) => void
   onDraftChange?: (error: string | null) => void
   onLoadProgress?: (progress: SceneLoadProgress) => void
   onActionProgress?: (progress: SceneActionProgress) => void
@@ -40,6 +41,7 @@ export class SceneView {
   private grid = new Graphics()
   private agentEntities = new Map<string, ActorView>()
   private propViews = new Map<string, PropView>()
+  private ambientViews: SceneAmbientView[] = []
   private propViewTemplates = new Map<string, string>()
   private viewRegistry: PropViewRegistry
   private pack: ScenePresentationPack
@@ -130,6 +132,8 @@ export class SceneView {
       })
       this.agentEntities.set(actor.id, entity); this.layer!.addChild(entity)
     })
+    this.ambientViews = this.pack.createAmbientViews?.(this.runtime) ?? []
+    for (const view of this.ambientViews) this.layer.addChild(...view.roots)
     app.stage.eventMode = 'static'
     this.resize(app.screen.width, app.screen.height)
     this.unsubscribe = this.runtime.subscribe(() => this.syncProps())
@@ -234,7 +238,13 @@ export class SceneView {
     this.propViews.set(prop.id, view)
     this.propViewTemplates.set(prop.id, prop.templateId)
     this.layer!.addChild(...view.roots)
-    view.hitTarget.eventMode = 'none'
+    view.hitTarget.eventMode = this.options.onPropClick ? 'static' : 'none'
+    if (this.options.onPropClick) {
+      view.hitTarget.cursor = 'pointer'
+      view.hitTarget.on('pointertap', (event: FederatedPointerEvent) => {
+        if (!this.runtime.isEditing) this.options.onPropClick?.({ propId: prop.id, clientX: event.clientX, clientY: event.clientY })
+      })
+    }
   }
   private syncProps() {
     if (this.renderingSuspended) return
@@ -283,6 +293,7 @@ export class SceneView {
       const entity = this.agentEntities.get(agent.id)
       entity?.update(agent, dt)
     }
+    for (const view of this.ambientViews) view.update(this.runtime.isEditing ? 0 : dt, world)
     this.layer?.sortChildren()
   }
   private onTick = (ticker: { deltaTime: number }) => {
@@ -314,6 +325,8 @@ export class SceneView {
   destroy() {
     if (this.destroyed) return
     this.destroyed = true; this.abort.abort(); this.unsubscribe?.(); this.unwatchPixelDensity?.(); this.onDestroy()
+    for (const view of this.ambientViews) view.dispose?.()
+    this.ambientViews = []
     this.app?.ticker.remove(this.onTick); this.app?.destroy(true, { children: true })
     this.characterLease?.release(); this.characterLease = undefined
     this.app = null; this.world = null; this.layer = null; this.agentEntities.clear(); this.propViews.clear(); this.propViewTemplates.clear()

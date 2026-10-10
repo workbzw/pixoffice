@@ -11,6 +11,7 @@ export interface SceneAssembly extends Pick<SceneViewOptions, 'pack' | 'animatio
 export interface MountSceneOptions {
   signal?: AbortSignal
   runtime?: CreateSceneRuntimeOptions
+  step?: (runtime: ReturnType<typeof createSceneRuntime>, elapsedMs: number) => void
   view?: Omit<SceneViewOptions, 'runtime' | 'pack' | 'animations' | 'resolveAppearance' | 'onStep' | 'dispatchCommand'>
 }
 
@@ -32,7 +33,7 @@ export async function mountScene(host: HTMLElement, load: (signal: AbortSignal) 
   signal.addEventListener('abort', dispose, { once: true })
   try {
     view = new SceneView({ ...options.view, ...assembly, runtime,
-      onStep: elapsed => runtime.tick(elapsed), dispatchCommand: command => runtime.submit(command) })
+      onStep: elapsed => options.step ? options.step(runtime, elapsed) : runtime.tick(elapsed), dispatchCommand: command => runtime.submit(command) })
     await view.init(host, Math.max(1, host.clientWidth), Math.max(1, host.clientHeight))
     signal.throwIfAborted()
     const mountedView = view

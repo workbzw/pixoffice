@@ -4,7 +4,7 @@
 
 [官网：pixoffice.online](https://pixoffice.online/?lang=zh)
 
-[完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/) · [教室](./example/classroom/README.md)
+[完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/) · [教室](./example/classroom/README.md) · [农场](./example/farm/README.md)
 
 ![PixOffice 多人走动与工位交流演示](./docs/office-demo.gif)
 
@@ -18,16 +18,17 @@ PixOffice 是独立的二维办公室前端项目，采用 Vite + React + Pixi�
 
 [业务页面数据接入](./docs/dashboard-integration.md) · [插件架构、场景协议与外部接入](./docs/plugin-runtime.md) · [地图编辑器与 AI 编辑协议](./docs/map-editor.md) · [长期协议设计草案](./docs/scene-protocol-v1.md)
 
-[场景扩展与动画架构](./docs/architecture/README.md)：办公室与教室平级独立，复用公共运行时和帧动画适配器。教室已有讲课、点名回答和回座位；骨骼引擎尚未实现。
+[场景扩展与动画架构](./docs/architecture/README.md)：办公室、教室与农场平级独立，复用公共运行时和帧动画适配器。农场支持播种、浇水、生长、采收和双农夫自动照料。骨骼引擎尚未实现。
 
 ## 包与示例
 
-项目使用 npm workspaces。四个通用包：`contracts` 公共契约、`runtime` 核心运行时、`renderer-pixi` 渲染宿主、`animation-frame` 帧播放器。办公室由 `scene-office`、`assets-office` 组成；教室由平级独立的 `scene-classroom`、`assets-classroom` 组成，场景之间不互相依赖。
+项目使用 npm workspaces，共十个包。四个通用包：`contracts` 公共契约、`runtime` 核心运行时、`renderer-pixi` 渲染宿主、`animation-frame` 帧播放器。三个场景分别由 `scene-office` / `assets-office`、`scene-classroom` / `assets-classroom`、`scene-farm` / `assets-farm` 组成，场景之间不互相依赖。
 
 - [完整办公室](./example/office-web)：保留当前 React 界面、聊天、编辑器与 HTTP 接入。
 - [最小装配](./example/minimal-vanilla)：只通过公开包入口拼装办公室，不依赖 React。
 - [独立场景](./example/isolated-scene)：不安装办公室包，只装配一个可行走人物；`npm run dev:isolated`。
 - [独立教室](./example/classroom)：教师讲课、学生回答、黑板更新；`npm run dev:classroom`。独立部署用 `npm run build:classroom`，产物不含办公室资源。
+- [独立农场](./example/farm)：2 位农夫、6 块菜地、3 种蔬菜和种植闭环；`npm run dev:farm`。独立部署用 `npm run build:farm`，不携带办公室或教室资源。本地存档，离线暂停生长。
 - [架构与分工](./docs/architecture/README.md)：依赖方向、资源交付、骨骼/场景开发入口。
 
 `npm run packages:build` 构建包；`npm run packages:check` 检查边界；`npm run packages:smoke` 将 tgz 安装到仓库之外验证。代码包目前只在仓库内开发，未发布 npm。素材独立部署，可用 `npm run assets:export -- /absolute/path/to/new-public-directory` 导出。
@@ -74,7 +75,7 @@ npm install
 npm run dev
 ```
 
-开发服务首页 `/` 为项目介绍，顶部菜单可进入完整办公室 `/office/`、最小装配 `/minimal/` 和教室 `/classroom/`。`npm run build` 同时生成四个页面，部署时仍使用根目录 `dist/`。
+开发服务首页 `/` 为项目介绍，顶部菜单可进入完整办公室 `/office/`、最小装配 `/minimal/`、教室 `/classroom/` 和农场 `/farm/`。`npm run build` 同时生成五个页面，部署时仍使用根目录 `dist/`。
 
 页面顶部指标、左侧员工、右侧任务流由业务数据源驱动。要接入一个独立的示例业务进程，另开终端执行 `npm run dashboard-example`，再以 `VITE_OFFICE_DASHBOARD_URL=http://127.0.0.1:18770 npm run dev` 启动页面。接口格式和自定义适配器见[业务页面数据接入](./docs/dashboard-integration.md)。
 

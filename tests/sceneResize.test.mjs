@@ -92,3 +92,16 @@ test('changed world dimensions update the camera without needlessly resizing the
   assert.equal(world.scale.x, 800 / 2400)
   assert.equal(world.x, 0)
 })
+
+test('optional ambient views share the scene frame, pause while editing, and dispose exactly once', t => {
+  const { scene, data } = fixture(t), frames = []
+  let disposed = 0
+  scene.ambientViews = [{ roots: [], update(dt, world) { frames.push({ dt, world }) }, dispose() { disposed++ } }]
+  scene.syncActors(.02)
+  assert.deepEqual(frames, [{ dt: .02, world: data }])
+  scene.runtime.isEditing = true; scene.runtime.readEditorWorld = () => data
+  scene.syncActors(.02)
+  assert.equal(frames.at(-1).dt, 0)
+  scene.destroy(); scene.destroy()
+  assert.equal(disposed, 1)
+})

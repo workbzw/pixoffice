@@ -13,6 +13,8 @@ const allowed = {
   'scene-office': ['contracts', 'runtime', 'renderer-pixi'],
   'scene-classroom': ['contracts', 'runtime', 'renderer-pixi'],
   'assets-classroom': ['contracts', 'animation-frame'],
+  'scene-farm': ['contracts', 'runtime', 'renderer-pixi'],
+  'assets-farm': ['contracts', 'animation-frame'],
 }
 async function files(dir) {
   const entries = await readdir(dir, { withFileTypes: true })

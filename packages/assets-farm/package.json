@@ -1,0 +1,7 @@
+{
+  "name": "@pixoffice/assets-farm", "version": "0.1.0", "type": "module", "license": "MIT",
+  "files": ["dist", "LICENSE", "README.md"],
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" } },
+  "scripts": { "build": "tsc -p tsconfig.json" },
+  "dependencies": { "@pixoffice/contracts": "0.1.0", "@pixoffice/animation-frame": "0.1.0" }
+}

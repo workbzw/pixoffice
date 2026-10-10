@@ -15,6 +15,8 @@
     "@pixoffice/scene-office": "0.1.0",
     "@pixoffice/scene-classroom": "0.1.0",
     "@pixoffice/assets-classroom": "0.1.0",
+    "@pixoffice/scene-farm": "0.1.0",
+    "@pixoffice/assets-farm": "0.1.0",
     "lucide-react": "^1.48.0",
     "pixi.js": "^8.18.1",
     "react": "^19.2.6",

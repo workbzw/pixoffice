@@ -10,6 +10,8 @@ Supply a `SceneReadPort`, `ScenePresentationPack`, animation registry and appear
 
 No concrete scene or frame-player dependency. Both frame and future skeleton adapters use the same registry and `AnimationAdapter<Container>` contract. This version does not implement live appearance replacement or hot scene switching.
 
+Scene packs may optionally provide `createAmbientViews(runtime)` for decorative wildlife or effects. Each view supplies Pixi `roots`, `update(elapsedSeconds, world)`, and optional `dispose()`. The renderer mounts them in the shared depth-sorted world layer and uses the existing ticker, with zero elapsed time during editor previews. Ambient views own no actor commands or worker reservations; scene-specific clocks and behavior stay inside their scene pack.
+
 For managed assembly, use `mountScene(element, async signal => assembly, { signal })`.
 `SceneAssembly` supplies `scene`, `pack`, `animations`, and `resolveAppearance`.
 Unlike a directly constructed `SceneView`, the returned mount owns its runtime and view;

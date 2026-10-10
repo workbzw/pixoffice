@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ActivityPlan, Template, World } from './model.ts'
+import type { ActivityPlan, ObjectStateChange, Template, World } from './model.ts'
 import { SceneFault } from './protocol.ts'
 import { isCell, furnitureCells, sameCell } from './map/furnitureGrid.ts'
 
@@ -23,6 +23,8 @@ export type PluginContext = { world: World; participants: { entityId: string; ro
 export type Capability = {
   id: string; name: string; params: z.ZodType
   build(context: PluginContext, params: unknown): ActivityPlan
+  /** Pure state proposals, validated and committed together before releasing activity claims. */
+  complete?(context: PluginContext, params: unknown): ObjectStateChange[]
 }
 export type ScenePlugin = {
   id: string; name: string; version: string; apiVersion: 1; dependencies?: string[]

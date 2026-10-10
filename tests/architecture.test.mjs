@@ -48,7 +48,7 @@ test('headless core cannot import office definitions, Pixi, React, application o
 })
 test('generic rendering and presentation do not import concrete scenes or frame players', async () => {
   const graph = await dependencies('renderer-pixi/src/index.ts')
-  assert(!graph.files.some(file => /^(scene-office|assets-office|scene-classroom|assets-classroom|animation-frame)\//.test(file)), graph.files.join('\n'))
+  assert(!graph.files.some(file => /^(scene-|assets-|animation-frame\/)/.test(file)), graph.files.join('\n'))
   assert(!graph.imports.some(id => id.startsWith('react')))
 })
 
@@ -68,6 +68,18 @@ test('office core is headless and the frame adapter has no office or UI imports'
   assert(!office.files.some(file => /^(renderer-pixi|animation-frame)\//.test(file)))
   const frame = await dependencies('animation-frame/src/FrameAdapter.ts')
   assert(!frame.files.some(file => /^(scene-office|assets-office|renderer-pixi|runtime)\//.test(file)), frame.files.join('\n'))
+})
+
+test('farm is an independent peer and its asset bindings cannot import scene rules', async () => {
+  const core = await dependencies('scene-farm/src/core/index.ts')
+  assert(!core.imports.some(id => /^(pixi|react)/.test(id)))
+  const presentation = await dependencies('scene-farm/src/pixi/index.ts')
+  assert(!presentation.files.some(file => /^(scene-office|assets-office|scene-classroom|assets-classroom|animation-frame|assets-farm)\//.test(file)))
+  const assets = await dependencies('assets-farm/src/index.ts')
+  assert(!assets.files.some(file => /^(scene-|assets-office|assets-classroom|runtime|renderer-pixi)/.test(file)))
+  for (const entry of ['scene-office/src/core/index.ts', 'scene-classroom/src/core/index.ts']) {
+    const graph = await dependencies(entry); assert(!graph.files.some(file => /farm/.test(file)))
+  }
 })
 
 test('an independent scene runs without an office roster, fixed workstation or renderer', async t => {

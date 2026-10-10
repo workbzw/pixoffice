@@ -59,7 +59,7 @@ p, h1, h2, h3 { margin: 0; }
 .site-number { float: right; color: #a1aba0; font: 12px/25px ui-monospace, monospace; }
 .site-features h3 { font-size: 18px; font-weight: 550; margin-bottom: 12px; }
 .site-features p { font-size: 13px; color: #7a857b; line-height: 1.95; }
-.site-example-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 28px; }
+.site-example-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); gap: 28px; }
 .site-example { display: flex; flex-direction: column; min-width: 0; border: 1px solid #e5e9e3; border-radius: 8px; overflow: hidden; transition: border-color .2s; }
 .site-example:hover { border-color: #a6b5a9; }
 .site-example-image { --preview-padding: 20px; position: relative; flex-shrink: 0; background: #eff1ee; aspect-ratio: 1.95; border-bottom: 1px solid #e5e9e3; }

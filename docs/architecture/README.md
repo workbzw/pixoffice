@@ -2,7 +2,7 @@
 
 原则：**把变化限制在局部。** 通用执行规则留在中心，场景、素材、动画技术和业务页面在边缘分别演进。
 
-当前已拆为八个 npm workspace 包，办公室与教室通过 `example/` 分别装配。包可构建和 `npm pack`，尚未发布 npm；真实骨骼播放器未实现。
+当前已拆为十个 npm workspace 包，办公室、教室与农场通过 `example/` 分别装配。包可构建和 `npm pack`，尚未发布 npm；真实骨骼播放器未实现。
 
 首次拆包见 [拆包验收记录](./package-migration.md)；当前增补见 [场景隔离与按需装配](./scene-isolation.md)。
 
@@ -18,11 +18,14 @@ packages/
   scene-office/       办公室布局、家具、交互、投影与物品视图
   assets-classroom/   教室动作要求、语义绑定与独立资源 ID
   scene-classroom/    课桌、黑板、教学流程与独立场景表现
+  assets-farm/        农作动作语义绑定与独立帧资源
+  scene-farm/         菜地、作物状态、农作流程与独立场景表现
 example/
   office-web/         原有完整 React 页面、聊天、业务数据、编辑器、外部接入
   minimal-vanilla/    不使用 React 的办公室装配与拜访命令
   isolated-scene/     不依赖办公室的独立运行、独立资源与构建示例
   classroom/          独立教室应用、素材构建与部署
+  farm/               独立农场应用、模拟时钟、自动照料与存档
 assets/office/        办公室构建配置与旧路径转发，不是业务执行代码
 art/characters/      原始动作素材、准入记录
 public/               供宿主部署的资源；生成图集不提交 Git
@@ -48,10 +51,12 @@ example/office-web、example/minimal-vanilla
 未来 animation-skeleton ──→ contracts + 所选骨骼引擎 + Pixi peer
 scene-classroom         ──→ runtime、contracts、renderer-pixi
 assets-classroom        ──→ animation-frame、contracts
+scene-farm              ──→ runtime、contracts、renderer-pixi
+assets-farm             ──→ animation-frame、contracts
 ```
 
 - `runtime` 不依赖 React、Pixi、办公室或动画播放器。协议和场景插件接口目前由它导出，没有再拆成多个微型包。
-- 办公室与教室不互相引用。教室教学行为只发送语义动作，替换帧/骨骼素材不改变教师、学生岗位规则。
+- 办公室、教室与农场不互相引用。场景只发送语义动作，替换帧/骨骼素材不改变业务规则。
 - `scene-office` 的根入口与 `/core` 无 DOM/Pixi 执行依赖；`/pixi` 才加载画面实现。安装层仍是同一个包，所以宿主需要满足声明的依赖。
 - `scene-office` 与 `renderer-pixi` 不依赖 `animation-frame`。素材解析和注册适配器由应用装配。
 - `contracts` 不依赖任何 PixOffice 实现包，避免形成大而全的公共工具库。
@@ -123,3 +128,5 @@ npm run build
 当前验证办公室、独立行走示例和帧实现；测试替身不等于真实骨骼支持。不支持运行中世界热替换/外观热换、远程安装任意插件、自动 IK 或任意家具接触适配。缺少动作能力应明确拒绝，不能换一个姿态冒充。
 
 包版本暂统一 `0.1.0`；内部依赖使用精确版本。正式发布前需要确定 npm scope 权限、版本策略、真实骨骼兼容矩阵与发布流程。本次不会执行 publish。
+
+农场使用宿主注入的模拟时钟，生长不依赖动画帧数。`Capability.complete` 返回纯状态提案；运行时验证资源声明、状态版本和 Schema，先持久化整个结果再发布，避免取消、重复命令或保存失败造成重复收获。`Phase.actions` 声明语义动作，不从任务标题猜测动画。

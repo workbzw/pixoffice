@@ -49,6 +49,15 @@ for (const base of ['/', '/preview/']) {
         assert.ok(html.includes(`href="${base}brand/logo.png"`))
       }
 
+      for (const entry of ['farm/', 'farm/index.html']) {
+        const response = await fetch(`${origin}${base}${entry}`)
+        assert.equal(response.status, 200)
+        const html = await response.text()
+        assert.match(html, /PixOffice · 农场/)
+        assert.match(html, /src\/farm\.tsx/)
+        assert.ok(html.includes(`href="${base}brand/logo.png"`))
+      }
+
       const entry = await readFile(new URL('../example/office-web/src/minimal.ts', import.meta.url), 'utf8')
       assert.match(entry, /minimal-vanilla\/src\/main\.ts/)
       const source = await readFile(new URL('../example/office-web/src/components/RuntimeWorkspace.tsx', import.meta.url), 'utf8')

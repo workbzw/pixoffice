@@ -50,15 +50,18 @@ export type Move = {
 export type Pose = { actorId: string; posture?: Actor['posture']; facing?: Facing; lookAt?: string; expression?: string }
 export type Phase = {
   title: string; moves?: Move[]; durationMs?: number
+  actions?: { actorId: string; actionId: string }[]
   speech?: { actorId: string; text: string }[]
   /** Required arrival poses also constrain candidate destinations in this phase. */
   poses?: Pose[]
 }
+export type ObjectStateChange = { entityId: string; expectedStateRevision: number; state: Record<string, unknown> }
 export type ActivityPlan = { title: string; claims: Claim[]; phases: Phase[]; continuous?: boolean; maxDurationMs?: number }
 export type Activity = {
   id: string; commandId: string; pluginId: string; capability: string; participants: string[]
   plan: ActivityPlan; phaseIndex: number; phaseStarted: boolean; elapsedMs: number; phaseElapsedMs: number
   status: 'active' | 'completed' | 'cancelled' | 'failed'; error?: { code: string; message: string }
+  completionRevisions?: Record<string, number>
 }
 export type SceneEvent = { eventId: string; sequence: number; sceneId: string; runtimeId: string; type: string; timestamp: number; data: Record<string, unknown> }
 export type InterruptedActivity = { id: string; commandId: string; capability: string; title: string }

@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "id": "farm-gardener",
+  "label": "农场园丁",
+  "profile": "farm",
+  "canvas": {
+    "width": 256,
+    "height": 384
+  },
+  "pivot": {
+    "x": 128,
+    "y": 344
+  },
+  "referenceHeight": 280,
+  "displayHeight": 112,
+  "portrait": "idle.front",
+  "clips": {
+    "idle.front": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "body/idle/front/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "idle.back": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "idle/back/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "idle.left": {
+      "alias": "idle.right",
+      "mirrorX": true
+    },
+    "idle.right": {
+      "frames": [
+        {
+          "durationMs": 1000,
+          "file": "body/idle/right/001.png"
+        }
+      ],
+      "loop": false
+    },
+    "walk.front": {
+      "frames": [
+        {
+          "file": "standard-v2/walk/front/001.png",
+          "durationMs": 200
+        },
+        {
+          "file": "standard-v2/walk/front/002.png",
+          "durationMs": 200
+        },
+        {
+          "file": "standard-v2/walk/front/003.png",
+          "durationMs": 200
+        },
+        {
+          "file": "standard-v2/walk/front/004.png",
+          "durationMs": 200
+        }
+      ],
+      "loop": true
+    },
+    "walk.back": {
+      "frames": [
+        {
+          "file": "standard-v2/walk/back/001.png",
+          "durationMs": 200
+        },
+        {
+          "file": "standard-v2/walk/back/002.png",
+          "durationMs": 200
+        },
+        {
+          "file": "standard-v2/walk/back/003.png",
+          "durationMs": 200
+        },
+        {
+          "file": "standard-v2/walk/back/004.png",
+          "durationMs": 200
+        }
+      ],
+      "loop": true
+    },
+    "walk.left": {
+      "alias": "walk.right",
+      "mirrorX": true
+    },
+    "walk.right": {
+      "frames": [
+        {
+          "durationMs": 200,
+          "file": "body/walk/right/001.png"
+        },
+        {
+          "durationMs": 200,
+          "file": "body/idle/right/001.png"
+        },
+        {
+          "durationMs": 200,
+          "file": "body/walk/right/003.png"
+        },
+        {
+          "durationMs": 200,
+          "file": "body/idle/right/001.png"
+        }
+      ],
+      "loop": true
+    },
+    "farm.plant": {
+      "frames": [
+        {
+          "file": "farm/plant/001.png",
+          "durationMs": 450
+        },
+        {
+          "file": "farm/plant/002.png",
+          "durationMs": 450
+        },
+        {
+          "file": "farm/plant/003.png",
+          "durationMs": 450
+        },
+        {
+          "file": "farm/plant/004.png",
+          "durationMs": 450
+        }
+      ],
+      "loop": false
+    },
+    "farm.water": {
+      "frames": [
+        {
+          "file": "farm/water/001.png",
+          "durationMs": 450
+        },
+        {
+          "file": "farm/water/002.png",
+          "durationMs": 450
+        },
+        {
+          "file": "farm/water/003.png",
+          "durationMs": 450
+        },
+        {
+          "file": "farm/water/004.png",
+          "durationMs": 450
+        }
+      ],
+      "loop": false
+    },
+    "farm.harvest": {
+      "frames": [
+        {
+          "file": "farm/harvest/001.png",
+          "durationMs": 450
+        },
+        {
+          "file": "farm/harvest/002.png",
+          "durationMs": 450
+        },
+        {
+          "file": "farm/harvest/003.png",
+          "durationMs": 450
+        },
+        {
+          "file": "farm/harvest/004.png",
+          "durationMs": 450
+        }
+      ],
+      "loop": false
+    }
+  }
+}

@@ -16,6 +16,8 @@ dist/
 /example/isolated-scene/public/
 /example/classroom/public/
 /public/classroom-assets/
+/public/farm-assets/
+/example/farm/public/
 /public/assets/office/**/*.webp
 /.character-staging/
 /.character-backups/

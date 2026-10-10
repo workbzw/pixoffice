@@ -40,6 +40,7 @@ const planSchema = z.strictObject({ title: z.string().max(200), claims: z.array(
     moves: z.array(z.strictObject({ actorId: idSchema, targetId: idSchema, anchor: idSchema, interactionId: idSchema.optional(), alternatives: z.array(idSchema).max(8).optional(),
       })).max(24).optional(),
     speech: z.array(z.strictObject({ actorId: idSchema, text: z.string().max(500) })).max(24).optional(),
+    actions: z.array(z.strictObject({ actorId: idSchema, actionId: idSchema })).max(24).optional(),
     poses: z.array(z.strictObject({ actorId: idSchema, posture: z.enum(['standing', 'seated']).optional(), facing: z.enum(['front', 'back', 'left', 'right']).optional(), lookAt: idSchema.optional(), expression: z.string().max(80).optional() })).max(24).optional(),
   })).min(1).max(100) })
 
@@ -119,6 +120,8 @@ export class SceneRuntime {
       phaseIndex: activity.phaseIndex, phaseCount: activity.plan.phases.length,
       title: activity.plan.phases[activity.phaseIndex]?.title ?? activity.plan.title,
       ready: this.phaseReady.has(activity.id),
+      actions: structuredClone(activity.plan.phases[activity.phaseIndex]?.actions ?? []),
+      progress: Math.min(1, activity.phaseElapsedMs / Math.max(1, activity.plan.phases[activity.phaseIndex]?.durationMs ?? 1)),
     }))
   }
   getRecord(id: string) { const record = this.records.get(id); return record ? structuredClone(record) : undefined }
@@ -197,6 +200,7 @@ export class SceneRuntime {
     if (!checked.success) throw new SceneFault('INVALID_PARAMS', checked.error.issues.map(i => i.message).join('; '))
     const params = checked.data
     const plan: ActivityPlan = planSchema.parse(capability.build({ world: this.readWorld(), participants: structuredClone(command.participants), template: id => this.template(id) }, params))
+    if (plan.continuous && capability.complete) throw new SceneFault('INVALID_PLAN', '持续活动不能声明一次性完成效果')
     const participants = new Set(command.participants.map(p => p.entityId))
     const claimed = (id: string, channel: string) => plan.claims.some(c => c.resource === `actor:${id}:${channel}`)
     for (const id of participants) {
@@ -224,7 +228,8 @@ export class SceneRuntime {
         this.actor(pose.lookAt)
         if (pose.facing) throw new SceneFault('INVALID_PLAN', '朝向与面向对象不能同时指定')
       }
-      for (const effect of [...(phase.moves ?? []), ...(phase.poses ?? [])]) if (!participants.has(effect.actorId) || !claimed(effect.actorId, 'body')) throw new SceneFault('INVALID_PLAN', '动作缺少参与者或身体资源声明')
+      for (const effect of [...(phase.moves ?? []), ...(phase.poses ?? []), ...(phase.actions ?? [])]) if (!participants.has(effect.actorId) || !claimed(effect.actorId, 'body')) throw new SceneFault('INVALID_PLAN', '动作缺少参与者或身体资源声明')
+      if (new Set(phase.actions?.map(action => action.actorId)).size !== (phase.actions?.length ?? 0)) throw new SceneFault('INVALID_PLAN', '同阶段不能为一个人指定两种动作')
       for (const speech of phase.speech ?? []) if (!participants.has(speech.actorId) || !claimed(speech.actorId, 'speech')) throw new SceneFault('INVALID_PLAN', '说话缺少参与者或语音资源声明')
       if (new Set(phase.moves?.map(m => m.actorId)).size !== (phase.moves?.length ?? 0)) throw new SceneFault('INVALID_PLAN', '同阶段不能移动一个人两次')
       if (new Set(phase.poses?.map(p => p.actorId)).size !== (phase.poses?.length ?? 0)) throw new SceneFault('INVALID_PLAN', '同阶段不能为一个人指定两种姿态')
@@ -255,6 +260,8 @@ export class SceneRuntime {
             }
             const activity: Activity = { id: command.commandId, commandId: command.commandId, pluginId, capability: command.capability,
               participants: command.participants.map(p => p.entityId), plan, phaseIndex: 0, phaseStarted: false, elapsedMs: 0, phaseElapsedMs: 0, status: 'active' }
+            if (this.plugins.capability(command.capability).capability.complete) activity.completionRevisions = Object.fromEntries(this.world.props
+              .filter(prop => plan.claims.some(claim => claim.resource.startsWith(`prop:${prop.id}:`))).map(prop => [prop.id, prop.stateRevision]))
             this.resources.acquire(activity.id, plan.claims)
             this.activities.set(activity.id, activity)
             this.startedAt.set(activity.id, this.now())
@@ -430,6 +437,10 @@ export class SceneRuntime {
 
   private endActivity(activity: Activity, status: Activity['status'], error?: { code: string; message: string }) {
     if (activity.status !== 'active') return
+    if (status === 'completed') {
+      try { this.commitCompletion(activity) }
+      catch (reason) { status = 'failed'; error = sceneError(reason) }
+    }
     activity.status = status; activity.error = error
     this.startedAt.delete(activity.id); this.phaseReady.delete(activity.id)
     const settling: string[] = []
@@ -450,6 +461,42 @@ export class SceneRuntime {
     if (!terminal(record.status)) this.finish(record, status === 'completed' ? 'completed' : status === 'cancelled' ? 'cancelled' : 'failed', error)
     this.persist()
     this.emit('activity.ended', { activityId: activity.id, status, error })
+  }
+
+  private commitCompletion(activity: Activity) {
+    const command = this.records.get(activity.commandId)!.command
+    if (command.type !== 'activity.start') return
+    const { capability } = this.plugins.capability(activity.capability)
+    if (!capability.complete) return
+    if (activity.plan.continuous) throw new SceneFault('INVALID_PLAN', '持续活动不能在启动回执中提交完成效果')
+    const changes = capability.complete({ world: this.readWorld(), participants: structuredClone(command.participants), template: id => this.template(id) }, capability.params.parse(command.params))
+    if (changes.length > 100 || new Set(changes.map(change => change.entityId)).size !== changes.length) throw new SceneFault('INVALID_PLAN', '完成效果包含重复或过多物品')
+    const prepared = changes.map(change => {
+      const prop = this.world.props.find(item => item.id === change.entityId)
+      if (!prop) throw new SceneFault('ENTITY_NOT_FOUND', change.entityId)
+      if (!activity.plan.claims.some(claim => claim.resource.startsWith(`prop:${prop.id}:`))) throw new SceneFault('INVALID_PLAN', '完成效果缺少物品资源声明')
+      if (prop.stateRevision !== change.expectedStateRevision || prop.stateRevision !== activity.completionRevisions?.[prop.id]) throw new SceneFault('REVISION_CONFLICT', '物品状态已变更，未提交完成效果')
+      const state = this.plugins.validateState(prop.templateId, change.state)
+      z.record(z.string(), z.json()).parse(state)
+      return { prop, state: structuredClone(state) }
+    })
+    if (prepared.length && this.persistence) {
+      if (this.persistenceError) throw new SceneFault('PERSISTENCE_FAILED', this.persistenceError)
+      const checkpoint = this.checkpoint()
+      for (const { prop, state } of prepared) {
+        const saved = checkpoint.world.props.find(item => item.id === prop.id)!
+        saved.state = state; saved.stateRevision++
+      }
+      checkpoint.activeActivities = checkpoint.activeActivities.filter(item => item.id !== activity.id)
+      checkpoint.records.find(item => item.command.commandId === activity.commandId)!.status = 'completed'
+      try { this.persistence.save(checkpoint) }
+      catch (reason) {
+        this.persistenceError = `存档失败：${reason instanceof Error ? reason.message : String(reason)}`
+        throw new SceneFault('PERSISTENCE_FAILED', this.persistenceError)
+      }
+    }
+    // Validate and persist every proposal before changing any live object.
+    for (const { prop, state } of prepared) { prop.state = state; prop.stateRevision++ }
   }
 
   private actor(id: string) { const actor = this.world.actors.find(a => a.id === id); if (!actor) throw new SceneFault('ENTITY_NOT_FOUND', id); return actor }

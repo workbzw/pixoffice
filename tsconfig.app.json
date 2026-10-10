@@ -22,5 +22,5 @@
       "@/*": ["example/office-web/src/*"]
     }
   },
-  "include": ["example/office-web/src", "example/minimal-vanilla/src", "example/isolated-scene/src", "example/classroom/src"]
+  "include": ["example/office-web/src", "example/minimal-vanilla/src", "example/isolated-scene/src", "example/classroom/src", "example/farm/src"]
 }

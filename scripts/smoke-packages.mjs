@@ -9,11 +9,12 @@ const root = fileURLToPath(new URL('..', import.meta.url))
 const temp = await mkdtemp(path.join(tmpdir(), 'pixoffice-packages-'))
 const isolated = await mkdtemp(path.join(tmpdir(), 'pixoffice-isolated-'))
 const classroom = await mkdtemp(path.join(tmpdir(), 'pixoffice-classroom-packages-'))
+const farm = await mkdtemp(path.join(tmpdir(), 'pixoffice-farm-packages-'))
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 const run = (command, args, cwd) => execFileSync(command, args, { cwd, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 })
 try {
   const dependencies = { 'pixi.js': '^8.18.1' }
-  for (const name of ['contracts', 'runtime', 'renderer-pixi', 'animation-frame', 'scene-office', 'assets-office', 'scene-classroom', 'assets-classroom']) {
+  for (const name of ['contracts', 'runtime', 'renderer-pixi', 'animation-frame', 'scene-office', 'assets-office', 'scene-classroom', 'assets-classroom', 'scene-farm', 'assets-farm']) {
     const [result] = JSON.parse(run(npm, ['pack', '--json', '--ignore-scripts', '--pack-destination', temp], path.join(root, 'packages', name)))
     assert(result.files.some(file => file.path.endsWith('.d.ts')), `${name}: missing declarations`)
     assert(!result.files.some(file => file.path.startsWith('src/')), `${name}: raw source leaked`)
@@ -46,7 +47,15 @@ try {
   await cp(path.join(temp, 'tsconfig.json'), path.join(classroom, 'tsconfig.json'))
   console.log(run(process.execPath, ['consumer.mjs'], classroom).trim())
   run(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc'), '-p', path.join(classroom, 'tsconfig.json')], classroom)
+  const farmDependencies = { ...generic }
+  for (const name of ['scene-farm', 'assets-farm']) farmDependencies[`@pixoffice/${name}`] = `file:${path.join(temp, dependencies[`@pixoffice/${name}`].slice(5))}`
+  await writeFile(path.join(farm, 'package.json'), JSON.stringify({ private: true, type: 'module', dependencies: farmDependencies }))
+  console.log(run(npm, ['install', '--offline', '--ignore-scripts', '--no-audit', '--no-fund'], farm).trim())
+  for (const ext of ['mjs', 'ts']) await cp(path.join(root, `tests/fixtures/farm-consumer.${ext}`), path.join(farm, `consumer.${ext}`))
+  await cp(path.join(temp, 'tsconfig.json'), path.join(farm, 'tsconfig.json'))
+  console.log(run(process.execPath, ['consumer.mjs'], farm).trim())
+  run(process.execPath, [path.join(root, 'node_modules/typescript/bin/tsc'), '-p', path.join(farm, 'tsconfig.json')], farm)
 } catch (error) {
   console.error(error.stdout?.toString() ?? '', error.stderr?.toString() ?? '')
   throw error
-} finally { await rm(temp, { recursive: true, force: true }); await rm(isolated, { recursive: true, force: true }); await rm(classroom, { recursive: true, force: true }) }
+} finally { for (const dir of [temp, isolated, classroom, farm]) await rm(dir, { recursive: true, force: true }) }

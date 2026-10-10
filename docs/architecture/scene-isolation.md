@@ -2,7 +2,7 @@
 
 ## 本轮边界
 
-通用四包不认识具体场景；办公室与教室分别由两个可选包组成：
+通用四包不认识具体场景；办公室、教室与农场分别由两个可选包组成：
 
 | 层 | 包 | 依赖方向 |
 | --- | --- | --- |
@@ -14,6 +14,8 @@
 | 办公室帧素材规则 | assets-office/frame | animation-frame、contracts |
 | 教室行为与视图 | scene-classroom | runtime、contracts、renderer-pixi |
 | 教室帧素材绑定 | assets-classroom | animation-frame、contracts |
+| 农场行为与视图 | scene-farm | runtime、contracts、renderer-pixi |
+| 农场帧素材绑定 | assets-farm | animation-frame、contracts |
 
 `animation-frame` 不再要求办公室坐姿、四向走路或敲键盘。它验证图片、图集、
 锚点、别名与播放时序；具体场景决定必需动作。办公室原规则保留在
@@ -91,9 +93,11 @@ npm run assets:export -- /tmp/office-assets
 
 - `example/isolated-scene`：无办公室依赖，一个人物只含站立/行走与嘴部资源，独立 dist。
 - `example/classroom`：独立教室资源和入口，生产打包禁止导入办公室包。
-- `packages:check`：八个包的导入方向和公开入口检查。
+- `example/farm`：独立农场资源和入口，生产打包禁止导入办公室或教室包。
+- `packages:check`：十个包的导入方向和公开入口检查。
 - `packages:smoke`：仓库外安装并验证各代码包与通用四包。
 - `tests/classroom.test.mjs`：五位学生往返、碰撞、串行排队、各阶段取消、角色与外观解耦。
+- `tests/farm.test.mjs`：种植闭环、并发照料、碰撞、取消、状态版本、持久化失败和重放幂等。
 - `tests/sceneIsolation.test.mjs`：自定义动作、选择性制作、清单导出安全、移动取消和按需解析。
 - 原办公室测试及 `characters:check`：确认人物资源与既有行为不变。
 
