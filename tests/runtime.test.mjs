@@ -148,10 +148,14 @@ test('presentation state is independent of movement and rejects stale revisions'
   assert.equal(runtime.readActors()[0].presentation.title, 'External task')
 })
 
-test('wall-clock deadline and timeout terminate without requiring animation catch-up', () => {
+test('execution timeout counts simulated time while queued expiry uses wall-clock time', () => {
   const { runtime, jump } = setup()
   runtime.submit({ ...visit('timeout'), timeoutMs: 100 })
   jump(5000)
+  assert.equal(runtime.getRecord('timeout').status, 'running', 'browser suspension does not time out an unadvanced activity')
+  runtime.tick(50)
+  assert.equal(runtime.getRecord('timeout').status, 'running')
+  runtime.tick(50)
   assert.equal(runtime.getRecord('timeout').error.code, 'EXECUTION_TIMEOUT')
   runtime.submit(focus())
   runtime.submit({ ...emote(), expiresAt: new Date(6500).toISOString() })

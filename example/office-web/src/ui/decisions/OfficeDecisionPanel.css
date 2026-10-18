@@ -1,6 +1,6 @@
 .office-decision { position: absolute; top: 14px; left: var(--chat-gutter); right: var(--chat-gutter); bottom: calc(var(--chat-composer-height, 48px) + 34px); display: flex; align-items: flex-end; justify-content: center; pointer-events: none; }
 .office-decision[hidden] { display: none; }
-.office-decision-card { width: min(100%, 520px); max-height: 100%; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; padding: 12px 18px; border: 1px solid #ffffffd9; border-radius: 8px; background: #fffffff2; color: #344239; box-shadow: 0 10px 40px #27382d20; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); pointer-events: auto; animation: office-decision-in .22s ease-out both; }
+.office-decision-card { width: min(100%, 520px); max-height: 100%; overflow-y: auto; overscroll-behavior: contain; box-sizing: border-box; padding: 12px 18px; border: 1px solid #ffffffd9; border-radius: 8px; background: rgb(255 255 255 / 95%); color: #344239; box-shadow: 0 10px 40px #27382d20; pointer-events: auto; animation: office-decision-in .22s ease-out both; }
 .office-decision-header { display: flex; align-items: center; gap: 9px; margin-bottom: 8px; }
 .office-decision-header > .runtime-avatar { flex: 0 0 28px; width: 28px; height: 34px; }
 .office-decision-header > div { display: flex; flex-direction: column; gap: 2px; }
@@ -25,10 +25,11 @@
 .office-decision-actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 34px; padding: 7px 12px; border: 1px solid transparent; border-radius: 6px; font: inherit; font-size: 12px; }
 .office-decision-primary { background: #456753; color: #fff !important; }
 .office-decision-primary:hover:not(:disabled) { background: #365640; }
-.office-decision-primary:disabled { background: #e6ece7; color: #a1afa5 !important; cursor: not-allowed; }
+.office-decision-primary:disabled { background: #e3eee6; color: #52675a !important; cursor: not-allowed; }
+.office-decision .office-decision-actions button:disabled { opacity: 1; }
 .office-decision-secondary { background: transparent; border-color: #dce4de !important; color: #6d7c72; }
 .office-decision-secondary:hover { background: #eff3ef; }
-.office-decision-pending, .office-decision-receipt { display: flex; align-items: center; gap: 8px; max-width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #e2e9e3; border-radius: 8px; background: #fffffff2; box-shadow: 0 4px 20px #27382d10; color: #5b7463; font: inherit; font-size: 12px; pointer-events: auto; }
+.office-decision-pending, .office-decision-receipt { display: flex; align-items: center; gap: 8px; max-width: 100%; box-sizing: border-box; padding: 10px 14px; border: 1px solid #e2e9e3; border-radius: 8px; background: rgb(255 255 255 / 95%); box-shadow: 0 4px 20px #27382d10; color: #5b7463; font: inherit; font-size: 12px; pointer-events: auto; }
 .office-decision-pending strong { font-size: 12px; font-weight: 500; white-space: nowrap; }
 .office-decision-pending > span:first-of-type { display: grid; place-items: center; flex: 0 0 18px; height: 18px; border-radius: 50%; background: #e7f0e9; font-size: 10px; }
 .office-decision-pending-title, .office-decision-receipt > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

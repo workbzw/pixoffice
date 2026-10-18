@@ -42,6 +42,8 @@ Scenes are lazily assembled through `SceneAssembly`. Furniture and individual ch
 
 A floating input sits at the bottom of the animated scene. Sending a message expands the conversation panel upward. An animated multicolor border indicates generation, with controls to stop, collapse, or start a new conversation. By default, this is a clearly labeled interaction preview: it does not call a model or execute tasks. Connect a real streaming service through `VITE_PIXOFFICE_CHAT_URL` or the `chatSource` prop of `OfficeApp`. See the [Chat Integration Protocol](./docs/chat-integration.md).
 
+In the local preview, starting the demo shows one confirmation in the current office after about 15 seconds and one side choice card from another office after about 30 seconds. Each run contains only these two questions, with no follow-up queue. Each question receives a fresh deadline when it appears. Stopping the demo cancels questions that have not appeared yet. Connected-backend menus are still triggered by backend requests.
+
 ## Map Editing
 
 The grid button in the top-right corner of the office opens the full-screen layout editor; the top-left button opens the team-space overview. Choose assets from the furniture catalog at the bottom, drag furniture onto the floor grid, and select it to duplicate, remove, or reassign a workstation. Invalid placements return to their previous positions. Undo and redo are supported; the advanced menu offers JSON import/export and route testing. External AI systems can modify the same shared draft through the `map.edit` protocol without simulating mouse input.

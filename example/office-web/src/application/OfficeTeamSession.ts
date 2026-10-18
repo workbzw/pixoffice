@@ -5,6 +5,7 @@ import { DashboardSceneBridge } from '../dashboard/sceneBridge.ts'
 import { OfficeDemoSource } from '../dashboard/OfficeDemoSource.ts'
 import { OfficeSimulation, advanceOfficeSimulations } from './OfficeSimulation.ts'
 import { DecisionSession } from './decisions/DecisionSession.ts'
+import type { DecisionRequest } from './decisions/DecisionSession.ts'
 import { createDecisionPreview } from './decisions/preview.ts'
 import { notifySubscribers } from '../notifications.ts'
 import { ChatSession } from '../chat/ChatSession.ts'
@@ -32,6 +33,7 @@ export class OfficeTeamSession {
   readonly source: OfficeDataSource
   readonly simulation: OfficeSimulation
   readonly decisions: DecisionSession
+  readonly decisionPreviewEnabled: boolean
   readonly chat: ChatSession
   readonly ui: OfficeUiSession
   readonly whiteboardProgress = new WhiteboardProgress({ reduceMotion: typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches })
@@ -46,13 +48,18 @@ export class OfficeTeamSession {
   private unsubscribe?: () => void
   private disconnect?: () => void
   private actions = new Map<string, Promise<void>>()
+  private decisionPreviewKind?: DecisionRequest['kind']
 
   constructor(runtime: SceneRuntime, source: OfficeDataSource, options: { simulation?: OfficeSimulation; transport?: OfficeTeamTransport; decisionPreview?: boolean; chatSource?: OfficeChatSource; chatPersistence?: ChatPersistence; requestUi?: (action: OfficeUiAction) => Promise<OfficeUiPresentation> } = {}) {
     if (source.kind !== 'example' && options.simulation?.canDemo) throw new Error('真实数据团队不能使用演示数据源')
     this.runtime = runtime; this.source = source; this.transport = options.transport
+    this.decisionPreviewEnabled = options.decisionPreview === true && source.kind === 'example'
     const leader = runtime.readActors()[0]
-    this.decisions = new DecisionSession(runtime.sceneId, options.decisionPreview && source.kind === 'example'
-      ? () => createDecisionPreview(runtime.sceneId, { name: leader?.name ?? '办公室负责人', appearanceId: leader?.templateId ?? 'office-lead' }) : [])
+    this.decisions = new DecisionSession(runtime.sceneId, () => {
+      if (!this.decisionPreviewEnabled || !this.decisionPreviewKind) return []
+      return createDecisionPreview(runtime.sceneId, { name: leader?.name ?? '办公室负责人', appearanceId: leader?.templateId ?? 'office-lead' })
+        .filter(request => request.kind === this.decisionPreviewKind)
+    })
     this.chat = new ChatSession(runtime.sceneId, options.chatSource ?? new PreviewChatSource(), { persistence: options.chatPersistence })
     this.ui = new OfficeUiSession(runtime.sceneId, options.requestUi)
     this.simulation = options.simulation ?? new OfficeSimulation(runtime, source.kind === 'example' ? new OfficeDemoSource(runtime) : undefined)
@@ -63,6 +70,11 @@ export class OfficeTeamSession {
 
   getSnapshot = () => this.state
   get isStarted() { return this.active }
+  showDecisionPreview(kind: DecisionRequest['kind']) {
+    if (!this.decisionPreviewEnabled) return
+    this.decisionPreviewKind = kind
+    this.decisions.reset()
+  }
   setConnection(connection: string) { this.update({ connection }) }
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
 

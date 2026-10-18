@@ -12,9 +12,9 @@ before(async () => {
 })
 after(() => server?.close())
 
-function fixture(t, options = {}) {
+function fixture(t, { runtimeOptions = {}, ...options } = {}) {
   let now = 0
-  const runtime = createOfficeRuntime({ now: () => now })
+  const runtime = createOfficeRuntime({ now: () => now, ...runtimeOptions })
   const scene = new OfficeScene({ runtime, ...options })
   t.after(() => { scene.destroy(); runtime.dispose() })
   return { scene, runtime, tick(ms = 50) { now += ms; scene.onTick({ deltaTime: 3 }) } }
@@ -88,12 +88,14 @@ test('demo waits for manual running and queued visits before starting its next r
 })
 
 test('an asynchronous demo failure stops scheduling instead of silently retrying', t => {
-  const notices = [], { scene, runtime, tick } = fixture(t, { onDraftChange: text => notices.push(text) })
+  let supported = true
+  const notices = [], { scene, runtime, tick } = fixture(t, { runtimeOptions: { supportsPose: () => supported }, onDraftChange: text => notices.push(text) })
   scene.setDemo(true); tick()
   assert.equal(runtime.snapshot().records.length, 3)
-  tick(120001)
+  supported = false
+  tick()
   assert.equal(scene.isDemoRunning, false)
-  assert(notices.some(text => text.includes('执行期限')))
+  assert(notices.some(text => text.includes('动作')))
   for (let i = 0; i < 100; i++) tick()
   assert.equal(runtime.snapshot().records.length, 3)
 })

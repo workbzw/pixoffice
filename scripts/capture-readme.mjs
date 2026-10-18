@@ -29,17 +29,23 @@ try {
   await expect(page.getByText(/正在加载办公室/)).toHaveCount(0, { timeout: 30000 })
   await expect(page.locator('.runtime-footer')).toContainText('本地示例')
 
-  // Complete the local preview menus using ordinary UI actions before recording the scene.
+  // Complete the two timed demo questions before recording the scene.
   const panel = page.getByRole('complementary', { name: '待你决定', exact: true })
-  await panel.getByRole('radio').first().check()
-  await panel.getByRole('button', { name: '提交选择', exact: true }).click()
-  await panel.getByRole('button', { name: '暂不提交', exact: true }).click()
-  await expect(panel).toBeHidden({ timeout: 10000 })
-  while (await page.getByRole('button', { name: /^暂不提醒/ }).count()) await page.getByRole('button', { name: /^暂不提醒/ }).first().click()
+  const completePreview = async () => {
+    await panel.getByRole('button', { name: '暂不提交', exact: true }).click()
+    await expect(panel).toBeHidden({ timeout: 10000 })
+  }
+  const dismissNotices = async () => {
+    while (await page.getByRole('button', { name: /^暂不提醒/ }).count()) await page.getByRole('button', { name: /^暂不提醒/ }).first().click()
+  }
   const start = page.getByRole('button', { name: '开始演示', exact: true })
   await expect(start).toBeEnabled({ timeout: 30000 })
   await start.click()
   await expect(page.getByRole('button', { name: '停止演示', exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: '暂不提交', exact: true })).toBeVisible({ timeout: 20000 })
+  await completePreview()
+  await expect(page.getByRole('button', { name: /^暂不提醒/ }).first()).toBeVisible({ timeout: 20000 })
+  await dismissNotices()
   await page.mouse.move(viewport.width - 1, viewport.height - 1)
 
   await page.waitForTimeout(2000)

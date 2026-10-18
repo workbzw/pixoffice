@@ -20,6 +20,7 @@ import { assertOfficeDirectory } from './dashboard/officeDirectory.ts'
 import { maxRelayTeams } from '@pixoffice/protocol/relay'
 import type { OfficeSimulation } from './application/OfficeSimulation.ts'
 import { OfficeTeamSession } from './application/OfficeTeamSession.ts'
+import type { DecisionRequest } from './application/decisions/DecisionSession.ts'
 import { officeTeamTransport } from './application/connectOfficeTeam.ts'
 import { useOfficeTeamHost } from './controller/useOfficeTeamHost.ts'
 import { useOfficeTeamDirectory } from './controller/useOfficeTeamDirectory.ts'
@@ -66,11 +67,13 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
   const sessions = useMemo(() => new Map(entries.map(entry => [entry.team.id, entry.session])), [entries])
   const [activeId, setActiveId] = useState(initialTeams[0]?.id ?? '')
   const [decisionOpenToken, setDecisionOpenToken] = useState(0)
-  const [focusedDecisionTeamId, setFocusedDecisionTeamId] = useState('')
+  const [decisionFocus, setDecisionFocus] = useState<{ teamId: string; requests: readonly DecisionRequest[] }>()
   const hostedSessions = useMemo(() => [...sessions.values()], [sessions])
   useOfficeTeamHost(hostedSessions)
   const teamOptions = useOfficeTeamDirectory(teams, hostedSessions)
   const activeSession = sessions.get(activeId)
+  const focusedDecisionTeamId = decisionFocus && sessions.get(decisionFocus.teamId)?.decisions.getSnapshot().pending.some(request => decisionFocus.requests.includes(request))
+    ? decisionFocus.teamId : ''
   const create = createTeam ? async (input: OfficeCreationInput) => {
     if (creating.current) throw new Error('正在创建办公室，请稍候')
     if (entries.length >= maxRelayTeams) throw new Error(`最多支持 ${maxRelayTeams} 个办公室`)
@@ -85,13 +88,14 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
   } : undefined
   const select = (id: string) => {
     if (!teams.some(team => team.id === id) || id === activeId) return
-    setFocusedDecisionTeamId('')
+    setDecisionFocus(undefined)
     void sessions.get(id)?.refresh()
     setActiveId(id)
   }
   const openDecisions = (id: string) => {
-    if (!sessions.has(id)) return
-    select(id); setFocusedDecisionTeamId(id); setDecisionOpenToken(value => value + 1)
+    const session = sessions.get(id)
+    if (!session) return
+    select(id); setDecisionFocus({ teamId: id, requests: session.decisions.getSnapshot().pending }); setDecisionOpenToken(value => value + 1)
   }
   if (!activeSession) {
     const scene = <OfficeEmptyState create={create} />

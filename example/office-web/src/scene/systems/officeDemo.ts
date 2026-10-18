@@ -36,3 +36,15 @@ export function demoCommands(runtime: SceneRuntime, round: number): SceneCommand
     }
   })
 }
+
+export function demoReturnCommands(runtime: SceneRuntime): SceneCommand[] {
+  const world = runtime.readWorld()
+  return world.actors.filter(actor => {
+    if (!actor.homeId) return false
+    const seat = runtime.navigation.anchor(world, actor.homeId, 'seat')
+    return actor.posture !== 'seated' || actor.using?.propId !== actor.homeId || actor.position.x !== seat.x || actor.position.y !== seat.y
+  }).map(actor => ({
+    ...commandBase(runtime), type: 'activity.start', capability: 'scene.move',
+    participants: [{ entityId: actor.id, role: 'actor' }], params: { targetId: actor.homeId!, anchor: 'seat' },
+  }))
+}

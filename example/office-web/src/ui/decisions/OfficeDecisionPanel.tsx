@@ -17,7 +17,8 @@ export function OfficeDecisionPanel({ snapshot, onResolve, onShowRecords, onRese
   const [collapsed, setCollapsed] = useState(false)
   const current = snapshot.pending[0]
   const last = snapshot.receipt
-  useEffect(() => { setCollapsed(false) }, [openToken])
+  const requestKey = current ? `${current.id}:${current.createdAt ?? ''}:${current.deadline ?? ''}` : ''
+  useEffect(() => { setCollapsed(false) }, [openToken, requestKey])
   if (!current && !last) return null
   return <aside className="office-decision" aria-label="待你决定" hidden={hidden}>
     {current && !collapsed ? <DecisionCard key={`${current.id}:${current.createdAt ?? ''}:${current.deadline ?? ''}`} request={current} count={snapshot.pending.length} preview={preview}

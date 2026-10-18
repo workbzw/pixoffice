@@ -68,7 +68,6 @@ export class SceneRuntime {
   private pumping = false
   private editing = false
   private editor?: MapDraft
-  private startedAt = new Map<string, number>()
   private phaseReady = new Set<string>()
   private settling = new Map<string, string[]>()
   constructor(options: SceneRuntimeOptions) {
@@ -191,7 +190,8 @@ export class SceneRuntime {
       try {
         const record = this.records.get(activity.commandId)!
         const max = activity.plan.continuous ? activity.plan.maxDurationMs ?? 3600000 : record.command.timeoutMs ?? 120000
-        if (this.now() - this.startedAt.get(activity.id)! >= max) throw new SceneFault('EXECUTION_TIMEOUT', '活动超过执行期限')
+        // Browser suspension must not consume execution time without advancing movement.
+        if (activity.elapsedMs + dt >= max) throw new SceneFault('EXECUTION_TIMEOUT', '活动超过执行期限')
         this.advance(activity, dt)
       } catch (error) { this.endActivity(activity, 'failed', sceneError(error)) }
     }
@@ -271,7 +271,6 @@ export class SceneRuntime {
               .filter(prop => plan.claims.some(claim => claim.resource.startsWith(`prop:${prop.id}:`))).map(prop => [prop.id, prop.stateRevision]))
             this.resources.acquire(activity.id, plan.claims)
             this.activities.set(activity.id, activity)
-            this.startedAt.set(activity.id, this.now())
             record.activityId = activity.id; record.status = 'running'
             this.persist()
             if (this.persistenceError) throw new SceneFault('PERSISTENCE_FAILED', this.persistenceError)
@@ -432,7 +431,7 @@ export class SceneRuntime {
     }
     activity.status = status; activity.error = error
     if (status === 'completed') this.completedActivities++
-    this.startedAt.delete(activity.id); this.phaseReady.delete(activity.id)
+    this.phaseReady.delete(activity.id)
     const settling: string[] = []
     for (const id of activity.participants) {
       const actor = this.actor(id)
