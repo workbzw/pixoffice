@@ -1,12 +1,15 @@
 import { createSceneRuntime } from '@pixoffice/runtime'
 import type { ScenePack, CreateSceneRuntimeOptions } from '@pixoffice/runtime'
-import { visualAssetManifestSchema } from '@pixoffice/contracts'
-import type { VisualAssetManifest } from '@pixoffice/contracts'
+import { assertProductAppearance, sceneProductSchema, visualAssetManifestSchema } from '@pixoffice/contracts'
+import type { SceneProduct, VisualAssetManifest } from '@pixoffice/contracts'
 import { SceneView } from './SceneView.ts'
 import type { SceneViewOptions } from './SceneView.ts'
 
 export interface SceneAssembly extends Pick<SceneViewOptions, 'pack' | 'animations' | 'resolveAppearance'> {
   scene: ScenePack
+  product?: SceneProduct
+  /** Product-owned calibration, independent of the headless scene definitions. */
+  runtimeOptions?: Pick<CreateSceneRuntimeOptions, 'seatStepDuration' | 'supportsPose'>
 }
 export interface MountSceneOptions {
   signal?: AbortSignal
@@ -21,7 +24,8 @@ export async function mountScene(host: HTMLElement, load: (signal: AbortSignal) 
   signal.throwIfAborted()
   const assembly = await load(signal)
   signal.throwIfAborted()
-  const runtime = createSceneRuntime(assembly.scene, options.runtime)
+  const product = assembly.product && sceneProductSchema.parse(assembly.product)
+  const runtime = createSceneRuntime(assembly.scene, { ...assembly.runtimeOptions, ...options.runtime })
   let view: SceneView | undefined, observer: ResizeObserver | undefined, disposed = false
   const dispose = () => {
     if (disposed) return
@@ -33,6 +37,11 @@ export async function mountScene(host: HTMLElement, load: (signal: AbortSignal) 
   signal.addEventListener('abort', dispose, { once: true })
   try {
     view = new SceneView({ ...options.view, ...assembly, runtime,
+      resolveAppearance: async id => {
+        const manifest = await assembly.resolveAppearance(id)
+        if (product) assertProductAppearance(product, manifest)
+        return manifest
+      },
       onStep: elapsed => options.step ? options.step(runtime, elapsed) : runtime.tick(elapsed), dispatchCommand: command => runtime.submit(command) })
     await view.init(host, Math.max(1, host.clientWidth), Math.max(1, host.clientHeight))
     signal.throwIfAborted()

@@ -6,14 +6,14 @@ import ts from 'typescript'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
 const allowed = {
-  contracts: [], runtime: [],
-  'renderer-pixi': ['contracts', 'runtime'],
+  protocol: [], contracts: ['protocol'], runtime: ['protocol'],
+  'renderer-pixi': ['protocol', 'contracts', 'runtime'],
   'animation-frame': ['contracts'],
   'assets-office': ['contracts', 'animation-frame'],
-  'scene-office': ['contracts', 'runtime', 'renderer-pixi'],
-  'scene-classroom': ['contracts', 'runtime', 'renderer-pixi'],
+  'scene-office': ['protocol', 'contracts', 'runtime', 'renderer-pixi'],
+  'scene-classroom': ['protocol', 'contracts', 'runtime', 'renderer-pixi'],
   'assets-classroom': ['contracts', 'animation-frame'],
-  'scene-farm': ['contracts', 'runtime', 'renderer-pixi'],
+  'scene-farm': ['protocol', 'contracts', 'runtime', 'renderer-pixi'],
   'assets-farm': ['contracts', 'animation-frame'],
 }
 async function files(dir) {
@@ -59,7 +59,7 @@ for (const [name, pkg] of manifests) {
         assert(allowed[name].includes(target), `${name} must not depend on ${target}`)
         assert(manifests.get(target).exports[spec.slice(dependency.length) ? `.${spec.slice(dependency.length)}` : '.'], `${file}: private entry ${spec}`)
       }
-      if (name === 'contracts' || name === 'runtime') assert(!/^(react|pixi)/.test(dependency), `${name} must remain headless`)
+      if (['protocol', 'contracts', 'runtime'].includes(name)) assert(!/^(react|pixi)/.test(dependency), `${name} must remain headless`)
     }
   }
   if (pkg.peerDependencies?.['pixi.js']) assert(!pkg.dependencies?.['pixi.js'], `${name}: Pixi must be shared by the host`)

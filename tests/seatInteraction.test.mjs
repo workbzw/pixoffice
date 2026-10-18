@@ -1,16 +1,17 @@
 import assert from 'node:assert/strict'
 import { before, after, test } from 'node:test'
 import { createTestServer } from './helpers/vite.mjs'
+import { beginMapEdit } from './helpers/map.mjs'
 import { base, visit, use, safeTick, until, completed, noClaims, distance } from './helpers/grid.mjs'
-let server, createOfficeRuntime, OfficeRuntime, GridNavigation, SeatInteractions, PluginHost, pack
+let server, createOfficeRuntime, SceneRuntime, GridNavigation, SeatInteractions, PluginHost, pack
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
-  ;({ OfficeRuntime } = await server.ssrLoadModule('/packages/runtime/src/OfficeRuntime.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts'))
+  ;({ SceneRuntime } = await server.ssrLoadModule('/packages/runtime/src/SceneRuntime.ts'))
   ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
   ;({ SeatInteractions } = await server.ssrLoadModule('/packages/runtime/src/seatInteraction.ts'))
   ;({ PluginHost } = await server.ssrLoadModule('/packages/runtime/src/plugins.ts'))
-  pack = await server.ssrLoadModule('/example/office-web/src/runtime/builtin/officePack.ts')
+  pack = await server.ssrLoadModule('@pixoffice/scene-office/core/pack')
 })
 after(() => server?.close())
 test('furniture entrances and use paths contain adjacent whole cells only', () => {
@@ -78,7 +79,7 @@ test('cancellation at every transition stage settles safely and releases reserve
     until(r, () => !r.readActors()[0].seatTransition && !r.readActors()[0].step)
     assert.equal(r.getRecord('visit').status, 'cancelled')
     noClaims(r)
-    assert.doesNotThrow(() => r.setEditing(true))
+    assert.equal(beginMapEdit(r, 'settled-draft').status, 'completed')
   }
 })
 test('a seated host turns to listen and reply without leaving the chair', () => {
@@ -96,7 +97,7 @@ test('a seated host turns to listen and reply without leaving the chair', () => 
 })
 test('standing expressions exit before playing and restore the owned seat afterwards', () => {
   const r = createOfficeRuntime()
-  r.submit({ ...base('emote'), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: 'marvis', role: 'actor' }], params: { animation: 'emotes/wave', durationMs: 300 } })
+  r.submit({ ...base('emote'), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: 'office-lead', role: 'actor' }], params: { animation: 'emotes/wave', durationMs: 300 } })
   until(r, () => r.readActors()[0].expression)
   assert.equal(r.readActors()[0].posture, 'standing')
   assert(r.navigation.walkable(r.readWorld(), r.readActors()[0].position))
@@ -139,8 +140,8 @@ test('a plugin-defined standing appliance can occupy an internal use cell', () =
     anchors: { use: { x: 0, y: 0 }, entrance: { x: 0, y: 1 } }, resources: {},
     interactions: { operate: { name: 'Operate', anchor: 'use', approaches: ['entrance'], cells: [{ x: 0, y: 0 }], posture: 'standing', facing: 'back' } },
   }] }
-  const r = new OfficeRuntime({ world, plugins: [...pack.builtinPlugins, plugin], createNavigation: templates => new GridNavigation(templates) })
-  r.submit(use('appliance-use', 'appliance', 'marvis', 'operate'))
+  const r = new SceneRuntime({ world, plugins: [...pack.builtinPlugins, plugin], createNavigation: templates => new GridNavigation(templates) })
+  r.submit(use('appliance-use', 'appliance', 'office-lead', 'operate'))
   until(r, () => r.readActors()[0].using?.propId === 'appliance')
   assert.deepEqual(r.readActors()[0].position, { x: 14, y: 7 })
   completed(r, 'appliance-use'); noClaims(r)

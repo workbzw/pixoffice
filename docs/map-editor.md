@@ -35,13 +35,11 @@
 
 ## AI / HTTP 接入
 
-开发网关默认 `http://127.0.0.1:8765`，以实际启动端口为准。
+当前可通过页面内编辑或运行时 `snapshot()` / `describe()` 读取地图和能力。旧 `/scene/state`、`/scene/capabilities` 及命令结果查询接口已删除。
 
-读取 `GET /scene/state`：`world` 是正式地图和运行状态，`map` 是可导出的地图文档，`editor` 是当前草稿（可能不存在）。读取 `GET /scene/capabilities` 获得 JSON Schema、当前模板、碰撞体、锚点和命令能力。
+新的 [Fastify 消息转发](./message-relay.md) 仅尽力投递命令，不回报执行完成，因此不提供依赖“提交 -> 查询完成 -> 读取新版本”的远程编辑事务闭环。需要这种闭环的应用应直接接运行时，不可用 HTTP 200 代替命令完成。
 
-`furnitureGrid.cellSize` 和 `world.gridSize` 都固定为 1，使用同一个格。所有位置、占地边界、锚点偏移和路径点都必须是整数；显示像素不进入协议。
-
-所有编辑通过 `POST /scene/commands`，结果通过 `GET /scene/commands/:commandId` 查询。HTTP 202 只代表网关接收；必须等命令 `completed`，再读取已更新的 `editor.revision`。浏览器需保持打开并连接本地网关。
+以下仍是前端命令格式示例。版本号和草稿 ID 从当前运行时或页面导出的快照读取。`furnitureGrid.cellSize` 和 `world.gridSize` 都固定为 1；所有位置、占地边界、锚点偏移和路径点均为整数，显示像素不进入协议。
 
 ### 1. 创建草稿
 
@@ -124,14 +122,16 @@
 
 导出格式为 `ai-office-map` / `version: 2` / `unit: "cell"`，只包含场景布局，不包含任务、API Key、对话、业务状态或可执行脚本。只允许当前场景、相同画布尺寸与固定背景摆放范围，并且只能引用本应用注册的可信模板。UI 导入最大 64 KB，物品最多 200，禁行区最多 64。
 
-v1 地图 JSON 不直接导入，避免把旧连续单位误当成格数；浏览器 v1 存档由专用迁移器先备份再转换。\n\n本版支持凸多边形地面、矩形禁行区、已有桌椅 / 白板素材。暂不包含凹多边形地面、多楼层、任意背景上传、家具自由旋转、人物素材编辑和多人网络协作。无需新增编辑器服务或引入另一套寻路算法。
+仅导入当前 v2 地图 JSON，避免把旧连续单位误当成格数；浏览器不再读取旧存档键，也不提供 v1 存档迁移。
+
+本版支持凸多边形地面、矩形禁行区、已有桌椅 / 白板素材。暂不包含凹多边形地面、多楼层、任意背景上传、家具自由旋转、人物素材编辑和多人网络协作。无需新增编辑器服务或引入另一套寻路算法。
 
 ## 模块归属
 
 ```text
 React 家具目录 / 选中浮层 / SVG 指针交互层
-             | map.edit（与 HTTP / iframe 相同）
-OfficeRuntime -> MapDraft -> MapDocument / 原子操作
+             | map.edit（与外部场景消息相同）
+SceneRuntime -> MapDraft -> MapDocument / 原子操作
              |      |
              |      +-- NavigationAdapter：草稿校验 / 路线预览
              +--------- 正式 World / 存档 / layout.changed

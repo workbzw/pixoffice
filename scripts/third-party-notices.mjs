@@ -3,8 +3,13 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const projectRoot = fileURLToPath(new URL('../', import.meta.url))
-const approvedLicenses = new Set(['MIT', 'ISC', 'BSD-3-Clause', 'PSF'])
+// Blue Oak 1.0.0 permits redistribution with its license text, included below.
+const approvedLicenses = new Set(['MIT', 'ISC', 'BSD-3-Clause', 'PSF', 'BlueOak-1.0.0'])
 const supplementalLicenses = {
+  'abstract-logging@2.0.1': {
+    file: 'licenses/abstract-logging-2.0.1.txt',
+    source: 'https://github.com/jsumners/abstract-logging/blob/v2.0.1/Readme.md#license -> https://jsumners.mit-license.org/',
+  },
   '@pixi/colord@2.9.6': {
     file: 'licenses/pixi-colord-2.9.6.txt',
     source: 'https://github.com/pixijs/colord/blob/v2.9.6/LICENSE.md',
@@ -12,7 +17,7 @@ const supplementalLicenses = {
 }
 const readmeLicenses = new Set(['heap@0.2.5', 'pathfinding@0.4.18'])
 
-const readText = async file => (await readFile(file, 'utf8')).replace(/\r\n/g, '\n')
+const readText = async file => (await readFile(file, 'utf8')).replace(/\r\n/g, '\n').replace(/[ \t]+$/gm, '')
 const readJson = async file => JSON.parse(await readText(file))
 
 function declaredLicense(pkg) {
@@ -103,7 +108,7 @@ export async function generateThirdPartyNotices(root = projectRoot, { check = fa
   for (const [name, content] of outputs) {
     const file = path.join(root, name)
     let existing
-    try { existing = await readText(file) } catch (error) { if (error.code !== 'ENOENT') throw error }
+    try { existing = await readFile(file, 'utf8') } catch (error) { if (error.code !== 'ENOENT') throw error }
     if (existing === content) continue
     if (check) throw new Error(`Outdated license notice: ${name}; run npm run licenses:generate`)
     await writeFile(file, content)

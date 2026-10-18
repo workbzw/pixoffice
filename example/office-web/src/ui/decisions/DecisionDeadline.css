@@ -1,0 +1,4 @@
+.decision-deadline { display: flex; align-items: center; gap: 10px; margin: 12px 0 0; color: #65756b; font-size: 11px; }
+.decision-deadline > div { height: 6px; min-width: 0; flex: 1; overflow: hidden; border-radius: 3px; background: #e7ede8; }
+.decision-deadline i { display: block; height: 100%; background: #2aba83; transition: width .25s linear; }
+.decision-deadline > span { flex: 0 0 48px; text-align: right; font-variant-numeric: tabular-nums; }

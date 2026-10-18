@@ -1,8 +1,7 @@
-import type { OfficeDataSource } from './contract.ts'
+import type { OfficeDataSource } from '@pixoffice/protocol/dashboard'
 import { ExampleOfficeDataSource } from './demoSource.ts'
-import { HttpOfficeDataSource } from './httpSource.ts'
+import { codingOfficeExample } from './codingExample.ts'
 
 export function createOfficeDataSource(): OfficeDataSource {
-  const url = import.meta.env.VITE_OFFICE_DASHBOARD_URL?.trim()
-  return url ? new HttpOfficeDataSource(url) : new ExampleOfficeDataSource()
+  return new ExampleOfficeDataSource(new Date(), codingOfficeExample)
 }

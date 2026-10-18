@@ -1,32 +1,39 @@
-# 业务页面数据接入
+# 办公室业务快照字段说明
 
-页面现在区分两套状态：**业务快照**决定顶部指标、员工、任务流和动态；**场景内核**负责人物、家具、寻路与动作。外部项目只需提供业务快照和业务操作，不必修改 Pixi 动画代码。页面默认展示可交互的示例数据；这些数字不是来自真实业务系统。
+本文定义办公室业务快照 `schemaVersion: "1.0"` 的字段与展示规则。外部业务后端通过[办公室 HTTP 接入协议](./office-integration.md)提交快照，PixOffice 服务端转发给浏览器页面。
+
+业务快照决定办公室名称、成员、任务列表、动态、资源指标和白板内容。浏览器场景运行时管理人物位置、家具、寻路和动画。纯前端演示使用本地示例数据，服务器模式使用外部业务后端提交的数据。
 
 ## 快速联调
 
-在两个终端运行：
+运行：
 
 ```bash
-npm run dashboard-example
-VITE_OFFICE_DASHBOARD_URL=http://127.0.0.1:18770 npm run dev
+npm run dev
+# 打开 /office/；另一个终端执行：
+npm run integration-example
 ```
 
-打开 Vite 输出的网址。示例业务服务只监听 `127.0.0.1:18770`，数据保存在进程内；重启后重置。也可将 `VITE_OFFICE_DASHBOARD_URL` 改成自己的服务地址。此变量不设置时，页面使用内存中的示例数据。`VITE_OFFICE_HTTP_ACTIONS_URL` 是另一条接口，用于驱动场景动作，不是业务快照接口。
+外部业务后端调用 PixOffice 的 `POST /api/pixoffice/messages`。初始化时将快照放入 `offices` 数组，更新时将快照放入 `snapshot` 字段。`npm run dev:vite` 用于纯前端本地演示。
 
-## HTTP 契约 1.0
+## 业务快照 1.0
 
-`GET <baseUrl>/snapshot` 返回完整 JSON 快照。示例：
+完整快照示例：
 
 ```json
 {
   "schemaVersion": "1.0",
+  "seq": 1,
+  "whiteboard": { "template": "task-board-v1", "title": "", "status": "queued", "steps": [] },
   "workspace": { "id": "team-a", "name": "市场情报空间" },
   "employees": [
-    { "id": "leader", "sceneActorId": "marvis", "name": "王明", "role": "负责人", "online": true },
-    { "id": "researcher", "sceneActorId": "code-agent", "name": "李研", "role": "信息检索", "online": true }
+    { "id": "leader", "sceneActorId": "office-lead", "name": "王明", "role": "负责人", "online": true },
+    { "id": "researcher", "sceneActorId": "code-agent", "name": "信息检索", "role": "检索功能", "online": true },
+    { "id": "reviewer", "sceneActorId": "code-agent", "name": "资料核验", "role": "核验功能", "online": true }
   ],
   "tasks": [
-    { "id": "task-1", "title": "跟踪竞品新品", "assigneeId": "researcher", "status": "running", "progress": 45, "updatedAt": "2026-09-30T10:00:00.000Z", "summary": "整理今日上新信息" }
+    { "id": "task-1", "title": "跟踪竞品新品", "assigneeId": "researcher", "status": "running", "progress": 45, "updatedAt": "2026-09-30T10:00:00.000Z", "summary": "整理今日上新信息" },
+    { "id": "task-2", "title": "核验资料来源", "assigneeId": "reviewer", "status": "blocked", "updatedAt": "2026-09-30T10:01:00.000Z" }
   ],
   "events": [
     { "id": "event-1", "kind": "task.assigned", "taskId": "task-1", "employeeId": "researcher", "fromEmployeeId": "leader", "summary": "王明分配了任务", "occurredAt": "2026-09-30T10:00:00.000Z" }
@@ -34,24 +41,43 @@ VITE_OFFICE_DASHBOARD_URL=http://127.0.0.1:18770 npm run dev
 }
 ```
 
-- 员工 `id` 是业务 ID；`sceneActorId` 才是办公室人物 ID。省略 `sceneActorId` 的员工仍可出现在列表，但不会驱动人物。当前办公室人物 ID：`marvis`、`code-agent`、`file-agent`、`app-agent`、`review-agent`、`data-agent`。
-- 任务状态可用 `queued`、`running`、`blocked`、`completed`、`failed`。`progress` 是可选的 0 到 100；没有真实进度时省略，不要伪造百分比。
+- 员工 `id` 是业务员工、功能或智能体的独立 ID；`sceneActorId` 是办公室人物 ID。多条业务记录可以绑定同一人物，人物的姓名、外观和工位保持固定。上例的检索与核验功能共用 `code-agent`。省略 `sceneActorId` 的成员显示在列表中，其任务不关联人物动画。办公室人物 ID 为：`office-lead`、`code-agent`、`file-agent`、`app-agent`、`review-agent`、`data-agent`。
+- 共用小人的任务仍按各自的 `assigneeId` 独立保存、操作和统计；人物状态与电脑任务气泡使用同一条主任务：优先级为 `running` > `blocked` > `failed` > `queued` > `completed`，同级取 `updatedAt` 最新的一条，同一时间按任务 ID 升序取首条，不受数组顺序影响。完成后展示下一条未完成任务；没有未完成任务时，人物恢复空闲，但电脑气泡保留最近完成的任务，直到下一条任务接替。任务列表保留全部业务任务，不因小人数量而删减。
+- 电脑气泡的绿色进度条是前端活动展示，不是业务进度：运行时由快到慢推进，最多显示 99%；仅在任务 `status` 为 `completed` 时显示 100% 和“已完成”，暂停、失败或等待时不自动推进。新任务 ID 会重置展示进度。此效果不回写快照的 `progress`，任务列表和统计仍使用后端真实数据，也不要求后端定时上报百分比。
+- 同一人物绑定的成员之间交接任务时，不播放工位拜访；不同人物之间的交接由浏览器安排拜访。浏览器负责动作排队和资源占用，外部业务后端负责业务任务的并发调度。
+- 成员解绑后，对应人物恢复空闲展示并清除任务标题。已接收的场景活动继续按场景指令执行。
+- 任务状态可用 `queued`、`running`、`blocked`、`completed`、`failed`。`progress` 为 0–100 的业务进度，`-1` 表示未知，省略时默认为 `-1`。
 - `updatedAt`、`occurredAt` 使用带时区的 ISO 8601 时间。`events` 应按新到旧排序，事件 `id` 在工作空间内保持稳定。`task.assigned` 事件可触发负责人走到员工身旁；页面首次加载时不会重放历史交接。
 - `system` 可选，格式为 `{ "cpuPercent": 39, "memoryPercent": 65, "networkKbps": 15 }`。不提供时页面显示“未提供”，不生成假监控值。
-- 员工、任务 ID 不得重复；任务 `assigneeId` 必须引用快照中的员工。客户端使用 Zod 校验整个响应，错误会在页面提示。
+- 员工、任务 ID 分别在办公室内唯一。非空 `assigneeId` 必须引用快照中的员工；空串表示未分配。PixOffice 校验完整快照，字段或引用无效时返回错误。
 
-`POST <baseUrl>/actions` 接收以下一种 JSON，服务端负责鉴权、状态转换、持久化和审计；返回任意 2xx 表示成功，非 2xx 表示失败。页面随后重新获取快照。
+`seq` 是每个办公室独立递增的完整快照版本，必须提供正整数；外部业务后端重启后应继续使用递增版本。较小版本被忽略，同版本不同内容返回 `409 SEQ_CONFLICT`。`whiteboard` 为固定模板数据对象，空标题表示空白板，省略时补齐默认结构。具体内容字段见[办公室 HTTP 接入协议](./office-integration.md)。
 
-```json
-{ "type": "task.assign", "taskId": "task-1", "assigneeId": "researcher" }
-```
+## 必填字段与默认值
 
-另外三种类型为 `task.start`、`task.block`、`task.complete`，消息体包含 `type` 和 `taskId`。不要把场景动作命令发到这个接口。
+| 位置 | 必填字段 | 可选字段及默认值 |
+| --- | --- | --- |
+| 快照 | `schemaVersion`、`seq`、`workspace` | `employees: []`、`tasks: []`、`events: []`、默认资源指标与白板对象 |
+| `workspace` | `id`、`name` | 无 |
+| 每个成员 | `id`、`name` | `sceneActorId: ""`、`role: ""`、`online: false` |
+| 每个任务 | `id`、`title`、`status`、`updatedAt` | `assigneeId: ""`、`progress: -1`、`summary: ""` |
+| 每个事件 | `id`、`kind`、`summary`、`occurredAt` | `taskId: ""`、`employeeId: ""`、`fromEmployeeId: ""` |
+| `system` | 无 | `cpuPercent: -1`、`memoryPercent: -1`、`networkKbps: -1` |
 
-HTTP 适配器每 3 秒轮询；业务源也可直接实现 [`OfficeDataSource`](../example/office-web/src/dashboard/contract.ts) 的 `getSnapshot`、`subscribe`、`execute`，再传入 [`OfficeApp`](../example/office-web/src/App.tsx) 的 `dataSource` 属性，不必采用 HTTP 或修改场景内核。可从 [`office.ts`](../example/office-web/src/office.ts) 导入组件、类型和内置适配器。`kind` 是开放字符串，方便标识自定义来源。业务 UI 保留为示例源码，内核和渲染能力已拆成五个包；均尚未发布 npm。
+`employees` 最多 200 项，`tasks` 最多 1000 项，`events` 最多 500 项。一次请求的整体大小限制为 64 KiB，实际可提交条目数还受文字长度影响。
+
+所有字段禁止 `null`。每次更新表示该办公室的完整业务状态；空列表清空相应列表，省略的可选字段按上表补齐。需要保留的成员、任务、事件和白板内容应包含在新快照中。
+
+可选引用可以省略或显式使用 `""`：`sceneActorId` 表示未绑定人物，`assigneeId` 表示未分配负责人，事件中的空引用表示不关联相应对象。办公室、成员、任务和事件本身的 `id` 仍须为有效的非空字符串。
+
+任务按钮产生用户操作，由外部业务后端通过 `ui.next` 领取并处理，再提交新快照。运行 `npm run integration-ui-example` 可查看操作领取与展示结果返回的示例。
+
+## 源码装配接口
+
+直接集成 React 应用源码的开发者，可实现 [`OfficeDataSource`](../packages/protocol/src/dashboard.ts) 并注入组件，用于提供、订阅和处理业务数据。HTTP 接入开发者使用 `POST /api/pixoffice/messages`。
 
 ## 边界
 
-[`sceneBridge.ts`](../example/office-web/src/dashboard/sceneBridge.ts) 只把业务状态投影为人物显示文本，并在新分配事件出现时触发一次工位拜访。人物抵达、说话或动画结束**不会**自动将业务任务标为完成；业务系统仍是任务状态唯一权威。场景协议与地图编辑接口见[插件运行时文档](./plugin-runtime.md)。
+[`sceneBridge.ts`](../example/office-web/src/dashboard/sceneBridge.ts) 将业务状态转换为人物展示状态，并在收到新任务分配事件时安排工位拜访。业务任务完成由外部业务后端设置 `status: "completed"` 后提交快照。场景协议与地图编辑接口见[插件运行时文档](./plugin-runtime.md)。
 
-此仓库的示例服务仅用于本地联调，没有用户认证、持久化或生产权限控制。接入真实数据时，这些必须由宿主业务服务提供。
+PixOffice 服务端提供访问密钥校验、最新快照的内存缓存和消息转发。外部业务后端负责业务持久化和业务权限；部署方负责页面及浏览器消息接口的访问控制。部署配置见[部署文档](./message-relay.md)。

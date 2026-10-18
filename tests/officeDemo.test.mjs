@@ -6,8 +6,8 @@ import { createTestServer } from './helpers/vite.mjs'
 let server, OfficeScene, createOfficeRuntime, demoPairs
 before(async () => {
   server = await createTestServer()
-  ;({ OfficeScene } = await server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts'))
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ OfficeScene } = await server.ssrLoadModule('/example/office-web/src/application/OfficeScene.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts'))
   ;({ demoPairs } = await server.ssrLoadModule('/example/office-web/src/scene/systems/officeDemo.ts'))
 })
 after(() => server?.close())

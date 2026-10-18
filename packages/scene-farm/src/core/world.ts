@@ -1,4 +1,5 @@
 import type { ScenePlugin, World } from '@pixoffice/runtime'
+import { SceneFault } from '@pixoffice/protocol'
 import { emptyPlot, inventoryStateSchema, plotStateSchema } from './crops.ts'
 
 export const farmRoster = [
@@ -9,11 +10,20 @@ export const farmObjects: ScenePlugin = {
   id: 'farm.objects', name: '农场物品', version: '1.0.0', apiVersion: 1,
   templates: [
     { id: 'farm.plot', name: '菜地', view: 'farm.plot', footprint: { left: 0, top: 0, right: 5, bottom: 3 },
-      anchors: { work: { x: 2, y: 3 } }, resources: { cultivation: 1 } },
+      anchors: { work: { x: 2, y: 3 } }, resources: { cultivation: 1 }, initialState: emptyPlot() },
     { id: 'farm.store', name: '收获箱', view: 'farm.store', footprint: { left: 0, top: 0, right: 2, bottom: 1 },
-      anchors: { front: { x: 0, y: 1 } }, resources: { inventory: 1 } },
+      anchors: { front: { x: 0, y: 1 } }, resources: { inventory: 1 }, initialState: { carrot: 0, tomato: 0, cabbage: 0 } },
   ],
   stateSchemas: { 'farm.plot': plotStateSchema, 'farm.store': inventoryStateSchema },
+  validateWorld(world) {
+    const expected = createFarmWorld(world.sceneId)
+    for (const key of ['actors', 'props'] as const) {
+      for (const item of expected[key]) if (!world[key].some(actual => actual.id === item.id && actual.templateId === item.templateId)) {
+        throw new SceneFault('REQUIRED_ENTITY_MISSING', `农场缺少必需对象：${item.id}`)
+      }
+      if (world[key].length !== expected[key].length) throw new SceneFault('SCENE_STRUCTURE_INVALID', '当前农场使用固定农夫和菜地配置')
+    }
+  },
 }
 export function createFarmWorld(sceneId = 'farm'): World {
   const positions = [{ x: 3, y: 5 }, { x: 10, y: 5 }, { x: 17, y: 5 }, { x: 3, y: 10 }, { x: 10, y: 10 }, { x: 17, y: 10 }]

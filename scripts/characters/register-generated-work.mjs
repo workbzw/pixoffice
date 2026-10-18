@@ -3,9 +3,9 @@ import path from 'node:path'
 import sharp from 'sharp'
 import { buildCharacter } from './build.mjs'
 import { measureFrame } from './standard.mjs'
-import { rejectLegacyPublication } from './legacy-authoring.mjs'
+import { assertStagingArguments } from './staging.mjs'
 
-if (process.argv.includes('--publish')) rejectLegacyPublication()
+assertStagingArguments(process.argv.slice(2), ['--prepare', '--neutral-only'])
 
 const root = path.resolve(import.meta.dirname, '../..')
 const art = path.join(root, 'art/characters/office-quiet-work-v4')
@@ -71,7 +71,7 @@ if (process.argv.includes('--prepare')) {
     await writeFile(path.join(staged, 'character.json'), json(source))
     await writeFile(path.join(staged, 'standard.json'), json(standard))
     await buildCharacter(staged)
-    prepared.push({ id: entry.id, original, staged, files, frames, records })
+    prepared.push({ id: entry.id, frames, records })
   }
   const previews = []
   for (let phase = 0; phase < 4; phase++) {
@@ -83,14 +83,5 @@ if (process.argv.includes('--prepare')) {
   await sharp(referenceClip.frames.map(frame => previews[referenceFiles.indexOf(frame.file)]), { join: { animated: true } })
     .gif({ loop: 0, delay: referenceClip.frames.map(frame => frame.durationMs), dither: 0 }).toFile(path.join(art, 'work-preview.gif'))
   await writeFile(path.join(art, 'registered-frames.json'), json(prepared.map(({ id, records }) => ({ id, records }))))
-  if (process.argv.includes('--publish')) {
-    if (process.argv.includes('--neutral-only')) throw new Error('Neutral-only previews cannot be published as animation')
-    for (const { original, staged, files } of prepared) {
-      for (const file of [...files, 'character.json', 'standard.json']) {
-        await mkdir(path.dirname(path.join(original, file)), { recursive: true })
-        await cp(path.join(staged, file), path.join(original, file))
-      }
-    }
-  }
-  console.log(`${prepared.length} generated complete-character clips ${process.argv.includes('--publish') ? 'published' : 'staged'} and validated`)
+  console.log(`${prepared.length} generated complete-character clips staged and validated`)
 }

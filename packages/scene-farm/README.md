@@ -12,4 +12,4 @@ Two decorative hens wander over free floor cells and periodically stop to peck. 
 
 The example injects a separate, unscaled active-time clock into runtime deadlines. Pausing stops task deadlines as well as movement; 4x crop growth does not shorten task execution timeouts.
 
-The full background is always fitted into the viewport. Farmers and plots use a shared 1.5x visual scale, with 5x3-cell plot footprints and a work anchor immediately outside each plot. The example migrates version-1 layouts while preserving crops, inventory and records; the first save keeps the old envelope under `pixoffice:farm:v1:layout-v1-backup`.
+The full background is always fitted into the viewport. Farmers and plots use a shared 1.5x visual scale, with 5x3-cell plot footprints and a work anchor immediately outside each plot. The example saves current version-2 envelopes under `pixoffice:farm:v2`; it does not read retired keys or migrate earlier layouts.

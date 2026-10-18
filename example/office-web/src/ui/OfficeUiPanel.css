@@ -1,0 +1,15 @@
+.office-ui-status { position: absolute; z-index: 20; top: 58px; right: 16px; display: flex; align-items: center; gap: 12px; max-width: min(420px, calc(100% - 32px)); padding: 10px 14px; border: 1px solid #dfe5df; border-radius: 8px; background: #fffffff0; color: #44564b; font-size: 14px; overflow-wrap: anywhere; }
+.office-ui-status button, .office-ui-dialog header button { display: grid; place-items: center; flex: none; width: 30px; height: 30px; border: 0; border-radius: 4px; background: transparent; color: #657168; cursor: pointer; }
+.office-ui-dialog { box-sizing: border-box; width: min(520px, calc(100vw - 32px)); max-height: calc(100dvh - 40px); padding: 24px; border: 1px solid #dce3dd; border-radius: 8px; color: #303c34; background: #fff; box-shadow: 0 20px 60px #20302530; overflow: auto; }
+.office-ui-dialog::backdrop { background: #18251d60; }
+.office-ui-dialog header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.office-ui-dialog h2 { margin: 0; font-size: 20px; overflow-wrap: anywhere; }
+.office-ui-dialog p { margin: 16px 0; white-space: pre-wrap; font-size: 14px; line-height: 1.7; overflow-wrap: anywhere; }
+.office-ui-dialog dl { margin: 20px 0 0; }
+.office-ui-dialog dl > div { display: grid; grid-template-columns: minmax(70px, 1fr) minmax(0, 2fr); gap: 16px; padding: 12px 0; border-bottom: 1px solid #edf0ed; }
+.office-ui-dialog dt { color: #758078; font-size: 13px; overflow-wrap: anywhere; }
+.office-ui-dialog dd { margin: 0; font-size: 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.office-ui-dialog footer { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; margin-top: 24px; }
+.office-ui-dialog footer button { padding: 8px 14px; border: 1px solid #cbd9ce; border-radius: 4px; background: #f2f6f2; color: #34503d; cursor: pointer; }
+.office-ui-dialog button:focus-visible, .office-ui-status button:focus-visible { outline: 2px solid #487a59; outline-offset: 2px; }
+.office-ui-dialog button:disabled { opacity: .5; cursor: wait; }

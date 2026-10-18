@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { SceneFault } from '@pixoffice/runtime'
+import { SceneFault } from '@pixoffice/protocol'
 import type { Actor, Phase, PluginContext, ScenePlugin } from '@pixoffice/runtime'
 import { classroomRoster } from './world.ts'
 
@@ -43,7 +43,7 @@ function seats(students: Actor[]): Phase[] {
 export const classroomTeaching: ScenePlugin = {
   id: 'classroom.teaching', name: '课堂教学', version: '1.0.0', apiVersion: 1, dependencies: ['classroom.objects'],
   capabilities: [
-    { id: 'classroom.lecture', name: '教师讲课', params: lectureParams, build(context, raw) {
+    { id: 'classroom.lecture', name: '教师讲课', params: lectureParams, participants: { min: 1, max: 7, roles: [{ role: 'teacher', min: 1, max: 1 }, { role: 'student', min: 0, max: 6 }], rules: ['角色必须与人物名册一致；学生必须绑定课桌'] }, build(context, raw) {
       const p = lectureParams.parse(raw), { teacher, students } = participants(context, false), boardId = board(context, p.boardId)
       return { title: '课堂讲解', claims: claims([teacher, ...students], boardId), phases: [
         ...seats(students),
@@ -52,7 +52,7 @@ export const classroomTeaching: ScenePlugin = {
           poses: [{ actorId: teacher.id, posture: 'standing', facing: 'front' }, ...students.map(a => ({ actorId: a.id, posture: 'seated' as const, facing: 'back' as const }))] },
       ] }
     } },
-    { id: 'classroom.answer', name: '到黑板前回答', params: answerParams, build(context, raw) {
+    { id: 'classroom.answer', name: '到黑板前回答', params: answerParams, participants: { min: 2, max: 2, roles: [{ role: 'teacher', min: 1, max: 1 }, { role: 'student', min: 1, max: 1 }], rules: ['角色必须与人物名册一致；学生必须绑定课桌'] }, build(context, raw) {
       const p = answerParams.parse(raw), { teacher, students: [student] } = participants(context, true), boardId = board(context, p.boardId)
       return { title: `${student.name}回答问题`, claims: claims([teacher, student], boardId), phases: [
         { title: '教师准备提问', moves: [{ actorId: teacher.id, targetId: boardId, anchor: 'teacher' }], poses: [{ actorId: teacher.id, posture: 'standing', facing: 'front' }] },
@@ -63,7 +63,7 @@ export const classroomTeaching: ScenePlugin = {
         ...seats([student]),
       ] }
     } },
-    { id: 'classroom.settle', name: '返回课堂座位', params: resetParams, build(context, raw) {
+    { id: 'classroom.settle', name: '返回课堂座位', params: resetParams, participants: { min: 1, max: 7, roles: [{ role: 'teacher', min: 1, max: 1 }, { role: 'student', min: 0, max: 6 }], rules: ['角色必须与人物名册一致；学生必须绑定课桌'] }, build(context, raw) {
       const p = resetParams.parse(raw), { teacher, students } = participants(context, false), boardId = board(context, p.boardId)
       return { title: '准备上课', claims: claims([teacher, ...students], boardId), phases: [
         ...seats(students),

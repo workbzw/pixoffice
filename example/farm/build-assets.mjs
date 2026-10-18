@@ -32,6 +32,8 @@ try {
   const catalog = await createAssetCatalog(temp, 'farm', files, { background: 'background.webp', roster: 'roster.json', 'farm-gardener': 'farm-gardener/visual.json' })
   await writeFile(path.join(temp, 'asset-pack.json'), JSON.stringify(catalog, null, 2) + '\n')
   await mkdir(output, { recursive: true }); await cp(temp, output, { recursive: true })
+  const config = path.join(path.dirname(output), 'pixoffice-config.js')
+  if (config !== path.join(root, 'public/pixoffice-config.js')) await cp(path.join(root, 'public/pixoffice-config.js'), config)
   for (const file of await readdir(output)) if (/^(carrot|tomato|cabbage)-[0-3]\.webp$/.test(file)) await rm(path.join(output, file))
   console.log(`Farm assets ready: ${output}`)
 } finally { await rm(temp, { recursive: true, force: true }) }

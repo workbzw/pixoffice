@@ -1,0 +1,18 @@
+.classroom-scene { background: #fff; border: .6px solid #dde0db; border-radius: 22px; }
+.classroom-scene { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.classroom-canvas { position: absolute; inset: 22px 12px 70px; }.classroom-canvas canvas { display: block; }
+.classroom-loading { position: absolute; inset: 0; display: grid; place-items: center; background: #ffffffc7; z-index: 3; font-size: 14px; color: #7f897c; }
+.classroom-loading > div { max-width: 80%; text-align: center; overflow-wrap: anywhere; }
+.classroom-loading button { display: block; margin: 18px auto 0; border: 1px solid #dbe1d6; border-radius: 20px; padding: 9px 20px; background: #fff; }
+.classroom-action-loading { position: absolute; bottom: 82px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100% - 24px); padding: 8px 12px; border-radius: 20px; background: #fffffff2; color: #7f897c; font-size: 11px; }
+.classroom-action-loading svg { flex-shrink: 0; animation: classroom-loading-spin 1s linear infinite; }
+@keyframes classroom-loading-spin { to { transform: rotate(360deg); } }
+.classroom-caption { position: absolute; bottom: 78px; left: 50%; transform: translateX(-50%); width: max-content; max-width: min(540px, calc(100% - 32px)); padding: 10px 16px; background: #fffffff2; border-radius: 16px; color: #65715f; display: flex; gap: 10px; align-items: baseline; font-size: 13px; line-height: 1.7; pointer-events: none; }
+.classroom-caption strong { flex-shrink: 0; font-size: 12px; color: #426553; }
+.classroom-error { position: absolute; bottom: 85px; left: 20px; right: 20px; z-index: 4; padding: 12px; display: flex; align-items: center; justify-content: space-between; border: 1px solid #d7a8a0; background: #fff; color: #914c43; font-size: 12px; border-radius: 12px; }
+.classroom-error > span { min-width: 0; overflow-wrap: anywhere; }.classroom-error button { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; padding: 7px; }
+@media (max-width: 700px) {
+  .classroom-scene { order: 1; height: 400px; flex-shrink: 0; }
+  .classroom-canvas { inset: 26px 0 72px; }
+}
+@media (prefers-reduced-motion: reduce) { .classroom-action-loading svg { animation: none; } }

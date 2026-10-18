@@ -38,20 +38,22 @@ export function createCharacterResources<T extends CharacterManifest>(options: {
     const entry = registry.characters.find(character => character.id === id)
     if (!entry) throw new Error(`Unknown character resource pack: ${id}`)
     const url = canonicalUrl(`${resourceBase}/${entry.manifest}`)
+    const result = await readManifestUrl(url, id)
     manifestUrls.set(id, url)
-    return readManifestUrl(url, id)
+    return result
   }
   async function readManifestUrl(url: string, id?: string) {
     let pending = manifests.get(url)
     if (!pending) {
       pending = readJson(url).then(data => {
         const manifest = options.parseManifest(data)
-        if (id && manifest.id !== id) throw new Error(`Character manifest ID mismatch: ${id}`)
         return { manifest, url }
       }).catch(error => { manifests.delete(url); throw error })
       manifests.set(url, pending)
     }
-    return pending
+    const result = await pending
+    if (id && result.manifest.id !== id) throw new Error(`Character manifest ID mismatch: ${id}`)
+    return result
   }
   async function loadPack(url: string): Promise<CharacterPackResources<T>> {
     const { manifest } = await readManifestUrl(url)
@@ -67,8 +69,13 @@ export function createCharacterResources<T extends CharacterManifest>(options: {
   const characterAssets = {
     async acquire(id: string, manifestUrl?: string) {
       const url = canonicalUrl(manifestUrl ?? (await readCharacterManifest(id)).url)
+      const lease = await resourceCache.acquire(url)
+      if (lease.value.manifest.id !== id) {
+        lease.release()
+        throw new Error(`Character manifest ID mismatch: ${id}`)
+      }
       manifestUrls.set(id, url)
-      return resourceCache.acquire(url)
+      return lease
     },
     get(id: string) { const url = manifestUrls.get(id); return url ? resourceCache.get(url) : undefined },
   }

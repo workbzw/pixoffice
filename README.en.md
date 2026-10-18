@@ -16,7 +16,7 @@ It includes character frame animations, seated poses, and office assets, with su
 
 Maps and character movement use integer grid cells: characters occupy 1×1 cell, desk-and-chair sets 2×2 cells, and whiteboards 2×1 cells. Furniture interactions use entrance cells, use cells, and resource reservations. Smooth motion is interpolated only in the rendering layer. The current command protocol is `2.0`; see [Integer Grid and Furniture Interactions](./docs/integer-grid-and-interactions.md).
 
-[Dashboard Data Integration](./docs/dashboard-integration.md) · [Plugins, Scene Protocol, and External Integration](./docs/plugin-runtime.md) · [Map Editor and AI Editing Protocol](./docs/map-editor.md) · [Long-Term Protocol Draft](./docs/scene-protocol-v1.md)
+[Office Business Integration](./docs/office-integration.md) · [Dashboard Data Integration](./docs/dashboard-integration.md) · [Plugins, Scene Protocol, and External Integration](./docs/plugin-runtime.md) · [Map Editor and AI Editing Protocol](./docs/map-editor.md) · [Message Relay and Deployment](./docs/message-relay.md)
 
 [Scene Extensions and Animation Architecture](./docs/architecture/README.md) covers independent office, classroom and farm packages, the shared runtime, frame animation, and integration interfaces. The classroom supports lectures and student answers. The farm supports planting, watering, growth, harvest and automatic care. A skeletal animation engine is not implemented yet.
 
@@ -24,13 +24,14 @@ The website supports Chinese and English. The example interfaces, screenshots, a
 
 ## Packages and Examples
 
-The project uses ten npm workspace packages. Four generic packages define the core boundaries: `contracts`, `runtime`, `renderer-pixi`, and `animation-frame`. The optional office, classroom and farm pairs (`scene-*`, `assets-*`) are peers and do not depend on each other.
+The project uses eleven npm workspace packages. Five generic packages define the core boundaries: `protocol`, `contracts`, `runtime`, `renderer-pixi`, and `animation-frame`. The optional office, classroom and farm pairs (`scene-*`, `assets-*`) are peers and do not depend on each other.
 
 - [Full Office](./example/office-web): the React interface, chat, editor, and HTTP integration.
 - [Minimal Example](./example/minimal-vanilla): an office assembled only through public package exports, without React.
 - [Independent Scene](./example/isolated-scene): one walking character, without either office package. Run `npm run dev:isolated`.
 - [Independent Classroom](./example/classroom): lectures, student answers and a live blackboard. Run `npm run dev:classroom`; `npm run build:classroom` produces an independent deployment without office resources.
 - [Independent Farm](./example/farm): two farmers, six plots, three vegetables and a complete planting cycle. Run `npm run dev:farm`; `npm run build:farm` excludes office and classroom resources. Local saves preserve progress; growth pauses offline.
+- [Dimetric Assembly](./example/dimetric): an independent 2:1 product validation entry. Run `npm run dev:dimetric` or `npm run build:dimetric`. It shares protocols and runtime but owns its projection and save namespace, with no classic scene assets. Diagnostic markers are not final pixel artwork. See [Dual-Product Architecture](./docs/architecture/dual-products.md).
 - [Architecture and Responsibilities](./docs/architecture/README.md): dependency direction, asset delivery, and entry points for scene and skeletal animation development.
 
 Use `npm run packages:build` to build the packages, `npm run packages:check` to check boundaries, and `npm run packages:smoke` to install the packaged tarballs outside the repository for validation. The code packages are developed within this repository and have not been published to npm. Assets are deployed separately and can be exported with `npm run assets:export -- /absolute/path/to/new-public-directory`.
@@ -54,9 +55,9 @@ npm run characters:build  # Validate admission and build published character pac
 npm run characters:check  # Verify source assets match generated resources
 ```
 
-`npm run dev`, `npm run build`, and `npm test` build these assets automatically. Character atlases and initial office assets use lossless WebP, preserving the original PNG sources, frame coordinates, and action timing. The generated `public/characters/` directory and generated office `.webp` files are not tracked in Git. Legacy atlases remain as source records but are no longer loaded directly for normal frame animation.
+`npm run dev`, `npm run build`, and `npm test` build these assets automatically. Character atlases and initial office assets use lossless WebP, preserving current PNG sources, frame coordinates, and action timing. The generated `public/characters/` directory and generated office `.webp` files are not tracked in Git. Early character sheets, rejected design drafts and stale generated files have been removed; current character packs and the production sources for active artwork remain.
 
-On first load, the page draws a white surface and the office background, then loads the initial character packs (seated and working poses) alongside the desks and chairs. Regular textures have a concurrency limit of four; the background loads independently with priority. Progress shows the actual number of completed resources. Sidebar avatars use separate small images instead of full animation atlases. Other poses required by a saved scene are loaded as needed, and legacy ungrouped atlases remain compatible.
+On first load, the page draws a white surface and the office background, then loads the initial character packs (seated and working poses) alongside the desks and chairs. Regular textures have a concurrency limit of four; the background loads independently with priority. Progress shows the actual number of completed resources. Sidebar avatars use separate small images instead of full animation atlases. Other poses required by a saved scene are loaded as needed. Manifests must declare `startup` / `deferred` atlas groups, and registry entries must include a separate `portrait`. Retired formats are rejected; missing actions are never silently replaced with other actions.
 
 Once the office is visible, current work animations continue while the remaining walking, talking, and expression assets load in the background. Interactions, demos, editing controls, and the scene gateway become available when preparation finishes. On failure, the visible scene is preserved and a retry is offered. The browser performance timeline exposes three marks: `pixoffice:background-visible`, `pixoffice:scene-ready` (initial scene visible), and `pixoffice:actions-ready` (full interaction ready). The scene simulation clock does not advance during background loading. Hosts using the headless runtime directly should wait for assets to be ready before advancing the visual simulation.
 
@@ -72,66 +73,66 @@ Production builds automatically generate [Third-Party Licenses and Attributions]
 
 ## Running Locally
 
+Use Node.js 24 LTS (minimum supported: Node.js 22.13). Prefer `npm ci` for a locked installation.
+
 ```bash
 npm install
-npm run dev
+npm run dev:vite
 ```
 
 The development server serves the project website at `/`. Navigation opens the full office at `/office/`, the minimal example at `/minimal/`, the classroom at `/classroom/`, and the farm at `/farm/`. `npm run build` generates all five pages in the root `dist/` directory for deployment.
 
-The top metrics, employee sidebar, and task feed are driven by a business data source. To connect the standalone sample business process, run `npm run dashboard-example` in another terminal, then start the frontend with `VITE_OFFICE_DASHBOARD_URL=http://127.0.0.1:18770 npm run dev`. See [Dashboard Data Integration](./docs/dashboard-integration.md) for the interface format and custom adapters.
+The frontend-only demo uses local business data. In server mode, the backend pushes offices and task snapshots without business polling. Run `npm run dev`, open `/office/`, then run `npm run integration-example` in another terminal to exercise initialization, task delivery, user confirmation and completion. See [Office Business Integration](./docs/office-integration.md) for the contract and runnable backend example.
 
-Employee actions are driven over HTTP by default. `npm run dev` starts both:
+## Messaging and Deployment
 
-- The Vite frontend
-- The HTTP Action Gateway
+One repository and one React build: Vercel publishes only `dist/` as a local-data demo, without a backend connection or Functions. Docker serves the same frontend alongside Fastify and enables integration at runtime.
 
-The default action endpoint is:
+`npm run dev` starts Vite and Fastify; the office page waits for initialization data from the external business backend. Use `npm run dev:vite` for a frontend-only demo. The external business backend calls the PixOffice server over HTTP POST. PixOffice manages the SSE connection between its server and browser pages to deliver business state and scene commands.
 
-```text
-http://localhost:8765/actions
-```
+- POST URL: `http://localhost:8765/api/pixoffice/messages`
+- Header: `Authorization: Bearer pixoffice-demo-key`
+- Browser runtimes own animation scheduling, deduplication, expiry and cancellation. Fastify caches the latest full snapshot per office, never animation history. New or reconnected SSE clients automatically recover current state without rebuilding existing runtimes.
+- Snapshots include a monotonically increasing per-office `seq` and structured `whiteboard` data. Offline snapshots return HTTP 202 (cached, not browser-ready); online application returns 200. Offline animations and decisions return 409; decisions time out with 408 and no default choice.
+- The default key is a public demo value. Override `PIXOFFICE_API_KEY` for public deployment; custom keys never enter the frontend build.
+- Messages support `offices.initialize`, `office.snapshot`, `office.read`, `office.capabilities`, `decision.request`, `ui.next` and `ui.respond`. Run `npm run integration-ui-example` to handle actor clicks and task actions and return dialogs or whiteboard snapshots. The conversation input uses the [Chat Streaming API](./docs/chat-integration.md).
 
-External systems `POST` actions to this endpoint. The frontend retrieves and executes them through HTTP polling.
-
-To set the frontend polling URL:
-
-```bash
-VITE_OFFICE_HTTP_ACTIONS_URL=http://localhost:8765/actions npm run dev
-```
-
-To start only the action gateway:
+See [Message Relay and Deployment](./docs/message-relay.md) for boundaries, batches, security and Docker details.
 
 ```bash
-npm run action-gateway
+docker build -t pixoffice .
+docker run --rm -p 3000:3000 -e PIXOFFICE_API_KEY=your-private-key pixoffice
 ```
 
-To change the gateway port:
-
-```bash
-OFFICE_ACTION_GATEWAY_PORT=8766 npm run action-gateway
-```
+Open `http://localhost:3000/office/`, then POST to `/api/pixoffice/messages` on the same host.
 
 ## HTTP Messages
 
-The current protocol uses `POST /scene/commands`. Query a command result with `GET /scene/commands/:commandId`, and read state and capabilities with `GET /scene/state` and `GET /scene/capabilities`. The `/actions` examples below use the legacy compatibility endpoint. The local gateway is for development and integration testing, not a production business service.
+Business requests are JSON objects containing `type` and the operation's parameters, such as `{"type":"office.read","teamId":"office-1"}`. Scene requests contain `teamId` and `command`, whose `sceneId` matches `teamId`. HTTP responses contain `code`, `msg` and an object-valued `data`. All protocol values prohibit `null`. See the [Office HTTP Integration Guide](./docs/office-integration.md) for field definitions and examples.
 
-A single desk visit:
+This desk-visit example targets `office-1`, created by `integration-example`. Keep the office page online when sending it:
 
 ```bash
-curl -X POST http://localhost:8765/actions \
+curl -X POST http://localhost:8765/api/pixoffice/messages \
+  -H 'Authorization: Bearer pixoffice-demo-key' \
   -H 'Content-Type: application/json' \
-  -d '{"type":"desk_visit","visitor":1,"host":5,"message":"Please take over this task."}'
+  -d '{"teamId":"office-1","command":{"protocolVersion":"2.0","sceneId":"office-1","commandId":"visit-1","type":"activity.start","capability":"office.visit","participants":[{"entityId":"office-lead","role":"visitor"},{"entityId":"code-agent","role":"host"}],"params":{"stops":[{"hostId":"code-agent","message":"Please take over this task."}]}}}'
 ```
 
-Example request body:
+The following JSON examples define scene commands. Place each command in the top-level `command` field when sending an HTTP request:
 
 ```json
 {
-  "type": "desk_visit",
-  "visitor": 1,
-  "host": 5,
-  "message": "Please take over this task."
+  "protocolVersion": "2.0",
+  "sceneId": "office-1",
+  "commandId": "visit-1",
+  "type": "activity.start",
+  "capability": "office.visit",
+  "participants": [
+    { "entityId": "office-lead", "role": "visitor" },
+    { "entityId": "code-agent", "role": "host" }
+  ],
+  "params": { "stops": [{ "hostId": "code-agent", "message": "Please take over this task." }] }
 }
 ```
 
@@ -139,10 +140,22 @@ Visit several desks in sequence:
 
 ```json
 {
-  "type": "desk_visit_tour",
-  "visitor": 1,
-  "hosts": [2, 3, 4],
-  "message": "Please take the next step."
+  "protocolVersion": "2.0",
+  "sceneId": "office-1",
+  "commandId": "tour-1",
+  "type": "activity.start",
+  "capability": "office.visit",
+  "participants": [
+    { "entityId": "office-lead", "role": "visitor" },
+    { "entityId": "code-agent", "role": "host" },
+    { "entityId": "search-agent", "role": "host" }
+  ],
+  "params": {
+    "stops": [
+      { "hostId": "code-agent", "message": "Please implement the feature." },
+      { "hostId": "search-agent", "message": "Please gather the supporting data." }
+    ]
+  }
 }
 ```
 
@@ -150,12 +163,18 @@ Set an employee's state:
 
 ```json
 {
-  "type": "set_state",
-  "rosterNo": 1,
-  "state": "working",
-  "task": "Organizing market intelligence..."
+  "protocolVersion": "2.0",
+  "sceneId": "office-1",
+  "commandId": "work-1",
+  "type": "actor.presentation.set",
+  "actorId": "office-lead",
+  "status": "working",
+  "title": "Organizing market intelligence...",
+  "sourceRevision": 1
 }
 ```
+
+Use a new `commandId` for each new command; resubmitting the same ID is deduplicated. Target characters by stable entity IDs, not display names or roster numbers. Increment `sourceRevision` for each business presentation update to the same character.
 
 ## Contact
 

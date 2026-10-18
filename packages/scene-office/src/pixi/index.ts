@@ -1,5 +1,5 @@
 import type { ScenePresentationPack } from '@pixoffice/renderer-pixi/ScenePresentationPack'
-import type { ActorIntent } from '@pixoffice/contracts/presentation'
+import type { ActorIntent, ActorTaskPresentation } from '@pixoffice/contracts/presentation'
 import { projectAgents } from '../adapters/office.ts'
 import { apartmentPoseForState } from './posePolicy.ts'
 import { loadOfficeBackground, loadOfficeFurniture } from './assets/loadOfficeAssets.ts'
@@ -7,6 +7,9 @@ import { loadWorkstationTrialAssets } from './assets/loadWorkstationTrialAssets.
 import { createOfficePropViews } from './views/index.ts'
 import { CELL_PIXELS, cellCenter } from './projection.ts'
 import { computeAgentDepthZ } from './depth.ts'
+import { loadReferenceOfficeBackground, loadReferenceOfficeObjects } from './assets/loadReferenceOfficeAssets.ts'
+import { createReferenceOfficePropViews, referenceMonitorAnchor } from './views/referenceOffice.ts'
+import type { WhiteboardProgress } from '../whiteboard.ts'
 export { configureOfficeAssets } from './assets/loadOfficeTexture.ts'
 
 export function createOfficePresentation(trialEnabled: () => boolean = () => true): ScenePresentationPack {
@@ -39,6 +42,28 @@ export function createOfficePresentation(trialEnabled: () => boolean = () => tru
           furniture: agent.assignedDeskId ? { propId: agent.assignedDeskId, seated: Boolean(agent.seated), transitioning: Boolean(transition) } : undefined,
           bubble: agent.bubbleText,
         }
+      })
+    },
+  }
+}
+
+export function createReferenceOfficePresentation(options: { taskForActor?: (id: string) => ActorTaskPresentation | undefined; whiteboardProgress?: WhiteboardProgress } = {}): ScenePresentationPack {
+  const base = createOfficePresentation()
+  return { ...base, id: 'pixoffice.office.reference', resourceCount: 8,
+    contentBounds: () => ({ left: 0, top: 0, right: 1100, bottom: 850 }),
+    loadBackground: loadReferenceOfficeBackground,
+    async loadObjects(report) { await base.loadObjects?.(report); await loadReferenceOfficeObjects(part => report(`reference:${part}`)) },
+    createPropViews: () => createReferenceOfficePropViews(options.whiteboardProgress),
+    projectActors(runtime, preview) {
+      const props = (preview ?? runtime.readWorld()).props
+      return base.projectActors(runtime, preview).map(actor => {
+        const supplied = options.taskForActor?.(actor.id)
+        const task: ActorTaskPresentation = supplied && (!actor.title || supplied.title === actor.title) ? supplied
+          : actor.title ? { title: actor.title, status: actor.status === 'thinking' ? 'blocked' : 'running', progressMode: 'activity' }
+          : { title: '待命', status: 'idle' }
+        const workstation = props.find(prop => prop.id === actor.furniture?.propId && prop.templateId === 'office.reference-workstation')
+        return { ...actor, displayHeight: 126, label: { placement: 'above' as const, scale: 1.25 }, task,
+          taskAnchor: workstation ? { ...referenceMonitorAnchor(workstation.position, 'right'), placement: 'right' as const } : undefined }
       })
     },
   }

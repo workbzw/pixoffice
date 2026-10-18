@@ -6,7 +6,7 @@ Six front/back indoor gait sheets generated with the built-in ImageGen tool on 2
 
 | Character | Generated output ID |
 | --- | --- |
-| marvis | exec-22be4910-5d31-47f8-b8a7-730c78fc532d |
+| office-lead | exec-22be4910-5d31-47f8-b8a7-730c78fc532d |
 | code-agent | exec-ce14ff4e-49e2-4508-a8cd-48b7fb466cbe |
 | file-agent | exec-0f7f3ee7-0cdc-4098-8882-313123658c89 |
 | app-agent | exec-bcb855bb-6956-4c0b-aee7-a58f5f30d0c0 |
@@ -18,7 +18,7 @@ The six main sheets are 1448 x 1086 RGBA, four front poses above four back poses
 
 `registration.json` contains manually reviewed head-bottom landmarks in source coordinates. Existing seated, leaning, rising and seated-turn art is reused and uniformly registered against each character's standing reference. Sharp performs only technical extraction, scaling, registration, atlas packing and QA montage composition; no body parts are drawn or stitched into the new gait.
 
-`source-manifests/` freezes the pre-v2 input references. The import is reproducible without repeatedly resizing already-registered output. Run `node scripts/characters/register-office-motion.mjs`, then `npm run characters:build`. All six standards are validated before publishing source changes. The `comparison.png` contact sheet shows back standing, four front walking frames, four back walking frames, and back sitting at one common scale.
+`source-manifests/` freezes the pre-v2 input references. These files are historical authoring records; the one-time import script has been removed. Use the current staged character-admission workflow for further changes. The `comparison.png` contact sheet shows back standing, four front walking frames, four back walking frames, and back sitting at one common scale.
 
 ## Main generation prompt
 
@@ -34,7 +34,7 @@ D: viewer-RIGHT leg supports, viewer-LEFT knee/foot gently passes it, feet close
 Arm swing is low and subtle opposite the legs; shoulders steady. Small indoor steps with almost straight knees, never running or kicking, no big sole aimed at viewer. The head is IDENTICAL in size and silhouette in all four cells of its row. Preserve the asymmetric hair (do NOT mirror the entire sprite). Only the limb pose alternates. Fixed front/back orthographic camera. Very clean alpha edges, no stray pixels, ample gutters. 2048x1536 landscape preferred.
 ```
 
-For the other five sheets, the character-specific reference supplies identity and the accepted marvis sheet supplies only pose/layout. Hair, face, outfit and colors must remain character-specific.
+For the other five sheets, the character-specific reference supplies identity and the accepted office-lead sheet supplies only pose/layout. Hair, face, outfit and colors must remain character-specific.
 
 ## Opposite-contact correction prompt
 

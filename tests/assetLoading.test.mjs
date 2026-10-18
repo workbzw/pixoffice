@@ -3,7 +3,7 @@ import { test } from 'node:test'
 import { Application, Assets, Texture, TextureSource } from 'pixi.js'
 import { readFile } from 'node:fs/promises'
 import sharp from 'sharp'
-import { AssetLoadQueue } from '../example/office-web/src/scene/assets/AssetLoadQueue.ts'
+import { AssetLoadQueue } from '@pixoffice/animation-frame/AssetLoadQueue'
 import { buildOfficeAssets, OFFICE_IMAGES } from '../scripts/build-office-assets.mjs'
 import { createTestServer } from './helpers/vite.mjs'
 
@@ -13,6 +13,18 @@ const deferred = () => {
   return { promise, resolve, reject }
 }
 const settle = () => new Promise(resolve => setImmediate(resolve))
+
+test('the live office background keeps its calibrated camera dimensions and furniture retains transparency', async () => {
+  const asset = name => new URL(`../public/assets/office/reference-v1/${name}.png`, import.meta.url)
+  const room = await sharp(await readFile(asset('room-whiteboard-v3'))).metadata()
+  assert.deepEqual({ width: room.width, height: room.height }, { width: 1424, height: 1105 })
+  for (const name of ['conference-table', 'desk-accessories']) {
+    const { data, info } = await sharp(await readFile(asset(name))).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    const alpha = (x, y) => data[(y * info.width + x) * 4 + 3]
+    for (const [x, y] of [[0, 0], [info.width - 1, 0], [0, info.height - 1], [info.width - 1, info.height - 1]]) assert.equal(alpha(x, y), 0)
+    assert(data.some((value, index) => index % 4 === 3 && value >= 250), `${name}: visible artwork`)
+  }
+})
 
 test('texture queue runs in parallel, bounds concurrency and continues after synchronous or async failure', async () => {
   assert.throws(() => new AssetLoadQueue(0), /concurrency/)
@@ -31,7 +43,7 @@ test('texture queue runs in parallel, bounds concurrency and continues after syn
 
 test('character groups acquire all unique packs concurrently and preserve caller order', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { characterAssets, acquireCharacterPacks } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadApartmentAssets.ts')
+  const { characterAssets, acquireCharacterPacks } = await server.ssrLoadModule('@pixoffice/assets-office/frame/resources')
   const gates = new Map(['a', 'b', 'c'].map(id => [id, deferred()])), started = [], loaded = [], released = []
   t.mock.method(characterAssets, 'acquire', async id => {
     started.push(id); await gates.get(id).promise
@@ -48,7 +60,7 @@ test('character groups acquire all unique packs concurrently and preserve caller
 
 test('a failed character group releases late successful leases before rejecting', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { characterAssets, acquireCharacterPacks } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadApartmentAssets.ts')
+  const { characterAssets, acquireCharacterPacks } = await server.ssrLoadModule('@pixoffice/assets-office/frame/resources')
   const late = deferred(), released = []
   t.mock.method(characterAssets, 'acquire', async id => {
     if (id === 'failed') throw new Error('missing pack')
@@ -61,22 +73,19 @@ test('a failed character group releases late successful leases before rejecting'
   assert.deepEqual(released.sort(), ['early', 'late'])
 })
 
-test('missing frame packs report the failure and return the procedural-placeholder path', async t => {
+test('missing frame packs reject explicitly without an alternate character loader', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { characterAssets, loadApartmentAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadApartmentAssets.ts')
-  const requested = [], errors = [], failure = new Error('missing frame pack')
+  const { characterAssets, acquireCharacterPacks } = await server.ssrLoadModule('@pixoffice/assets-office/frame/resources')
+  const requested = [], failure = new Error('missing frame pack')
   t.mock.method(characterAssets, 'acquire', async id => { requested.push(id); throw failure })
-  t.mock.method(console, 'error', (...args) => errors.push(args))
   t.mock.method(Assets, 'load', () => assert.fail('missing frame packs must not load an alternate character renderer'))
-  assert.equal(await loadApartmentAssets(['marvis'], undefined, { preload: 'startup' }), undefined)
-  assert.deepEqual(requested, ['marvis'])
-  assert.equal(errors.length, 1)
-  assert.equal(errors[0][1], failure)
+  await assert.rejects(acquireCharacterPacks(['office-lead'], undefined, { preload: 'startup' }), failure)
+  assert.deepEqual(requested, ['office-lead'])
 })
 
 test('default character acquisition waits for full actions and releases every lease if action preparation fails', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { characterAssets, acquireCharacterPacks } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadApartmentAssets.ts')
+  const { characterAssets, acquireCharacterPacks } = await server.ssrLoadModule('@pixoffice/assets-office/frame/resources')
   const gates = new Map(['a', 'b'].map(id => [id, deferred()])), loaded = [], released = []
   t.mock.method(characterAssets, 'acquire', async id => ({ value: { ensureAll: () => gates.get(id).promise }, release: () => released.push(id) }))
   const pending = acquireCharacterPacks(['a', 'b'], id => loaded.push(id)), rejection = assert.rejects(pending, /missing action/)
@@ -106,7 +115,7 @@ test('office WebP generation is lossless, deterministic and leaves PNG sources u
 
 test('office textures fall back to retained PNGs when WebP cannot load', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { loadOfficeTexture } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadOfficeTexture.ts')
+  const { loadOfficeTexture } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/assets/loadOfficeTexture')
   const texture = new Texture({ source: new TextureSource({ width: 10, height: 10 }) })
   t.after(() => texture.destroy(true))
   const requests = []
@@ -121,8 +130,8 @@ test('office textures fall back to retained PNGs when WebP cannot load', async t
 
 test('scene paints white and then the background without waiting for characters or furniture', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts')
-  const { characterAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadApartmentAssets.ts')
+  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/application/OfficeScene.ts')
+  const { characterAssets } = await server.ssrLoadModule('@pixoffice/assets-office/frame/resources')
   const remaining = deferred(), backgroundVisible = deferred(), progress = [], frames = []
   const released = []
   const background = new Texture({ source: new TextureSource({ width: 1402, height: 1122 }) })

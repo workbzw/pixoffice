@@ -1,5 +1,5 @@
 import type { Point } from './model.ts'
-import { SceneFault } from './protocol.ts'
+import { SceneFault } from '@pixoffice/protocol'
 
 /** Convex floor boundaries keep every straight segment between valid endpoints inside the room. */
 export function convexAreaContains(vertices: Point[]) {

@@ -4,13 +4,14 @@ import { readFile } from 'node:fs/promises'
 import sharp from 'sharp'
 import { createTestServer } from './helpers/vite.mjs'
 import { characterPackFixture } from './helpers/characterPack.mjs'
+import { frameVisualFixture } from './helpers/frameVisual.mjs'
 
-const root = new URL('../art/characters/packs/marvis/', import.meta.url)
+const root = new URL('../art/characters/packs/office-lead/', import.meta.url)
 const pixels = async file => sharp(await readFile(new URL(file, root))).ensureAlpha().raw().toBuffer()
 
 test('quiet work changes only generated finger regions and preserves the working pose', async () => {
   const source = JSON.parse(await readFile(new URL('character.json', root), 'utf8'))
-  const recipe = JSON.parse(await readFile(new URL('../art/characters/marvis-quiet-work-v2/registration.json', import.meta.url), 'utf8'))
+  const recipe = JSON.parse(await readFile(new URL('../art/characters/office-lead-quiet-work-v2/registration.json', import.meta.url), 'utf8'))
   const master = await pixels('work/quiet-back-v2/001.png')
   const resting = await pixels('standard-v2/sit/back/001.png')
   assert(!master.equals(resting), 'working must not reuse the dangling-arm resting pose')
@@ -42,17 +43,12 @@ test('quiet work changes only generated finger regions and preserves the working
 
 test('all other employees play their own complete quiet-work frames', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { characterPreviewTimeline, sampleCharacterLayers } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
-  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
+  const { characterPreviewTimeline, sampleCharacterLayers } = await server.ssrLoadModule('@pixoffice/assets-office/frame/packSchema')
   const recipe = JSON.parse(await readFile(new URL('../art/characters/office-quiet-work-v4/registration.json', import.meta.url), 'utf8'))
   const reference = JSON.parse(await readFile(new URL('character.json', root), 'utf8')).clips['work.quiet-back']
   for (const id of ['code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']) {
-    const pack = await characterPackFixture(id)
-    t.after(() => pack.dispose())
+    const model = await frameVisualFixture(t, server, id), { pack } = model
     const { manifest } = pack
-    const character = new ApartmentCharacter(id)
-    character.pack = pack
-    t.after(() => character.destroy())
     const files = ['001', '002', '003', '004'].map(n => `work/quiet-back-v4/${n}.png`)
     const clip = manifest.clips['work.quiet-back']
     assert(clip?.loop, `${id} has a dedicated frame clip`)
@@ -79,21 +75,18 @@ test('all other employees play their own complete quiet-work frames', async t =>
     assert(standard.requiredClips.includes('work.quiet-back'), `${id}: validates working proportions during every build`)
     for (const file of files) assert.equal(standard.frames[file].footY, 377)
     for (const frame of frames) assert.equal(frame.length, 256 * 384 * 4)
-    character.setAtDesk(true)
-    character.setViewFacing('back')
-    character.playState('working')
-    character.update(.25)
+    const character = model.sample({ actionId: 'office.type', poseId: 'seated', view: 'back', elapsedMs: 250 })
     assert.equal(character.sprite.texture, pack.textures.get(leftPress.body.key), `${id} uses quiet work in the live character`)
-    assert(character.workSprites.every(sprite => !sprite.visible), `${id} does not composite arms at runtime`)
-    character.setViewFacing('right')
-    assert(character.workSprites.every(sprite => !sprite.visible), `${id} hides working hands when turning to speak`)
+    assert.equal(character.children.length, 3, `${id} mounts only shadow, body and mouth`)
+    model.sample({ poseId: 'seated', view: 'right' })
+    assert.equal(character.children.length, 3)
   }
 })
 
 test('working fingertips stay above the actual trial desktop front, not down beside the lap', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { workstationSurface } = await server.ssrLoadModule('/example/office-web/src/scene/layout/workstationSurface.ts')
-  const { WORKSTATION_SEAT_Y } = await server.ssrLoadModule('/example/office-web/src/scene/layout/workstationArtwork.ts')
+  const { workstationSurface } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/workstationSurface')
+  const { WORKSTATION_SEAT_Y } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/workstationArtwork')
   const surface = workstationSurface('trial')
   const front = 344 + (surface.bounds.front - WORKSTATION_SEAT_Y) / .3
   for (const n of ['001', '002', '003', '004']) {
@@ -111,18 +104,16 @@ test('working fingertips stay above the actual trial desktop front, not down bes
 
 test('quiet work uses complete frames, pauses on the working pose and exits for walking, seating or conversation', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
-  const { sampleCharacterLayers, sampleCharacterClip, characterPreviewTimeline } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
-  const pack = await characterPackFixture(), character = new ApartmentCharacter('marvis')
-  character.pack = pack; t.after(() => { character.destroy(); pack.dispose() })
-  character.setAtDesk(true); character.setViewFacing('back'); character.playState('working')
+  const { sampleCharacterLayers, sampleCharacterClip, characterPreviewTimeline } = await server.ssrLoadModule('@pixoffice/assets-office/frame/packSchema')
+  const model = await frameVisualFixture(t, server), { pack } = model
+  const character = model.sample({ actionId: 'office.type', poseId: 'seated', view: 'back' })
   const seen = new Set()
   for (let elapsed = 0; elapsed <= 12000; elapsed += 50) {
-    character.update(elapsed ? .05 : 0)
+    model.sample({ actionId: 'office.type', poseId: 'seated', view: 'back', elapsedMs: elapsed })
     const sample = sampleCharacterLayers(pack.manifest, 'work.quiet-back', elapsed)
     assert.equal(sample.work, undefined)
     assert.equal(character.sprite.texture, pack.textures.get(sample.body.key))
-    assert(character.workSprites.every(sprite => !sprite.visible))
+    assert.equal(character.children.length, 3)
     assert.equal(character.sprite.scale.y, .3)
     assert.equal(character.sprite.x, 0); assert.equal(character.sprite.y, 0)
     seen.add(sample.body.key)
@@ -130,15 +121,14 @@ test('quiet work uses complete frames, pauses on the working pose and exits for 
   }
   assert.equal(seen.size, 4)
   assert.equal(characterPreviewTimeline(pack.manifest, 'work.quiet-back').frames.length, 13)
-  character.setViewFacing('left'); character.update(0)
+  model.sample({ poseId: 'seated', view: 'left' })
   assert.equal(character.sprite.texture, pack.textures.get(sampleCharacterClip(pack.manifest, 'talk.seated-left').key))
-  character.setViewFacing('back'); character.setSeatTransition({ stage: 'rising', seatedAmount: .5 }); character.update(0)
+  model.sample({ actionId: 'core.stand-up', poseId: 'transition', view: 'back', progress: .5 })
   assert.equal(character.sprite.texture, pack.textures.get(sampleCharacterClip(pack.manifest, 'stand-up.back', 0, .5).key))
-  character.setSeatTransition(undefined)
-  for (const [state, clip] of [['walking', 'walk.back'], ['idle', 'sit.back']]) {
-    character.playState(state); character.update(0)
+  for (const [actionId, poseId, clip] of [['core.walk', 'standing', 'walk.back'], ['core.idle', 'seated', 'sit.back']]) {
+    model.sample({ actionId, poseId, view: 'back' })
     assert.equal(character.sprite.texture, pack.textures.get(sampleCharacterClip(pack.manifest, clip).key))
   }
-  character.setAtDesk(false); character.playState('working'); character.update(0)
+  model.sample({ view: 'back' })
   assert.equal(character.sprite.texture, pack.textures.get(sampleCharacterClip(pack.manifest, 'idle.back').key))
 })

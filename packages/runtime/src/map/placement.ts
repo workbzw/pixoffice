@@ -1,8 +1,8 @@
 import type { Template, World } from '../model.ts'
 import type { NavigationAdapter } from '../navigationAdapter.ts'
-import type { MapDocument } from './schema.ts'
+import type { MapDocument } from '@pixoffice/protocol/map'
 import { materializeMap } from './MapDraft.ts'
-import { sceneError } from '../protocol.ts'
+import { sceneError } from '@pixoffice/protocol'
 import { validateFurnitureFootprints } from './furnitureGrid.ts'
 export { furnitureCells, snapFurniture } from './furnitureGrid.ts'
 

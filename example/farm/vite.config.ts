@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { fileURLToPath } from 'node:url'
+import { releaseAssetsPlugin } from '../../scripts/assets/release.mjs'
 export default defineConfig({
-  root: fileURLToPath(new URL('.', import.meta.url)), base: './', publicDir: 'public', plugins: [react(), {
+  root: fileURLToPath(new URL('.', import.meta.url)), base: './', publicDir: 'public', plugins: [react(), releaseAssetsPlugin('farm'), {
     name: 'farm-isolation', generateBundle() {
       for (const id of this.getModuleIds()) if (/(?:packages|@pixoffice)[\\/](?:scene-office|assets-office|scene-classroom|assets-classroom)[\\/]/.test(id)) this.error(`Farm imported another scene: ${id}`)
     },

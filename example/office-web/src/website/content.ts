@@ -56,7 +56,7 @@ const zh = {
   code: {
     label: '代码示例', start: '本地启动', action: '发送动作', copy: '复制代码',
     success: '已复制', error: '复制未成功，请选中代码复制',
-    gateway: '本地开发网关 · 旧版兼容动作接口', message: '一起核对这份数据。',
+    gateway: 'Fastify · 场景消息转发', message: '一起核对这份数据。',
   },
   footer: {
     tagline: '让每一次协作，都有一个看得见的空间。', resources: '项目资源', license: '项目许可', notices: '第三方声明',
@@ -119,7 +119,7 @@ const en: typeof zh = {
   code: {
     label: 'Code examples', start: 'Run locally', action: 'Send an action', copy: 'Copy code',
     success: 'Copied', error: 'Copy failed. Select the code to copy it.',
-    gateway: 'Local dev gateway · Legacy action endpoint', message: "Let's review this data together.",
+    gateway: 'Fastify · Scene message relay', message: "Let's review this data together.",
   },
   footer: {
     tagline: 'A visible space for every collaboration.', resources: 'Project resources', license: 'Project license', notices: 'Third-party notices',
@@ -134,13 +134,19 @@ export function websiteReadme(locale: WebsiteLocale = 'zh') {
 }
 
 export function websiteSnippets(locale: WebsiteLocale) {
-  const payload = { type: 'desk_visit', visitor: 1, host: 2, message: websiteContent[locale].code.message }
+  const payload = {
+    protocolVersion: '2.0', sceneId: 'office-1', commandId: 'visit-example-1',
+    type: 'activity.start', capability: 'office.visit',
+    participants: [{ entityId: 'office-lead', role: 'visitor' }, { entityId: 'code-agent', role: 'host' }],
+    params: { stops: [{ hostId: 'code-agent', message: websiteContent[locale].code.message }] },
+  }
   // Quote JSON as a POSIX shell argument, including apostrophes in translated text.
-  const jsonArgument = JSON.stringify(payload, null, 2).replaceAll("'", "'\\''")
+  const jsonArgument = JSON.stringify({ teamId: payload.sceneId, command: payload }, null, 2).replaceAll("'", "'\\''")
   return {
     start: 'git clone https://github.com/workbzw/pixoffice.git\ncd pixoffice\nnpm install\nnpm run dev',
     action: [
-      'curl -X POST http://localhost:8765/actions \\',
+      'curl -X POST http://localhost:8765/api/pixoffice/messages \\',
+      "  -H 'Authorization: Bearer pixoffice-demo-key' \\",
       "  -H 'Content-Type: application/json' \\",
       `  -d '${jsonArgument}'`,
     ].join('\n'),

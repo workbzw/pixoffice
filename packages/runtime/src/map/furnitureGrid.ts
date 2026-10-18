@@ -1,5 +1,5 @@
 import type { Box, Point, Template, World } from '../model.ts'
-import { SceneFault } from '../protocol.ts'
+import { SceneFault } from '@pixoffice/protocol'
 
 export const FURNITURE_CELL_SIZE = 1
 export const cellKey = (p: Point) => `${p.x},${p.y}`

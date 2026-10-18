@@ -8,7 +8,7 @@ export type AgentRosterEntry = {
 /** 6 位市场部员工（名册序号 1–6） */
 export const OFFICE_ROSTER: AgentRosterEntry[] = [
   {
-    id: 'marvis',
+    id: 'office-lead',
     name: '王明',
     color: 0xe85d4a,
     task: '主管：等待交付物',

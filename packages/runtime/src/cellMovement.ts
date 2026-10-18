@@ -2,7 +2,7 @@ import type { Actor, Point, World } from './model.ts'
 import { facingToward } from './model.ts'
 import { sameCell, cellDistance } from './map/furnitureGrid.ts'
 import type { NavigationAdapter, NavigationQuery } from './navigationAdapter.ts'
-import { SceneFault } from './protocol.ts'
+import { SceneFault } from '@pixoffice/protocol'
 
 export const CELL_STEP_MS = 480
 export function occupiedCells(world: World, exceptId: string): Point[] {

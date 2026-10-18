@@ -4,7 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildCharacter } from '../../scripts/assets/build-character.mjs'
 const root = fileURLToPath(new URL('.', import.meta.url))
-const sourceRoot = path.resolve(root, '../../art/characters/packs/marvis')
+const sourceRoot = path.resolve(root, '../../art/characters/packs/office-lead')
 const temp = await mkdtemp(path.join(tmpdir(), 'pixoffice-walker-'))
 try {
   const original = JSON.parse(await readFile(path.join(sourceRoot, 'character.json'), 'utf8'))

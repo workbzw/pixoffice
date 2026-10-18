@@ -1,9 +1,9 @@
 import type { Point, Template, World } from '../model.ts'
 import type { NavigationAdapter } from '../navigationAdapter.ts'
-import { SceneFault, sceneError } from '../protocol.ts'
-import type { SceneError } from '../protocol.ts'
-import { mapDocumentSchema } from './schema.ts'
-import type { MapDocument, MapOperation } from './schema.ts'
+import { SceneFault, sceneError } from '@pixoffice/protocol'
+import type { SceneError } from '@pixoffice/protocol'
+import { mapDocumentSchema } from '@pixoffice/protocol/map'
+import type { MapDocument, MapOperation } from '@pixoffice/protocol/map'
 import { validateFurnitureFootprints } from './furnitureGrid.ts'
 import { compactPath } from '../orthogonalPath.ts'
 import { restoreBoundActor } from '../furnitureBinding.ts'
@@ -16,7 +16,7 @@ export function exportMap(world: World): MapDocument {
   return structuredClone({ format: 'ai-office-map', version: 2, unit: 'cell', sceneId: world.sceneId, width: world.width, height: world.height, gridSize: 1, bounds: b,
     walkableArea: world.walkableArea ?? [{ x: b.left, y: b.top }, { x: b.right, y: b.top }, { x: b.right, y: b.bottom }, { x: b.left, y: b.bottom }],
     blockedAreas: world.blockedAreas ?? [], props: world.props.map(({ id, name, templateId, position, anchors }) => ({ id, name, templateId, position, ...(anchors ? { anchors } : {}) })),
-    bindings: world.actors.map(a => ({ actorId: a.id, homeId: a.homeId ?? null, position: a.position })) })
+    bindings: world.actors.map(a => ({ actorId: a.id, homeId: a.homeId ?? '', position: a.position })) })
 }
 
 export function materializeMap(document: MapDocument, current: World, template: (id: string) => Template): World {
@@ -35,11 +35,12 @@ export function materializeMap(document: MapDocument, current: World, template: 
       const seat = t.interactions?.seat
       if (seat && (key.startsWith('seat') || [seat.anchor, ...seat.approaches].includes(key))) throw new SceneFault('FIXED_SEAT_ANCHOR', '入座通道与桌椅素材绑定，不能单独移动')
     }
-    return { ...structuredClone(p), state: structuredClone(old?.state ?? {}), stateRevision: old?.stateRevision ?? 0 }
+    return { ...structuredClone(p), state: structuredClone(old?.state ?? t.initialState ?? {}), stateRevision: old?.stateRevision ?? 0,
+      ...(old?.stateSource ? { stateSource: old.stateSource } : {}) }
   })
   world.actors.forEach(actor => {
     const binding = document.bindings.find(b => b.actorId === actor.id)!
-    actor.homeId = binding.homeId ?? undefined
+    actor.homeId = binding.homeId || undefined
     actor.position = { ...binding.position }; actor.posture = 'standing'
     if (actor.homeId) restoreBoundActor(world, actor, template)
     actor.motion = undefined; actor.step = undefined; actor.using = actor.homeId ? { propId: actor.homeId, interactionId: 'seat' } : undefined
@@ -60,8 +61,10 @@ export class MapDraft {
   private route?: MapDraftSnapshot['route']
   private navigation: NavigationAdapter
   private template: (id: string) => Template
-  constructor(world: World, id: string, navigation: NavigationAdapter, template: (id: string) => Template) {
-    this.navigation = navigation; this.template = template
+  private readonly validateStructure: (world: World) => void
+  constructor(world: World, id: string, navigation: NavigationAdapter, template: (id: string) => Template,
+    validateStructure: (world: World) => void = () => {}) {
+    this.navigation = navigation; this.template = template; this.validateStructure = validateStructure
     this.id = id; this.baseLayoutRevision = world.layoutRevision; this.document = exportMap(world); this.validate(world)
   }
   assertRevision(id: string, revision: number) {
@@ -69,7 +72,11 @@ export class MapDraft {
     if (revision !== this.revision) throw new SceneFault('DRAFT_CONFLICT', '草稿已被其他操作更新，请读取最新草稿后重试')
   }
   snapshot(): MapDraftSnapshot { return structuredClone({ id: this.id, revision: this.revision, baseLayoutRevision: this.baseLayoutRevision, document: this.document, canUndo: this.past.length > 0, canRedo: this.future.length > 0, validation: this.validation, route: this.route }) }
-  world(current: World) { return materializeMap(this.document, current, this.template) }
+  world(current: World) {
+    const world = materializeMap(this.document, current, this.template)
+    this.validateStructure(world)
+    return world
+  }
   patch(operations: MapOperation[], current: World, requireValid = false) {
     let next = structuredClone(this.document)
     for (const op of operations) {
@@ -90,6 +97,7 @@ export class MapDraft {
     next = mapDocumentSchema.parse(next)
     // Structural errors are atomic failures; geometric errors remain editable drafts.
     const world = materializeMap(next, current, this.template)
+    this.validateStructure(world)
     if (requireValid) { validateFurnitureFootprints(world, this.template); this.navigation.validate(world) }
     this.past.push(this.document); if (this.past.length > 50) this.past.shift()
     this.document = next; this.future = []; this.changed(current, requireValid)

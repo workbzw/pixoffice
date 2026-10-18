@@ -76,7 +76,9 @@ test('READMEs link to each other, preserve website language, and use existing lo
       await access(new URL(match[1], url))
     }
     const examples = [...text.matchAll(/```json\n([\s\S]*?)\n```/g)].map(match => JSON.parse(match[1]))
-    assert.deepEqual(examples.map(example => example.type), ['desk_visit', 'desk_visit_tour', 'set_state'])
+    assert.deepEqual(examples.map(example => example.type), ['activity.start', 'activity.start', 'actor.presentation.set'])
+    assert(examples.every(example => example.protocolVersion === '2.0' && example.sceneId === 'office-1' && example.commandId))
+    assert(!text.includes('/actions'))
   }
 })
 
@@ -86,12 +88,17 @@ test('translated shell examples preserve protocol fields and escape apostrophes'
     // A local shell function captures arguments without invoking curl or the gateway.
     const output = execFileSync('/bin/sh', ['-c', `curl() { printf '%s\\0' "$@"; }\n${snippets.action}`], { encoding: 'utf8' })
     const args = output.split('\0').filter(Boolean)
-    assert.deepEqual(args.slice(0, 5), ['-X', 'POST', 'http://localhost:8765/actions', '-H', 'Content-Type: application/json'])
-    assert.equal(args[5], '-d')
-    assert.equal(args.length, 7)
-    assert.deepEqual(JSON.parse(args[6]), {
-      type: 'desk_visit', visitor: 1, host: 2,
-      message: content.websiteContent[language].code.message,
+    assert.deepEqual(args.slice(0, 7), ['-X', 'POST', 'http://localhost:8765/api/pixoffice/messages', '-H', 'Authorization: Bearer pixoffice-demo-key', '-H', 'Content-Type: application/json'])
+    assert.equal(args[7], '-d')
+    assert.equal(args.length, 9)
+    const envelope = JSON.parse(args[8])
+    assert.deepEqual(Object.keys(envelope).sort(), ['command', 'teamId'])
+    assert.equal(envelope.teamId, 'office-1')
+    assert.deepEqual(envelope.command, {
+      protocolVersion: '2.0', sceneId: 'office-1', commandId: 'visit-example-1',
+      type: 'activity.start', capability: 'office.visit',
+      participants: [{ entityId: 'office-lead', role: 'visitor' }, { entityId: 'code-agent', role: 'host' }],
+      params: { stops: [{ hostId: 'code-agent', message: content.websiteContent[language].code.message }] },
     })
     assert.equal(snippets.start, content.websiteSnippets('zh').start)
   }

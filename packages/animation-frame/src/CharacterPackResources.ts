@@ -22,8 +22,7 @@ export class CharacterPackResources<T extends CharacterManifest = CharacterManif
   get isComplete() { return this.pages.size === this.manifest.pages.length }
 
   ensureStartup() {
-    const grouped = this.manifest.pages.some(page => page.group === 'startup')
-    return this.ensurePages(this.manifest.pages.flatMap((page, index) => !grouped || page.group === 'startup' ? [index] : []))
+    return this.ensurePages(this.manifest.pages.flatMap((page, index) => page.group === 'startup' ? [index] : []))
   }
   ensureClips(names: string[]) {
     return this.ensurePages(this.dependencies(this.manifest, names).map(key => this.manifest.frames[key].page))

@@ -1,5 +1,5 @@
 import { createRoot } from 'react-dom/client'
-import { configureCharacterResources, loadCharacterRegistry } from '../scene/assets/loadApartmentAssets.ts'
+import { configureCharacterResources, loadCharacterRegistry } from '@pixoffice/assets-office/frame/resources'
 import { CharacterLab } from './CharacterLab.tsx'
 
 async function start() {

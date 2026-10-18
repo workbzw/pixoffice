@@ -14,7 +14,7 @@ const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm'
 const run = (command, args, cwd) => execFileSync(command, args, { cwd, encoding: 'utf8', maxBuffer: 10 * 1024 * 1024 })
 try {
   const dependencies = { 'pixi.js': '^8.18.1' }
-  for (const name of ['contracts', 'runtime', 'renderer-pixi', 'animation-frame', 'scene-office', 'assets-office', 'scene-classroom', 'assets-classroom', 'scene-farm', 'assets-farm']) {
+  for (const name of ['protocol', 'contracts', 'runtime', 'renderer-pixi', 'animation-frame', 'scene-office', 'assets-office', 'scene-classroom', 'assets-classroom', 'scene-farm', 'assets-farm']) {
     const [result] = JSON.parse(run(npm, ['pack', '--json', '--ignore-scripts', '--pack-destination', temp], path.join(root, 'packages', name)))
     assert(result.files.some(file => file.path.endsWith('.d.ts')), `${name}: missing declarations`)
     assert(!result.files.some(file => file.path.startsWith('src/')), `${name}: raw source leaked`)

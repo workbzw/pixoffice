@@ -1,5 +1,5 @@
 import { readCharacterManifest } from '@pixoffice/assets-office/frame/resources'
-import { bindOfficeFrames } from '../../../../assets/office/frameBindings.ts'
+import { bindOfficeFrames } from '@pixoffice/assets-office/frame/bindings'
 export { bindOfficeFrames }
 
 export async function resolveOfficeAppearance(id: string) {

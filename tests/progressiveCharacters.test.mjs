@@ -13,7 +13,7 @@ const settle = () => new Promise(resolve => setTimeout(resolve, 5))
 
 async function resources(t) {
   const server = await createTestServer(); t.after(() => server.close())
-  const { CharacterPackResources } = await server.ssrLoadModule('/example/office-web/src/scene/assets/CharacterPackResources.ts')
+  const { CharacterPackResources } = await server.ssrLoadModule('@pixoffice/animation-frame/CharacterPackResources')
   const full = await characterPackFixture()
   const pageTextures = full.manifest.pages.map(page => new Texture({ source: new TextureSource({ width: page.width, height: page.height }) }))
   const pack = new CharacterPackResources(full.manifest, pageTextures.map((_, index) => `/test-${index}.webp`))
@@ -69,45 +69,44 @@ test('disposing during deferred loading waits for late pages, creates no late vi
   await assert.rejects(pack.ensureStartup(), /disposed/)
 })
 
-test('old manifests without page groups still load fully and invalid page dimensions are retryable', async t => {
+test('invalid deferred page dimensions are retryable without reloading startup poses', async t => {
   const { pack, pageTextures, loads, unloaded } = await resources(t)
-  pack.manifest.pages.forEach(page => { delete page.group })
+  await pack.ensureStartup()
   const invalid = new Texture({ source: new TextureSource({ width: 1, height: 1 }) })
   t.after(() => invalid.destroy(true))
   let wrong = true
   t.mock.method(Assets, 'load', async url => { loads.push(url); return url === '/test-1.webp' && wrong ? invalid : pageTextures[pack.pageUrls.indexOf(url)] })
-  await assert.rejects(pack.ensureStartup(), /dimensions mismatch/)
+  await assert.rejects(pack.ensureAll(), /dimensions mismatch/)
   assert.deepEqual(unloaded, ['/test-1.webp'])
-  wrong = false; await pack.ensureStartup()
+  wrong = false; await pack.ensureAll()
   assert.equal(pack.isComplete, true)
   assert.equal(loads.filter(url => url === '/test-0.webp').length, 1)
 })
 
 test('partial character poses retain the previous complete body and mouth until all new layers exist', async t => {
   const { server, full } = await resources(t)
-  const { ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts')
-  const { sampleCharacterLayers } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
-  const character = new ApartmentCharacter('marvis'); character.pack = full
+  const { FrameSprite } = await server.ssrLoadModule('/packages/animation-frame/src/FrameSprite.ts')
+  const { sampleCharacterLayers } = await server.ssrLoadModule('@pixoffice/assets-office/frame/packSchema')
+  const character = new FrameSprite(full)
   t.after(() => character.destroy())
-  character.setViewFacing('front'); character.update(0)
+  character.renderClip('idle.front')
   const body = character.sprite.texture, mouth = character.mouthSprite.texture, head = character.getHeadOffsetY()
   const next = sampleCharacterLayers(full.manifest, 'idle.right'), missing = full.textures.get(next.mouth.key)
   full.textures.delete(next.mouth.key)
-  character.setViewFacing('right'); character.update(0)
+  character.renderClip('idle.right')
   assert.equal(character.sprite.texture, body)
   assert.equal(character.mouthSprite.texture, mouth)
   assert.equal(character.mouthSprite.visible, true)
   assert.equal(character.getHeadOffsetY(), head)
   assert.match(character.actionError, /loading/)
-  full.textures.set(next.mouth.key, missing); character.update(0)
+  full.textures.set(next.mouth.key, missing); character.renderClip('idle.right')
   assert.equal(character.sprite.texture, full.textures.get(next.body.key))
   assert.equal(character.actionError, undefined)
 })
 
 test('scene keeps current animations ticking but gates simulation and gateway until actions are ready, including retry', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts')
-  const { isOfficeSceneReady } = await server.ssrLoadModule('/example/office-web/src/scene/officeSceneBridge.ts')
+  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/application/OfficeScene.ts')
   const states = [], scene = new OfficeScene({ onActionProgress: state => states.push(state) })
   scene.firstFrameReady = true
   t.after(() => scene.destroy())
@@ -120,7 +119,7 @@ test('scene keeps current animations ticking but gates simulation and gateway un
   assert.equal(ticks.mock.callCount(), 0)
   assert.equal(visuals.mock.callCount(), 1)
   assert(visuals.mock.calls[0].arguments[0] > 0)
-  assert.equal(isOfficeSceneReady(), false)
+  assert.equal(scene.areActionsReady, false)
   assert.throws(() => scene.setDemo(true), /准备/)
   assert.throws(() => scene.beginEditing(), /准备/)
   assert.throws(() => scene.requestDeskVisit(1, 2, 'hello'), /准备/)
@@ -129,15 +128,13 @@ test('scene keeps current animations ticking but gates simulation and gateway un
   assert.equal(scene.areActionsReady, false)
   failed = false; await scene.prepareActions()
   assert.equal(scene.areActionsReady, true)
-  assert.equal(isOfficeSceneReady(), true)
   scene.onTick({ deltaTime: 1 }); assert.equal(ticks.mock.callCount(), 1)
-  scene.destroy(); assert.equal(released, 1); assert.equal(isOfficeSceneReady(), false)
+  scene.destroy(); assert.equal(released, 1)
 })
 
-test('destroyed scenes cannot publish late action readiness or bind the gateway', async t => {
+test('destroyed scenes cannot publish late action readiness', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts')
-  const { isOfficeSceneReady } = await server.ssrLoadModule('/example/office-web/src/scene/officeSceneBridge.ts')
+  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/application/OfficeScene.ts')
   const gate = deferred(), started = deferred(), states = []
   const scene = new OfficeScene({ onActionProgress: state => states.push(state) })
   scene.firstFrameReady = true
@@ -146,14 +143,13 @@ test('destroyed scenes cannot publish late action readiness or bind the gateway'
   scene.destroy(); const count = states.length
   gate.resolve(); await pending
   assert.equal(states.length, count)
-  assert.equal(isOfficeSceneReady(), false)
+  assert.equal(scene.areActionsReady, false)
 })
 
-test('preparing actions before the first office frame cannot expose an uninitialized gateway', async t => {
+test('preparing actions before the first office frame cannot announce readiness', async t => {
   const server = await createTestServer(); t.after(() => server.close())
-  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts')
-  const { isOfficeSceneReady } = await server.ssrLoadModule('/example/office-web/src/scene/officeSceneBridge.ts')
-  const scene = new OfficeScene(); t.after(() => scene.destroy())
+  const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/application/OfficeScene.ts')
+  const states = [], scene = new OfficeScene({ onActionProgress: state => states.push(state) }); t.after(() => scene.destroy())
   await scene.prepareActions()
-  assert.equal(isOfficeSceneReady(), false)
+  assert.equal(states.length, 0)
 })

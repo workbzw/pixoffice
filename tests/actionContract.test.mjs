@@ -2,37 +2,31 @@ import assert from 'node:assert/strict'
 import { before, after, test } from 'node:test'
 import { createTestServer } from './helpers/vite.mjs'
 import { characterPackFixture } from './helpers/characterPack.mjs'
+import { frameVisualFixture } from './helpers/frameVisual.mjs'
 import { base, move, visit, completed, until, noClaims } from './helpers/grid.mjs'
 
-let server, createOfficeRuntime, OfficeRuntime, GridNavigation, MovementController, ApartmentCharacter, CharacterManifestSchema, resolveCharacterClip, characterPoseClip, supportsOfficePose, pack
+let server, createOfficeRuntime, SceneRuntime, GridNavigation, MovementController, CharacterManifestSchema, resolveCharacterClip, characterPoseClip, supportsOfficePose, pack
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
-  ;({ OfficeRuntime } = await server.ssrLoadModule('/packages/runtime/src/OfficeRuntime.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts'))
+  ;({ SceneRuntime } = await server.ssrLoadModule('/packages/runtime/src/SceneRuntime.ts'))
   ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
   ;({ MovementController } = await server.ssrLoadModule('/packages/runtime/src/movement.ts'))
-  ;({ ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts'))
-  ;({ CharacterManifestSchema, resolveCharacterClip } = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts'))
-  ;({ characterPoseClip, supportsOfficePose } = await server.ssrLoadModule('/example/office-web/src/contracts/characterPose.ts'))
-  pack = await server.ssrLoadModule('/example/office-web/src/runtime/builtin/officePack.ts')
+  ;({ CharacterManifestSchema, resolveCharacterClip } = await server.ssrLoadModule('@pixoffice/assets-office/frame/packSchema'))
+  ;({ characterPoseClip, supportsOfficePose } = await server.ssrLoadModule('@pixoffice/scene-office/core/poseSupport'))
+  pack = await server.ssrLoadModule('@pixoffice/scene-office/core/pack')
 })
 after(() => server?.close())
 
 function runtimeFor(t, world = pack.createOfficeWorld(), supportsPose = supportsOfficePose, plugins = pack.builtinPlugins) {
-  const runtime = new OfficeRuntime({ world, plugins, supportsPose, createNavigation: templates => new GridNavigation(templates) })
+  const runtime = new SceneRuntime({ world, plugins, supportsPose, createNavigation: templates => new GridNavigation(templates) })
   t.after(() => runtime.dispose())
   return runtime
 }
-function render(t, resource, actor, state = 'idle') {
-  const character = new ApartmentCharacter(actor.templateId)
-  character.pack = resource
-  t.after(() => character.destroy())
-  character.setAtDesk(actor.posture === 'seated')
-  character.setViewFacing(actor.facing)
-  character.playState(state)
-  character.setSpeechText(actor.speech?.text)
-  character.update(0)
-  return character
+async function render(t, resource, actor) {
+  const model = await frameVisualFixture(t, server, actor.templateId, resource)
+  model.sample({ poseId: actor.posture, view: actor.facing, ...(actor.speech ? { speechMs: 0 } : {}) })
+  return model
 }
 async function resourceFor(t, id = 'code-agent') {
   const resource = await characterPackFixture(id)
@@ -52,13 +46,13 @@ test('approaching from behind chooses a supported side and renders the actual se
   assert.equal(host.posture, 'seated')
   assert.equal(host.facing, 'left', 'nearest legal side is chosen, not the zero-distance rear anchor')
   assert.deepEqual(r.readActors()[0].position, { x: 10, y: 5 })
-  const character = render(t, resource, host)
+  const model = await render(t, resource, host), character = model.root
   const clip = resolveCharacterClip(resource.manifest, characterPoseClip(host.posture, host.facing))
   assert.equal(character.sprite.texture, resource.textures.get(clip.frames[0].frame))
   assert.equal(character.actionError, undefined)
-  assert.equal(clip.fallback, false)
+  assert.equal(clip.requested, characterPoseClip(host.posture, host.facing))
   until(r, () => Boolean(r.readActors()[1].speech))
-  character.setSpeechText(r.readActors()[1].speech.text)
+  model.sample({ poseId: 'seated', view: r.readActors()[1].facing, speechMs: 0 })
   assert(character.mouthSprite.visible)
   completed(r, 'visit')
   assert.equal(r.readActors()[1].facing, 'back')
@@ -148,8 +142,8 @@ test('blocked-route replanning retains the arrival pose contract', t => {
 test('unsupported explicit poses fail before applying any pose or starting speech', t => {
   const invalid = { id: 'test.pose', name: 'Invalid pose', version: '1.0.0', apiVersion: 1, capabilities: [{
     ...pack.officeVisits.capabilities[0], id: 'test.pose', build() { return { title: 'Unsupported', claims: [
-      { resource: 'actor:marvis:body', units: 1 }, { resource: 'actor:code-agent:body', units: 1 }, { resource: 'actor:marvis:speech', units: 1 },
-    ], phases: [{ title: 'Invalid', poses: [{ actorId: 'marvis', posture: 'seated', facing: 'left' }, { actorId: 'code-agent', posture: 'seated', facing: 'front' }], speech: [{ actorId: 'marvis', text: 'must not speak' }] }] } },
+      { resource: 'actor:office-lead:body', units: 1 }, { resource: 'actor:code-agent:body', units: 1 }, { resource: 'actor:office-lead:speech', units: 1 },
+    ], phases: [{ title: 'Invalid', poses: [{ actorId: 'office-lead', posture: 'seated', facing: 'left' }, { actorId: 'code-agent', posture: 'seated', facing: 'front' }], speech: [{ actorId: 'office-lead', text: 'must not speak' }] }] } },
   }] }
   const r = runtimeFor(t, undefined, undefined, [...pack.builtinPlugins, invalid])
   const result = r.submit({ ...visit(), capability: 'test.pose' })
@@ -160,16 +154,13 @@ test('unsupported explicit poses fail before applying any pose or starting speec
 })
 
 test('renderer never substitutes back sitting or work for an unsupported seated front', async t => {
-  const resource = await resourceFor(t, 'marvis')
-  const character = render(t, resource, { templateId: 'marvis', posture: 'seated', facing: 'front' }, 'working')
-  assert.match(character.actionError, /talk\.seated-front/)
-  assert.equal(character.sprite.visible, false)
-  character.setViewFacing('right')
-  assert.equal(character.actionError, undefined)
-  assert.equal(character.sprite.visible, true)
+  const resource = await resourceFor(t, 'office-lead')
+  const model = await frameVisualFixture(t, server, 'office-lead', resource)
+  assert.throws(() => model.sample({ poseId: 'seated', view: 'front' }), /Unsupported/)
+  const character = model.sample({ poseId: 'seated', view: 'right' })
   const right = resolveCharacterClip(resource.manifest, 'talk.seated-right')
   assert.equal(character.sprite.texture, resource.textures.get(right.frames[0].frame))
-  character.setViewFacing('back')
+  model.sample({ actionId: 'office.type', poseId: 'seated', view: 'back' })
   const work = resolveCharacterClip(resource.manifest, 'work.quiet-back')
   assert.equal(character.sprite.texture, resource.textures.get(work.frames[0].frame))
 })

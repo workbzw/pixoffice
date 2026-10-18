@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict'
 
 export const base = commandId => ({ protocolVersion: '2.0', sceneId: 'office-1', commandId })
-export const visit = (id = 'visit', actor = 'marvis', host = 'code-agent') => ({ ...base(id), type: 'activity.start', capability: 'office.visit', participants: [{ entityId: actor, role: 'visitor' }, { entityId: host, role: 'host' }], params: { stops: [{ hostId: host, message: 'hello' }], durationMs: 300 } })
-export const move = (id, targetId, anchor, actor = 'marvis') => ({ ...base(id), type: 'activity.start', capability: 'scene.move', participants: [{ entityId: actor, role: 'actor' }], params: { targetId, anchor } })
-export const use = (id, objectId = 'whiteboard-1', actor = 'marvis', interactionId = 'write') => ({ ...base(id), type: 'activity.start', capability: 'furniture.use', participants: [{ entityId: actor, role: 'user' }], params: { objectId, interactionId, durationMs: 300 } })
+export const visit = (id = 'visit', actor = 'office-lead', host = 'code-agent') => ({ ...base(id), type: 'activity.start', capability: 'office.visit', participants: [{ entityId: actor, role: 'visitor' }, { entityId: host, role: 'host' }], params: { stops: [{ hostId: host, message: 'hello' }], durationMs: 300 } })
+export const move = (id, targetId, anchor, actor = 'office-lead') => ({ ...base(id), type: 'activity.start', capability: 'scene.move', participants: [{ entityId: actor, role: 'actor' }], params: { targetId, anchor } })
+export const use = (id, objectId = 'whiteboard-1', actor = 'office-lead', interactionId = 'write') => ({ ...base(id), type: 'activity.start', capability: 'furniture.use', participants: [{ entityId: actor, role: 'user' }], params: { objectId, interactionId, durationMs: 300 } })
 export const distance = (a, b) => Math.abs(a.x - b.x) + Math.abs(a.y - b.y)
 const key = p => `${p.x},${p.y}`
 

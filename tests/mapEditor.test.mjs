@@ -5,8 +5,8 @@ import { createTestServer } from './helpers/vite.mjs'
 let server, createOfficeRuntime, mapDocumentSchema, editFromUI, furnitureCells, snapFurniture, checkFurniturePlacement, furnitureFootprint, validateFurnitureFootprints, FURNITURE_CELL_SIZE
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
-  ;({ mapDocumentSchema } = await server.ssrLoadModule('/packages/runtime/src/map/schema.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts'))
+  ;({ mapDocumentSchema } = await server.ssrLoadModule('@pixoffice/protocol/map'))
   ;({ editMap: editFromUI } = await server.ssrLoadModule('/example/office-web/src/components/map-editor/commands.ts'))
   ;({ furnitureCells, snapFurniture, checkFurniturePlacement } = await server.ssrLoadModule('/packages/runtime/src/map/placement.ts'))
   ;({ furnitureFootprint, validateFurnitureFootprints, FURNITURE_CELL_SIZE } = await server.ssrLoadModule('/packages/runtime/src/map/furnitureGrid.ts'))
@@ -68,9 +68,9 @@ test('geometric errors remain editable and cannot overwrite the live map', () =>
 
 test('commit preserves live object state, presentation and seat binding updates', () => {
   const runtime = createOfficeRuntime(); beginOk(runtime)
-  ok(patch(runtime, [{ op: 'binding.set', actorId: 'marvis', homeId: 'desk-1' }, { op: 'binding.set', actorId: 'code-agent', homeId: 'desk-0' }]))
+  ok(patch(runtime, [{ op: 'binding.set', actorId: 'office-lead', homeId: 'desk-1' }, { op: 'binding.set', actorId: 'code-agent', homeId: 'desk-0' }]))
   ok(runtime.submit({ ...base(), type: 'object.state.set', entityId: 'whiteboard-1', expectedStateRevision: 0, state: { title: 'Live state', text: 'Keep this' } }))
-  ok(runtime.submit({ ...base(), type: 'actor.presentation.set', actorId: 'marvis', sourceRevision: 1, status: 'working', title: 'Real work' }))
+  ok(runtime.submit({ ...base(), type: 'actor.presentation.set', actorId: 'office-lead', sourceRevision: 1, status: 'working', title: 'Real work' }))
   ok(edit(runtime, { action: 'commit' }))
   const world = runtime.readWorld()
   assert.equal(world.props.find(p => p.id === 'whiteboard-1').state.text, 'Keep this')
@@ -166,15 +166,15 @@ test('persistence failure never replaces the live map and preserves the editable
   assert.equal(runtime.readWorld().props[0].position.x, 7)
 })
 
-test('busy runtime cannot begin; draft blocks activity and legacy layout overwrites', () => {
+test('busy runtime cannot begin; draft blocks activity and retired layout commands are invalid', () => {
   const runtime = createOfficeRuntime()
-  const activity = runtime.submit({ ...base(), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: 'marvis', role: 'actor' }], params: { animation: 'emotes/wave' } })
+  const activity = runtime.submit({ ...base(), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: 'office-lead', role: 'actor' }], params: { animation: 'emotes/wave' } })
   assert.equal(begin(runtime).error.code, 'BUSY')
   runtime.submit({ ...base(), type: 'activity.stop', activityId: activity.activityId })
   for (let i = 0; i < 100; i++) runtime.tick(100)
   beginOk(runtime)
-  assert.equal(runtime.submit({ ...base(), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: 'marvis', role: 'actor' }], params: { animation: 'emotes/wave' } }).error.code, 'EDITING')
-  assert.equal(runtime.submit({ ...base(), type: 'layout.apply', expectedLayoutRevision: runtime.readWorld().layoutRevision, placements: runtime.readWorld().props.map(p => ({ entityId: p.id, position: p.position })) }).error.code, 'EDITING')
+  assert.equal(runtime.submit({ ...base(), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: 'office-lead', role: 'actor' }], params: { animation: 'emotes/wave' } }).error.code, 'EDITING')
+  assert.equal(runtime.submit({ ...base(), type: 'layout.apply', expectedLayoutRevision: runtime.readWorld().layoutRevision, placements: runtime.readWorld().props.map(p => ({ entityId: p.id, position: p.position })) }).error.code, 'INVALID_COMMAND')
 })
 
 test('draft snapshots are detached, redo clears on new edits, history is bounded', () => {

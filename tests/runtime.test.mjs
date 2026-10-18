@@ -2,23 +2,24 @@ import assert from 'node:assert/strict'
 import { before, after, test } from 'node:test'
 import { readFileSync, readdirSync } from 'node:fs'
 import { createTestServer } from './helpers/vite.mjs'
+import { beginMapEdit, editMapDraft } from './helpers/map.mjs'
 
-let server, createOfficeRuntime, OfficeRuntime, PluginHost, ResourceManager, GridNavigation, pack
+let server, createOfficeRuntime, SceneRuntime, PluginHost, ResourceManager, GridNavigation, pack
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
-  ;({ OfficeRuntime } = await server.ssrLoadModule('/packages/runtime/src/OfficeRuntime.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts'))
+  ;({ SceneRuntime } = await server.ssrLoadModule('/packages/runtime/src/SceneRuntime.ts'))
   ;({ PluginHost } = await server.ssrLoadModule('/packages/runtime/src/plugins.ts'))
   ;({ ResourceManager } = await server.ssrLoadModule('/packages/runtime/src/resources.ts'))
   ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
-  pack = await server.ssrLoadModule('/example/office-web/src/runtime/builtin/officePack.ts')
+  pack = await server.ssrLoadModule('@pixoffice/scene-office/core/pack')
 })
 after(() => server?.close())
 
 const base = id => ({ protocolVersion: '2.0', sceneId: 'office-1', commandId: id })
-const visit = (id = 'visit', visitor = 'marvis', host = 'code-agent') => ({ ...base(id), type: 'activity.start', capability: 'office.visit', participants: [{ entityId: visitor, role: 'visitor' }, { entityId: host, role: 'host' }], params: { stops: [{ hostId: host, message: 'hello' }], durationMs: 300 } })
-const focus = (id = 'focus', actor = 'marvis') => ({ ...base(id), type: 'activity.start', capability: 'office.focus', participants: [{ entityId: actor, role: 'worker' }], params: { title: 'analysis' } })
-const emote = (id = 'emote', actor = 'marvis') => ({ ...base(id), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: actor, role: 'actor' }], params: { animation: 'emotes/wave', durationMs: 300 } })
+const visit = (id = 'visit', visitor = 'office-lead', host = 'code-agent') => ({ ...base(id), type: 'activity.start', capability: 'office.visit', participants: [{ entityId: visitor, role: 'visitor' }, { entityId: host, role: 'host' }], params: { stops: [{ hostId: host, message: 'hello' }], durationMs: 300 } })
+const focus = (id = 'focus', actor = 'office-lead') => ({ ...base(id), type: 'activity.start', capability: 'office.focus', participants: [{ entityId: actor, role: 'worker' }], params: { title: 'analysis' } })
+const emote = (id = 'emote', actor = 'office-lead') => ({ ...base(id), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: actor, role: 'actor' }], params: { animation: 'emotes/wave', durationMs: 300 } })
 function setup(options = {}) {
   let now = 1000
   const runtime = createOfficeRuntime({ now: () => now, ...options })
@@ -57,7 +58,7 @@ test('schema, scene, duplicate ID and plugin parameter validation precede execut
 test('resource conflict queues fairly; unrelated actors continue in parallel', () => {
   const { runtime, advance } = setup()
   runtime.submit(visit('first'))
-  assert.equal(runtime.submit(visit('second', 'file-agent', 'marvis')).status, 'queued')
+  assert.equal(runtime.submit(visit('second', 'file-agent', 'office-lead')).status, 'queued')
   assert.equal(runtime.submit(visit('third', 'review-agent', 'data-agent')).status, 'running')
   assert.equal(runtime.submit({ ...emote('reject'), busyPolicy: 'reject' }).error.code, 'BUSY')
   advance(60000)
@@ -74,7 +75,7 @@ test('capabilities reject unknown participant roles and unrelated extra particip
   extra.participants.push({ entityId: 'code-agent', role: 'observer' })
   assert.equal(runtime.submit(extra).error.code, 'INVALID_PARTICIPANTS')
   const meeting = { ...base('wrong-meeting-role'), type: 'activity.start', capability: 'office.meeting',
-    participants: [{ entityId: 'marvis', role: 'speaker' }, { entityId: 'code-agent', role: 'observer' }],
+    participants: [{ entityId: 'office-lead', role: 'speaker' }, { entityId: 'code-agent', role: 'observer' }],
     params: { boardId: 'whiteboard-1', text: 'Agenda' } }
   assert.equal(runtime.submit(meeting).error.code, 'INVALID_PARTICIPANTS')
   noClaims(runtime)
@@ -82,7 +83,7 @@ test('capabilities reject unknown participant roles and unrelated extra particip
 
 test('four-person meeting has a shared activity and waits for all arrivals', () => {
   const { runtime, advance } = setup()
-  const participants = ['marvis', 'code-agent', 'file-agent', 'app-agent'].map((entityId, i) => ({ entityId, role: i ? 'attendee' : 'speaker' }))
+  const participants = ['office-lead', 'code-agent', 'file-agent', 'app-agent'].map((entityId, i) => ({ entityId, role: i ? 'attendee' : 'speaker' }))
   runtime.submit({ ...base('meeting'), type: 'activity.start', capability: 'office.meeting', participants, params: { boardId: 'whiteboard-1', text: 'Agenda', durationMs: 1000 } })
   advance(500)
   assert.equal(runtime.snapshot().activities[0].phaseIndex, 0)
@@ -107,6 +108,20 @@ test('continuous activity outlives its start command and stops explicitly', () =
   noClaims(runtime)
 })
 
+test('a full activity queue still accepts cancellation and continuous-activity stop', () => {
+  const { runtime, advance } = setup()
+  const started = runtime.submit(focus())
+  for (let i = 0; i < 128; i++) assert.equal(runtime.submit(emote(`waiting-${i}`)).status, 'queued')
+  assert.equal(runtime.submit(emote('overflow')).error.code, 'QUEUE_FULL')
+  assert.equal(runtime.submit({ ...base('stop-full'), type: 'activity.stop', activityId: started.activityId }).status, 'completed')
+  assert.equal(runtime.submit({ ...base('cancel-full'), type: 'command.cancel', targetCommandId: 'waiting-127' }).status, 'completed')
+  assert.equal(runtime.getRecord('waiting-127').status, 'cancelled')
+  assert.equal(runtime.submit({ ...base('cancel-full'), type: 'command.cancel', targetCommandId: 'waiting-127' }).status, 'completed', 'control commands retain local deduplication')
+  advance(5000)
+  assert.equal(runtime.getRecord('waiting-0').status, 'completed')
+  runtime.dispose()
+})
+
 test('cancel stops movement in place, frees resources and does not teleport', () => {
   const { runtime, advance } = setup()
   runtime.submit(visit())
@@ -125,7 +140,7 @@ test('presentation state is independent of movement and rejects stale revisions'
   const { runtime, advance } = setup()
   runtime.submit(visit()); advance(500)
   const motion = runtime.readActors()[0].motion
-  const command = { ...base('presentation'), type: 'actor.presentation.set', actorId: 'marvis', status: 'thinking', title: 'External task', sourceRevision: 1 }
+  const command = { ...base('presentation'), type: 'actor.presentation.set', actorId: 'office-lead', status: 'thinking', title: 'External task', sourceRevision: 1 }
   assert.equal(runtime.submit(command).status, 'completed')
   assert.deepEqual(runtime.readActors()[0].motion, motion)
   assert.equal(runtime.submit({ ...command, commandId: 'stale' }).error.code, 'STALE_REVISION')
@@ -181,45 +196,44 @@ test('state changes validate capability schemas and revisions, not arbitrary fie
   assert.equal(runtime.submit({ ...command, commandId: 'unsafe', expectedStateRevision: 1, state: { title: 'x', text: 'x', script: 'x' } }).status, 'failed')
 })
 
-function layout(runtime, id = 'layout', mutate = () => {}) {
-  const world = runtime.readWorld()
-  const placements = world.props.map(p => ({ entityId: p.id, position: { ...p.position } }))
-  mutate(placements)
-  return { ...base(id), type: 'layout.apply', expectedLayoutRevision: world.layoutRevision, placements }
-}
-test('layout update is atomic and recomputes seat bindings, navigation and version', () => {
+test('map draft commits atomically and recomputes seat bindings, navigation and version', () => {
   const { runtime, advance } = setup()
-  const command = layout(runtime, 'layout', p => { p[0].position.x += 1 })
-  const expectedX = command.placements[0].position.x
-  runtime.setEditing(true)
+  assert.equal(beginMapEdit(runtime, 'begin').status, 'completed')
+  const prop = runtime.editorSnapshot().document.props[0]
+  prop.position.x += 1
+  const expectedX = prop.position.x
   assert.equal(runtime.submit(visit()).error.code, 'EDITING')
-  assert.equal(runtime.submit(command).status, 'completed')
-  runtime.setEditing(false)
+  assert.equal(editMapDraft(runtime, 'move', { action: 'patch', operations: [{ op: 'prop.put', prop }], requireValid: true }).status, 'completed')
+  assert.equal(editMapDraft(runtime, 'commit', { action: 'commit' }).status, 'completed')
+  assert.equal(runtime.isEditing, false)
   assert.equal(runtime.readActors()[0].position.x, expectedX)
   assert.equal(runtime.readWorld().layoutRevision, 1)
-  assert.equal(runtime.submit({ ...command, commandId: 'old-layout' }).error.code, 'REVISION_CONFLICT')
+  assert.equal(beginMapEdit(runtime, 'stale-layout', 0).error.code, 'REVISION_CONFLICT')
   const before = runtime.readWorld()
-  assert.equal(runtime.submit(layout(runtime, 'overlap', p => { p[0].position = p[1].position })).error.code, 'OVERLAP')
+  assert.equal(beginMapEdit(runtime, 'next-draft').status, 'completed')
+  const props = runtime.editorSnapshot().document.props
+  assert.equal(editMapDraft(runtime, 'overlap', { action: 'patch', operations: [{ op: 'prop.put', prop: { ...props[0], position: props[1].position } }], requireValid: true }).error.code, 'OVERLAP')
   assert.deepEqual(runtime.readWorld(), before)
+  assert.equal(editMapDraft(runtime, 'cancel-draft', { action: 'cancel' }).status, 'completed')
   runtime.submit(visit('after-layout')); advance(20000)
   assert.equal(runtime.getRecord('after-layout').status, 'completed')
   assert.equal(runtime.readActors()[0].position.x, expectedX)
 })
 
-test('editing and layout changes reject active activity and queued spatial work', () => {
+test('map drafts reject active activity and queued spatial work', () => {
   const { runtime } = setup()
   runtime.submit(focus())
-  assert.throws(() => runtime.setEditing(true), /活动/)
-  assert.equal(runtime.submit(layout(runtime)).error.code, 'BUSY')
+  assert.equal(beginMapEdit(runtime, 'busy-draft').error.code, 'BUSY')
 })
 
 test('layout errors name objects and distinguish overlap, clearance and out-of-bounds', () => {
   const { runtime } = setup()
   const before = runtime.readWorld()
   assert.doesNotThrow(() => runtime.navigation.validate(before))
-  const moveBoard = (id, position) => runtime.submit(layout(runtime, id, placements => {
-    placements.find(p => p.entityId === 'whiteboard-1').position = position
-  }))
+  assert.equal(beginMapEdit(runtime, 'begin').status, 'completed')
+  const board = runtime.editorSnapshot().document.props.find(p => p.id === 'whiteboard-1')
+  const moveBoard = (id, position) => editMapDraft(runtime, id, { action: 'patch',
+    operations: [{ op: 'prop.put', prop: { ...board, position } }], requireValid: true })
   const desk = before.props.find(p => p.id === 'desk-2').position
   const overlap = moveBoard('overlapping-board', { ...desk })
   assert.equal(overlap.error.code, 'OVERLAP')
@@ -269,11 +283,10 @@ test('corrupt or incompatible checkpoints are preserved rather than overwritten'
   assert.equal(writes, 0)
 })
 
-test('legacy checkpoints inherit the room floor without resetting layout, content or history', () => {
+test('current checkpoints restore their saved floor, layout, content and history without rewriting', () => {
   const original = setup().runtime
   original.submit({ ...base('board-text'), type: 'object.state.set', entityId: 'whiteboard-1', expectedStateRevision: 0, state: { title: '保留议题', text: '保留正文' } })
   const saved = original.checkpoint()
-  delete saved.world.walkableArea
   saved.world.props[0].position.x += 1
   saved.world.layoutRevision = 7
   saved.world.actors[0].name = '自定义姓名'
@@ -281,15 +294,15 @@ test('legacy checkpoints inherit the room floor without resetting layout, conten
   const { runtime, advance } = setup({ persistence: { load: () => saved, save: value => { writes++; persisted = structuredClone(value) } } })
   assert.equal(runtime.snapshot().persistenceError, undefined)
   assert.equal(writes, 0, 'loading does not overwrite the original checkpoint')
-  assert.equal(saved.world.walkableArea, undefined)
+  assert.deepEqual(saved.world.walkableArea, original.readWorld().walkableArea)
   assert.deepEqual(runtime.readWorld().walkableArea, original.readWorld().walkableArea)
   assert.deepEqual(runtime.readWorld().props, saved.world.props)
   assert.equal(runtime.readWorld().layoutRevision, 7)
   assert.equal(runtime.readActors()[0].name, '自定义姓名')
   assert.deepEqual(runtime.getRecord('board-text'), saved.records[0])
   assert(!runtime.navigation.walkable(runtime.readWorld(), { x: 470, y: 165 }))
-  runtime.submit(visit('after-floor-upgrade')); advance(20000)
-  assert.equal(runtime.getRecord('after-floor-upgrade').status, 'completed')
+  runtime.submit(visit('after-restore')); advance(20000)
+  assert.equal(runtime.getRecord('after-restore').status, 'completed')
   assert.deepEqual(persisted.world.walkableArea, original.readWorld().walkableArea)
   assert.deepEqual(persisted.world.props, saved.world.props)
 })
@@ -316,7 +329,7 @@ test('overlapping saved layouts can recover after backup without losing content 
   const { runtime, advance } = setup({ persistence })
   assert.equal(runtime.snapshot().canRecoverLayout, true)
   assert.equal(runtime.submit(visit('blocked')).error.code, 'PERSISTENCE_FAILED')
-  assert.throws(() => runtime.setEditing(true), /先恢复存档/)
+  assert.equal(beginMapEdit(runtime, 'locked-draft').error.code, 'PERSISTENCE_FAILED')
   assert.deepEqual(active, saved, 'loading must not silently replace the user layout')
   runtime.recoverLayout()
   assert.equal(replacements, 1)
@@ -433,13 +446,14 @@ test('runtime uses the injected navigation adapter for validation, anchors and m
   assert(calls.includes('path'))
   assert(calls.includes('anchor'))
   assert(calls.includes('segmentClear'))
-  assert.equal(runtime.submit(layout(runtime)).status, 'completed')
-  assert.equal(calls.filter(c => c === 'validate').length, 2)
+  assert.equal(beginMapEdit(runtime, 'navigation-draft').status, 'completed')
+  assert.equal(editMapDraft(runtime, 'navigation-commit', { action: 'commit' }).status, 'completed')
+  assert.equal(calls.filter(c => c === 'validate').length, 3)
 })
 
 test('missing navigation target fails without leaving resource claims', () => {
-  const plugin = { id: 'test.invalid', name: 'Invalid target', apiVersion: 1, version: '1.0.0', capabilities: [{ ...pack.officePersonal.capabilities[1], id: 'test.move', build() { return { title: 'bad', claims: [{ resource: 'actor:marvis:body', units: 1 }], phases: [{ title: 'move', moves: [{ actorId: 'marvis', targetId: 'missing', anchor: 'seat' }] }] } } }] }
-  const runtime = new OfficeRuntime({ world: pack.createOfficeWorld(), plugins: [...pack.builtinPlugins, plugin], createNavigation: templates => new GridNavigation(templates) })
+  const plugin = { id: 'test.invalid', name: 'Invalid target', apiVersion: 1, version: '1.0.0', capabilities: [{ ...pack.officePersonal.capabilities[1], id: 'test.move', build() { return { title: 'bad', claims: [{ resource: 'actor:office-lead:body', units: 1 }], phases: [{ title: 'move', moves: [{ actorId: 'office-lead', targetId: 'missing', anchor: 'seat' }] }] } } }] }
+  const runtime = new SceneRuntime({ world: pack.createOfficeWorld(), plugins: [...pack.builtinPlugins, plugin], createNavigation: templates => new GridNavigation(templates) })
   assert.equal(runtime.submit({ ...emote(), capability: 'test.move' }).error.code, 'ENTITY_NOT_FOUND')
   noClaims(runtime)
 })
@@ -452,9 +466,9 @@ test('generic actors need no workstation and can speak while moving', () => {
   world.actors[0].position = { x: 9, y: 6 }
   world.actors[0].posture = 'standing'
   world.props = [world.props.find(p => p.id === 'whiteboard-1')]
-  const runtime = new OfficeRuntime({ world, plugins: pack.builtinPlugins, createNavigation: templates => new GridNavigation(templates) })
-  assert.equal(runtime.submit({ ...base('move'), type: 'activity.start', capability: 'scene.move', participants: [{ entityId: 'marvis', role: 'actor' }], params: { targetId: 'whiteboard-1', anchor: 'attendee1' } }).status, 'running')
-  assert.equal(runtime.submit({ ...base('say'), type: 'activity.start', capability: 'scene.say', participants: [{ entityId: 'marvis', role: 'actor' }], params: { text: '边走边说', durationMs: 1000 } }).status, 'running')
+  const runtime = new SceneRuntime({ world, plugins: pack.builtinPlugins, createNavigation: templates => new GridNavigation(templates) })
+  assert.equal(runtime.submit({ ...base('move'), type: 'activity.start', capability: 'scene.move', participants: [{ entityId: 'office-lead', role: 'actor' }], params: { targetId: 'whiteboard-1', anchor: 'attendee1' } }).status, 'running')
+  assert.equal(runtime.submit({ ...base('say'), type: 'activity.start', capability: 'scene.say', participants: [{ entityId: 'office-lead', role: 'actor' }], params: { text: '边走边说', durationMs: 1000 } }).status, 'running')
   for (let i = 0; i < 10; i++) runtime.tick(50)
   assert(runtime.readActors()[0].motion)
   assert.equal(runtime.readActors()[0].speech.text, '边走边说')
@@ -467,7 +481,7 @@ test('generic actors need no workstation and can speak while moving', () => {
 
 test('moving to an occupied seat fails without overlapping a stationary actor', () => {
   const { runtime } = setup()
-  const result = runtime.submit({ ...base('occupied'), type: 'activity.start', capability: 'scene.move', participants: [{ entityId: 'marvis', role: 'actor' }], params: { targetId: 'desk-1', anchor: 'seat' } })
+  const result = runtime.submit({ ...base('occupied'), type: 'activity.start', capability: 'scene.move', participants: [{ entityId: 'office-lead', role: 'actor' }], params: { targetId: 'desk-1', anchor: 'seat' } })
   assert.equal(result.error.code, 'SEAT_NOT_OWNED')
   noClaims(runtime)
 })

@@ -3,7 +3,7 @@ import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { createServer } from 'vite'
 
-export async function createTestServer(mode = 'queue') {
+export async function createTestServer() {
   const root = fileURLToPath(new URL('../..', import.meta.url))
   const alias = []
   for (const name of await readdir(path.join(root, 'packages'))) {
@@ -20,7 +20,6 @@ export async function createTestServer(mode = 'queue') {
     resolve: {
       alias,
     },
-    define: { 'import.meta.env.VITE_OFFICE_DISPATCH_MODE': JSON.stringify(mode) },
     server: { middlewareMode: true, hmr: false, ws: false, watch: null },
     optimizeDeps: { noDiscovery: true, include: [] },
     appType: 'custom',

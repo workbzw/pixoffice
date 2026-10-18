@@ -1,4 +1,4 @@
-import type { DashboardSnapshot } from './contract.ts'
+import type { DashboardSnapshot } from '@pixoffice/protocol/dashboard'
 
 export function dashboardMetrics(data: DashboardSnapshot, now = new Date()) {
   const today = now.toLocaleDateString('en-CA')

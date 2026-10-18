@@ -7,7 +7,7 @@ import {
   getOfficeDeskTexture,
 } from '../assets/loadOfficeAssets.ts'
 import { getWorkstationTrialTextures } from '../assets/loadWorkstationTrialAssets.ts'
-import { CLASSIC_DESK, TRIAL_DESK, TRIAL_COMPUTER, classicDeskPlacement, workstationSurface } from '../workstationSurface.ts'
+import { CLASSIC_DESK, TRIAL_DESK, TRIAL_COMPUTER, classicDeskPlacement, trialComputerPlacement, workstationSurface } from '../workstationSurface.ts'
 import { transformWorkSurface } from '@pixoffice/contracts/contactSurface'
 
 export type WorkstationArtwork = 'classic' | 'trial'
@@ -174,7 +174,7 @@ export class DeskEntity {
     const d = TRIAL_DESK, c = TRIAL_COMPUTER, scale = d.targetWidth / d.width
     part(textures.desk, new Rectangle(d.left, d.top, d.width, d.apron - d.top), this.deskLayer, d.targetWidth, 0, d.apronY - (d.apron - d.top) * scale)
     part(textures.desk, new Rectangle(d.left, d.apron, d.width, d.bottom - d.apron), this.deskFrontLayer, d.targetWidth, 0, d.apronY)
-    part(textures.computer, new Rectangle(c.left, c.top, c.width, c.height), this.deskLayer, c.targetWidth, 0, c.bottomY - c.height * c.targetWidth / c.width)
+    part(textures.computer, new Rectangle(c.left, c.top, c.width, c.height), this.deskLayer, c.targetWidth, 0, trialComputerPlacement().topY)
     part(textures.chair, new Rectangle(208, 323, 800, 894), this.chairLayer, 44, 0, SEAT_OFFSET_Y - 14)
     return true
   }

@@ -11,7 +11,7 @@ import { createAssetCatalog } from '../../scripts/assets/export-pack.mjs'
 const root = fileURLToPath(new URL('../..', import.meta.url))
 const output = path.resolve(process.argv[2] ?? path.join(root, 'example/classroom/public/classroom-assets'))
 const temp = await mkdtemp(path.join(tmpdir(), 'pixoffice-classroom-'))
-const sourceIds = ['marvis', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']
+const sourceIds = ['office-lead', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']
 try {
   const staging = path.join(temp, 'output'); await mkdir(staging)
   const roster = []
@@ -58,5 +58,7 @@ try {
   await writeFile(path.join(staging, 'asset-pack.json'), JSON.stringify(catalog, null, 2) + '\n')
   await mkdir(output, { recursive: true })
   await cp(staging, output, { recursive: true })
+  const config = path.join(path.dirname(output), 'pixoffice-config.js')
+  if (config !== path.join(root, 'public/pixoffice-config.js')) await cp(path.join(root, 'public/pixoffice-config.js'), config)
   console.log(`Classroom assets ready: ${output}`)
 } finally { await rm(temp, { recursive: true, force: true }) }

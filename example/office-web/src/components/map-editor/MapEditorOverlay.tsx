@@ -5,7 +5,7 @@ import type { MapDraftSnapshot } from '@pixoffice/runtime/map/MapDraft'
 import { checkFurniturePlacement, snapFurniture } from '@pixoffice/runtime/map/placement'
 import type { EditorProps, MapFurniture } from './commands.ts'
 import { editMap } from './commands.ts'
-import { SceneFault } from '@pixoffice/runtime/protocol'
+import { SceneFault } from '@pixoffice/protocol'
 
 type Gesture = { prop: MapFurniture; start: Point; draft: MapDraftSnapshot; pointerId: number }
 const equal = (a: Point, b: Point) => a.x === b.x && a.y === b.y

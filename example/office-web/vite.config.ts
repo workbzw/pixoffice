@@ -2,13 +2,15 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { releaseAssetsPlugin } from '../../scripts/assets/release.mjs'
 
 const root = fileURLToPath(new URL('.', import.meta.url))
+const relayUrl = process.env.PIXOFFICE_INTERNAL_API_URL
 export default defineConfig({
   root,
   envDir: path.resolve(root, '../..'),
   publicDir: path.resolve(root, '../../public'),
-  plugins: [react(), {
+  plugins: [react(), releaseAssetsPlugin(), {
     name: 'character-candidate-preview',
     configureServer(server) {
       server.middlewares.use((req, _res, next) => {
@@ -20,7 +22,13 @@ export default defineConfig({
     },
   }],
   resolve: { dedupe: ['pixi.js', 'react', 'react-dom'] },
-  server: { fs: { allow: [path.resolve(root, '../..')] } },
+  server: {
+    fs: { allow: [path.resolve(root, '../..')] },
+    proxy: relayUrl ? {
+      '/api/pixoffice': { target: relayUrl },
+      '/pixoffice-config.js': { target: relayUrl },
+    } : undefined,
+  },
   build: {
     outDir: path.resolve(root, '../../dist'), emptyOutDir: true,
     rolldownOptions: {

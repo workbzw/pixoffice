@@ -8,7 +8,7 @@ import sharp from 'sharp'
 const root = fileURLToPath(new URL('../../', import.meta.url))
 const outputDirectory = path.join(root, 'art/farm/character')
 const directory = await mkdtemp(path.join(tmpdir(), 'pixoffice-farm-character-'))
-const sourceRoot = path.join(root, 'art/characters/packs/marvis')
+const sourceRoot = path.join(root, 'art/characters/packs/office-lead')
 const original = JSON.parse(await readFile(path.join(sourceRoot, 'character.json'), 'utf8'))
 const clips = {}
 function include(name) {

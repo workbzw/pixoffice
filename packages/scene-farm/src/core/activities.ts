@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { SceneFault } from '@pixoffice/runtime'
+import { SceneFault } from '@pixoffice/protocol'
 import type { Capability, ObjectStateChange, PluginContext, ScenePlugin } from '@pixoffice/runtime'
 import { cropIdSchema, crops, cropStatus, emptyPlot, inventoryStateSchema, plotStateSchema } from './crops.ts'
 
@@ -21,6 +21,7 @@ function operationState(context: PluginContext, raw: unknown, operation: Operati
 export function createFarmActivities(now: () => number): ScenePlugin {
   const capabilities: Capability[] = (['plant', 'water', 'harvest'] as const).map(operation => ({
     id: `farm.${operation}`, name: labels[operation], params: paramsSchema,
+    participants: { min: 1, max: 1, roles: [{ role: 'farmer', min: 1, max: 1 }], rules: ['播种仅限空地；浇水仅限缺水作物；采收仅限成熟作物'] },
     build(context, raw) {
       const { actor, plot } = operationState(context, raw, operation, now())
       return { title: `${actor.name}${labels[operation]}${plot.name}`,
@@ -34,13 +35,13 @@ export function createFarmActivities(now: () => number): ScenePlugin {
     },
     complete(context, raw): ObjectStateChange[] {
       const { plot, state, params } = operationState(context, raw, operation, now())
-      const next = operation === 'plant' ? { crop: params.crop!, plantedAt: now(), wateredAt: null }
+      const next = operation === 'plant' ? { crop: params.crop!, plantedAt: now(), wateredAt: -1 }
         : operation === 'water' ? { ...plotStateSchema.parse(plot.state), wateredAt: now() } : emptyPlot()
       const changes: ObjectStateChange[] = [{ entityId: plot.id, expectedStateRevision: plot.stateRevision, state: next }]
       if (operation === 'harvest') {
         const store = context.world.props.find(p => p.id === 'harvest-store' && p.templateId === 'farm.store')
         if (!store) throw new SceneFault('ENTITY_NOT_FOUND', 'harvest-store')
-        const inventory = inventoryStateSchema.parse(store.state), crop = state.crop!
+        const inventory = inventoryStateSchema.parse(store.state), crop = cropIdSchema.parse(state.crop)
         changes.push({ entityId: store.id, expectedStateRevision: store.stateRevision, state: { ...inventory, [crop]: inventory[crop] + crops[crop].yield } })
       }
       return changes

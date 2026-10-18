@@ -9,7 +9,12 @@
     "README.md"
   ],
   "exports": {
-    ".": { "types": "./dist/core/index.d.ts", "import": "./dist/core/index.js" },
+    "./whiteboard": { "types": "./dist/whiteboard.d.ts", "import": "./dist/whiteboard.js" },
+    "./task-board": { "types": "./dist/taskBoard.d.ts", "import": "./dist/taskBoard.js" },
+    ".": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    },
     "./pixi": {
       "types": "./dist/pixi/index.d.ts",
       "import": "./dist/pixi/index.js"
@@ -37,10 +42,6 @@
     "./core/pack": {
       "types": "./dist/core/pack.d.ts",
       "import": "./dist/core/pack.js"
-    },
-    "./core/migrateLegacy": {
-      "types": "./dist/core/migrateLegacy.d.ts",
-      "import": "./dist/core/migrateLegacy.js"
     },
     "./pixi/assets/loadOfficeAssets": {
       "types": "./dist/pixi/assets/loadOfficeAssets.d.ts",
@@ -91,9 +92,10 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@pixoffice/protocol": "0.1.0",
     "@pixoffice/contracts": "0.1.0",
-    "@pixoffice/runtime": "0.1.0",
     "@pixoffice/renderer-pixi": "0.1.0",
+    "@pixoffice/runtime": "0.1.0",
     "zod": "^4.6.5"
   },
   "peerDependencies": {

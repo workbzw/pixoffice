@@ -1,4 +1,6 @@
 export { SceneView } from './SceneView.ts'
+export { createOrthogonalProjection, createDimetricProjection, pickGridCell } from './projection.ts'
+export type { SceneProjection, SceneRenderProfile } from '@pixoffice/contracts/projection'
 export { mountScene, createAppearanceResolver } from './assembly.ts'
 export type { SceneAssembly, MountSceneOptions } from './assembly.ts'
 export { AnimationRegistry } from './animation/AnimationRegistry.ts'

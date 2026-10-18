@@ -13,25 +13,17 @@
       "types": "./dist/adapters/storage.d.ts",
       "import": "./dist/adapters/storage.js"
     },
-    "./adapters/http": {
-      "types": "./dist/adapters/http.d.ts",
-      "import": "./dist/adapters/http.js"
+    "./adapters/messages": {
+      "types": "./dist/adapters/messages.d.ts",
+      "import": "./dist/adapters/messages.js"
     },
-    "./adapters/embed": {
-      "types": "./dist/adapters/embed.d.ts",
-      "import": "./dist/adapters/embed.js"
-    },
-    "./OfficeRuntime": {
-      "types": "./dist/OfficeRuntime.d.ts",
-      "import": "./dist/OfficeRuntime.js"
+    "./adapters/sse": {
+      "types": "./dist/adapters/sse.d.ts",
+      "import": "./dist/adapters/sse.js"
     },
     "./SceneRuntime": {
       "types": "./dist/SceneRuntime.d.ts",
       "import": "./dist/SceneRuntime.js"
-    },
-    "./protocol": {
-      "types": "./dist/protocol.d.ts",
-      "import": "./dist/protocol.js"
     },
     "./model": {
       "types": "./dist/model.d.ts",
@@ -48,10 +40,6 @@
     "./map/placement": {
       "types": "./dist/map/placement.d.ts",
       "import": "./dist/map/placement.js"
-    },
-    "./map/schema": {
-      "types": "./dist/map/schema.d.ts",
-      "import": "./dist/map/schema.js"
     },
     "./map/furnitureGrid": {
       "types": "./dist/map/furnitureGrid.d.ts",
@@ -98,6 +86,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@pixoffice/protocol": "0.1.0",
     "pathfinding": "^0.4.18",
     "zod": "^4.6.5"
   }

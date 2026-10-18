@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { batchSchema, canonical, commandSchema, idSchema, pointSchema, protocolDescription, SceneFault, sceneError, terminal } from './protocol.ts'
-import type { CommandRecord, CommandResult, SceneCommand, StartCommand } from './protocol.ts'
+import { batchSchema, canonical, commandSchema, idSchema, pointSchema, protocolDescription, SceneFault, sceneError, terminal } from '@pixoffice/protocol'
+import type { CommandRecord, CommandResult, StartCommand } from '@pixoffice/protocol'
 import type { Activity, ActivityPlan, Actor, Checkpoint, Persistence, SceneEvent, Snapshot, World } from './model.ts'
 import { resolvePoses, unrestrictedPoses } from './actionContract.ts'
 import type { PoseSupport } from './actionContract.ts'
@@ -11,16 +11,14 @@ import { ResourceManager } from './resources.ts'
 import { MovementController } from './movement.ts'
 import type { SeatStepDuration } from './seatInteraction.ts'
 import { convexAreaContains } from './walkableArea.ts'
-import { blockedAreaSchema } from './schema.ts'
+import { blockedAreaSchema, jsonObjectSchema } from '@pixoffice/protocol/schema'
 import { MapDraft, exportMap } from './map/MapDraft.ts'
-import type { MapEdit } from './map/schema.ts'
+import type { MapEdit } from '@pixoffice/protocol/map'
 import { FURNITURE_CELL_SIZE, validateFurnitureFootprints } from './map/furnitureGrid.ts'
 import { restoreBoundActor, restoreInteractionFacing } from './furnitureBinding.ts'
 
-// Old geometry commands are audit records only; restore marks unfinished work failed.
-const archivedCommand = z.looseObject({ protocolVersion: z.literal('1.0'), sceneId: idSchema, commandId: idSchema,
-  type: z.enum(['map.edit', 'layout.apply', 'activity.start', 'activity.stop', 'command.cancel', 'actor.presentation.set', 'object.state.set']) })
-const savedCommand = z.custom<SceneCommand>(value => commandSchema.safeParse(value).success || archivedCommand.safeParse(value).success)
+const MAX_RECORDS = 512
+const CONTROL_RECORD_RESERVE = 2
 
 const actorSchema = z.object({ id: idSchema, name: z.string().max(100), templateId: idSchema, color: z.number().int(), position: pointSchema, homeId: idSchema.optional(),
   facing: z.enum(['front', 'back', 'left', 'right']), posture: z.enum(['standing', 'seated']),
@@ -33,7 +31,7 @@ const worldSchema = z.strictObject({ sceneId: idSchema, unit: z.literal('cell'),
     try { convexAreaContains(points); return true } catch { return false }
   }, '可行走区域必须是无交叉的凸多边形').optional(),
   blockedAreas: z.array(blockedAreaSchema).max(64).optional(),
-  actors: z.array(actorSchema).max(100), props: z.array(z.strictObject({ id: idSchema, name: z.string().max(100), templateId: idSchema, position: pointSchema, anchors: z.record(idSchema, pointSchema).optional(), state: z.record(z.string(), z.json()), stateRevision: z.number().int().nonnegative() })).max(200) })
+  actors: z.array(actorSchema).max(100), props: z.array(z.strictObject({ id: idSchema, name: z.string().max(100), templateId: idSchema, position: pointSchema, anchors: z.record(idSchema, pointSchema).optional(), state: jsonObjectSchema, stateRevision: z.number().int().nonnegative(), stateSource: idSchema.optional() })).max(200) })
 const planSchema = z.strictObject({ title: z.string().max(200), claims: z.array(z.strictObject({ resource: z.string().max(200), units: z.number().int().positive() })).max(100),
   continuous: z.boolean().optional(), maxDurationMs: z.number().int().min(100).max(3600000).optional(),
   phases: z.array(z.strictObject({ title: z.string().max(200), durationMs: z.number().int().nonnegative().max(120000).optional(),
@@ -44,8 +42,7 @@ const planSchema = z.strictObject({ title: z.string().max(200), claims: z.array(
     poses: z.array(z.strictObject({ actorId: idSchema, posture: z.enum(['standing', 'seated']).optional(), facing: z.enum(['front', 'back', 'left', 'right']).optional(), lookAt: idSchema.optional(), expression: z.string().max(80).optional() })).max(24).optional(),
   })).min(1).max(100) })
 
-export type LegacyWorldMigration = (raw: unknown, defaults: World, template: (id: string) => import('./model.ts').Template, navigation: NavigationAdapter) => World
-export type SceneRuntimeOptions = { world: World; plugins: ScenePlugin[]; createNavigation: NavigationFactory; now?: () => number; persistence?: Persistence; runtimeId?: string; seatStepDuration?: SeatStepDuration; supportsPose?: PoseSupport; migrateLegacyWorld?: LegacyWorldMigration }
+export type SceneRuntimeOptions = { world: World; plugins: ScenePlugin[]; createNavigation: NavigationFactory; now?: () => number; persistence?: Persistence; runtimeId?: string; seatStepDuration?: SeatStepDuration; supportsPose?: PoseSupport }
 
 export class SceneRuntime {
   readonly runtimeId: string
@@ -56,6 +53,8 @@ export class SceneRuntime {
   private world: World
   private resources = new ResourceManager()
   private records = new Map<string, CommandRecord>()
+  private stateSources = new Map<string, string>()
+  private completedActivities = 0
   private activities = new Map<string, Activity>()
   private events: SceneEvent[] = []
   private listeners = new Set<() => void>()
@@ -72,14 +71,12 @@ export class SceneRuntime {
   private startedAt = new Map<string, number>()
   private phaseReady = new Set<string>()
   private settling = new Map<string, string[]>()
-  private migrateLegacyWorld?: LegacyWorldMigration
-
   constructor(options: SceneRuntimeOptions) {
-    this.migrateLegacyWorld = options.migrateLegacyWorld
     this.now = options.now ?? Date.now
     this.runtimeId = options.runtimeId ?? `runtime-${globalThis.crypto.randomUUID()}`
     this.world = worldSchema.parse(options.world)
     for (const plugin of options.plugins) this.plugins.register(plugin)
+    this.plugins.validateWorld(this.world)
     this.navigation = options.createNavigation({ template: id => this.plugins.template(id) })
     this.supportsPose = options.supportsPose ?? unrestrictedPoses
     this.movement = new MovementController(this.navigation, { template: id => this.plugins.template(id) }, options.seatStepDuration, this.supportsPose)
@@ -107,6 +104,8 @@ export class SceneRuntime {
   getRevision = () => this.revision
   get sceneId() { return this.world.sceneId }
   get isEditing() { return this.editing }
+  /** Successful finite activities in this runtime lifetime, independent of bounded history. */
+  get completedActivityCount() { return this.completedActivities }
   template(id: string) { return this.plugins.template(id) }
   templates() { return this.plugins.templates() }
   exportMap() { return exportMap(this.world) }
@@ -130,25 +129,32 @@ export class SceneRuntime {
     canRecoverLayout: Boolean(this.layoutRecovery && this.persistence?.replaceWithBackup) }) }
   describe() { return { ...protocolDescription(), sceneId: this.sceneId, furnitureGrid: { cellSize: FURNITURE_CELL_SIZE, origin: { x: 0, y: 0 } }, plugins: this.plugins.describe(), templates: this.templates(), entities: [...this.world.actors.map(a => ({ id: a.id, name: a.name, kind: 'actor' })), ...this.world.props.map(p => ({ id: p.id, name: p.name, kind: 'prop', templateId: p.templateId, anchors: { ...this.plugins.template(p.templateId).anchors, ...p.anchors } }))] } }
 
-  submit(value: unknown): CommandResult {
+  submit(value: unknown, context?: { stateSource?: string }): CommandResult {
     const parsed = commandSchema.safeParse(value)
     if (!parsed.success) return { commandId: typeof value === 'object' && value && 'commandId' in value ? String(value.commandId).slice(0, 100) : '', status: 'rejected', error: { code: 'INVALID_COMMAND', message: parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; ').slice(0, 500) } }
     const command = parsed.data
+    if (context?.stateSource !== undefined && (command.type !== 'object.state.set' || !idSchema.safeParse(context.stateSource).success)) return {
+      commandId: command.commandId, status: 'rejected', error: { code: 'INVALID_COMMAND', message: '本地状态来源仅适用于物品状态更新，且须使用有效 ID' },
+    }
     const previous = this.records.get(command.commandId)
     if (previous) return canonical(previous.command) === canonical(command) ? this.result(previous) : { commandId: command.commandId, status: 'rejected', error: { code: 'COMMAND_ID_CONFLICT', message: '同一个命令 ID 不能对应不同内容' } }
-    if (this.disposed || this.persistenceError) return { commandId: command.commandId, status: 'rejected', error: { code: this.disposed ? 'RUNTIME_DISPOSED' : 'PERSISTENCE_FAILED', message: this.persistenceError ?? '场景已关闭' } }
+    const control = command.type === 'command.cancel' || command.type === 'activity.stop'
+    if (this.disposed || this.persistenceError && !control) return { commandId: command.commandId, status: 'rejected', error: { code: this.disposed ? 'RUNTIME_DISPOSED' : 'PERSISTENCE_FAILED', message: this.persistenceError ?? '场景已关闭' } }
     this.prune()
-    if (this.records.size >= 512) return { commandId: command.commandId, status: 'rejected', error: { code: 'QUEUE_FULL', message: '命令记录已满' } }
+    // Keep two bounded slots available for immediate cancellation and stop commands.
+    if (this.records.size >= (control ? MAX_RECORDS : MAX_RECORDS - CONTROL_RECORD_RESERVE)) return { commandId: command.commandId, status: 'rejected', error: { code: 'QUEUE_FULL', message: '命令记录已满' } }
     const record: CommandRecord = { command, status: 'queued', acceptedAt: this.now() }
     this.records.set(command.commandId, record)
+    if (context?.stateSource) this.stateSources.set(command.commandId, context.stateSource)
     try {
       if (command.sceneId !== this.sceneId) throw new SceneFault('SCENE_MISMATCH', command.sceneId)
-      if ([...this.records.values()].filter(r => !terminal(r.status)).length > 128) throw new SceneFault('QUEUE_FULL', '等待队列已满')
+      if (!control && [...this.records.values()].filter(r => !terminal(r.status)).length > 128) throw new SceneFault('QUEUE_FULL', '等待队列已满')
       if (command.after?.some(id => id === command.commandId || !this.records.has(id))) throw new SceneFault('INVALID_DEPENDENCY', '依赖须引用先前已接受的命令')
-      if (this.editing && !['map.edit', 'layout.apply', 'actor.presentation.set', 'object.state.set', 'command.cancel', 'activity.stop'].includes(command.type)) throw new SceneFault('EDITING', '布局编辑期间不接受新活动')
+      if (control && command.after?.some(id => !terminal(this.records.get(id)!.status))) throw new SceneFault('INVALID_DEPENDENCY', '停止或取消命令不能等待未完成的依赖')
+      if (this.editing && !['map.edit', 'actor.presentation.set', 'object.state.set', 'command.cancel', 'activity.stop'].includes(command.type)) throw new SceneFault('EDITING', '布局编辑期间不接受新活动')
       if (command.type === 'activity.start') this.buildPlan(command)
       this.persist()
-      if (this.persistenceError) throw new SceneFault('PERSISTENCE_FAILED', this.persistenceError)
+      if (this.persistenceError && !control) throw new SceneFault('PERSISTENCE_FAILED', this.persistenceError)
       this.emit('command.status', { commandId: command.commandId, status: 'queued' })
       this.pump()
     } catch (error) { this.finish(record, 'rejected', sceneError(error)) }
@@ -245,6 +251,7 @@ export class SceneRuntime {
     const blockedResources = new Set<string>()
     try {
       for (const record of this.records.values()) {
+        if (this.disposed) break
         if (record.status !== 'queued') continue
         const command = record.command
         try {
@@ -283,6 +290,7 @@ export class SceneRuntime {
   }
 
   private advance(activity: Activity, dt: number) {
+    if (this.disposed || activity.status !== 'active') return
     const phase = activity.plan.phases[activity.phaseIndex]
     if (!phase) { this.endActivity(activity, 'completed'); return }
     if (!activity.phaseStarted) {
@@ -298,6 +306,7 @@ export class SceneRuntime {
       this.phaseReady.delete(activity.id)
       activity.phaseStarted = true; activity.phaseElapsedMs = 0
       this.emit('activity.phase', { activityId: activity.id, title: phase.title, participants: activity.participants })
+      if (this.disposed || activity.status !== 'active') return
     }
     const movingActors = activity.participants.map(id => this.actor(id)).filter(actor => activity.plan.claims.some(c => c.resource === `actor:${actor.id}:body`))
     for (const actor of movingActors) this.movement.advance(this.world, actor, dt)
@@ -339,10 +348,17 @@ export class SceneRuntime {
         if (!prop) throw new SceneFault('ENTITY_NOT_FOUND', command.entityId)
         if (prop.stateRevision !== command.expectedStateRevision) throw new SceneFault('REVISION_CONFLICT', '物品状态已变化')
         prop.state = this.plugins.validateState(prop.templateId, command.state); prop.stateRevision++
+        prop.stateSource = this.stateSources.get(command.commandId)
         break
       }
-      case 'map.edit': this.editMap(command.edit, command.commandId); break
-      case 'layout.apply': this.applyLayout(command); break
+      case 'map.edit': {
+        const changes = this.editMap(command.edit, command.commandId)
+        // Publish applied changes only after the command is terminal, even if a listener disposes us.
+        this.finish(record, 'completed')
+        if (changes.layoutRevision !== undefined) this.emit('layout.changed', { layoutRevision: changes.layoutRevision })
+        this.emit('editor.changed', changes.editor)
+        return
+      }
       case 'command.cancel': {
         const target = this.records.get(command.targetCommandId)
         if (!target || target === record) throw new SceneFault('COMMAND_NOT_FOUND', command.targetCommandId)
@@ -362,41 +378,13 @@ export class SceneRuntime {
     this.finish(record, 'completed')
   }
 
-  private applyLayout(command: Extract<SceneCommand, { type: 'layout.apply' }>) {
-    if (this.editor) throw new SceneFault('EDITING', '地图草稿打开期间，请通过 map.edit 修改布局')
-    if (this.settling.size || [...this.activities.values()].some(a => a.status === 'active') || [...this.records.values()].some(r => r.status === 'queued' && r.command.type === 'activity.start')) throw new SceneFault('BUSY', '请先等待人物结束座位交互，再编辑布局')
-    if (command.expectedLayoutRevision !== this.world.layoutRevision) throw new SceneFault('REVISION_CONFLICT', '布局已被其他操作更新')
-    if (command.placements.length !== this.world.props.length || new Set(command.placements.map(p => p.entityId)).size !== this.world.props.length) throw new SceneFault('INVALID_LAYOUT', '必须提交全部物品且不能重复')
-    const next = this.readWorld()
-    for (const placement of command.placements) {
-      const prop = next.props.find(p => p.id === placement.entityId)
-      if (!prop) throw new SceneFault('ENTITY_NOT_FOUND', placement.entityId)
-      prop.position = placement.position
-    }
-    this.navigation.validate(next)
-    next.layoutRevision++
-    for (const actor of next.actors) {
-      if (actor.homeId) restoreBoundActor(next, actor, id => this.template(id))
-      else if (!this.navigation.walkable(next, actor.position)) throw new SceneFault('ACTOR_BLOCKED', '新布局遮挡了未绑定工位的人物')
-      actor.motion = undefined; actor.step = undefined; actor.using = actor.homeId ? { propId: actor.homeId, interactionId: 'seat' } : undefined; actor.expression = undefined
-    }
-    this.world = next
-    this.emit('layout.changed', { layoutRevision: next.layoutRevision })
-  }
-
-  setEditing(editing: boolean) {
-    if (editing && this.persistenceError) throw new SceneFault('PERSISTENCE_FAILED', '请先恢复存档，再编辑布局')
-    if (editing && (this.settling.size || [...this.activities.values()].some(a => a.status === 'active') || [...this.records.values()].some(r => !terminal(r.status)))) throw new SceneFault('BUSY', '请先结束活动并等待座位交互完成')
-    if (!editing) this.editor = undefined
-    this.editing = editing; this.emit('editor.changed', { editing })
-  }
-
   private editMap(edit: MapEdit, commandId: string) {
+    let layoutRevision: number | undefined
     if (edit.action === 'begin') {
       if (this.editing) throw new SceneFault('EDITING', '已有地图草稿，请继续编辑或取消')
       if (edit.expectedLayoutRevision !== this.world.layoutRevision) throw new SceneFault('REVISION_CONFLICT', '布局版本已变化')
       if (this.settling.size || [...this.activities.values()].some(a => a.status === 'active') || [...this.records.values()].some(r => r.command.commandId !== commandId && !terminal(r.status))) throw new SceneFault('BUSY', '请先停止演示，等待所有人物结束当前活动后编辑')
-      this.editor = new MapDraft(this.world, `draft-${globalThis.crypto.randomUUID()}`, this.navigation, id => this.template(id))
+      this.editor = new MapDraft(this.world, `draft-${globalThis.crypto.randomUUID()}`, this.navigation, id => this.template(id), world => this.plugins.validateWorld(world))
       this.editing = true
     } else {
       const editor = this.editor
@@ -412,6 +400,7 @@ export class SceneRuntime {
         case 'commit': {
           if (editor.baseLayoutRevision !== this.world.layoutRevision) throw new SceneFault('REVISION_CONFLICT', '正式地图已变化，请重新创建草稿')
           const next = worldSchema.parse(editor.world(this.world))
+          this.plugins.validateWorld(next)
           validateFurnitureFootprints(next, id => this.template(id))
           this.navigation.validate(next)
           next.layoutRevision++
@@ -423,25 +412,26 @@ export class SceneRuntime {
           try { this.persistence?.save(checkpoint) }
           catch (error) { throw new SceneFault('PERSISTENCE_FAILED', `地图未应用，存档失败：${error instanceof Error ? error.message : String(error)}`) }
           this.world = next; this.defineResources(); this.editor = undefined; this.editing = false
-          this.emit('layout.changed', { layoutRevision: next.layoutRevision })
+          layoutRevision = next.layoutRevision
           break
         }
       }
     }
-    this.emit('editor.changed', { editing: this.editing, draftId: this.editor?.id, draftRevision: this.editor?.snapshot().revision })
+    return { layoutRevision, editor: { editing: this.editing, draftId: this.editor?.id, draftRevision: this.editor?.snapshot().revision } }
   }
   setPluginEnabled(id: string, enabled: boolean) {
     this.plugins.setEnabled(id, enabled, pluginId => [...this.activities.values()].some(a => a.pluginId === pluginId && a.status === 'active') || [...this.records.values()].some(r => r.status === 'queued' && r.command.type === 'activity.start' && this.plugins.capability(r.command.capability).pluginId === pluginId))
     this.emit('plugin.changed', { pluginId: id, enabled })
   }
 
-  private endActivity(activity: Activity, status: Activity['status'], error?: { code: string; message: string }) {
+  private endActivity(activity: Activity, status: Activity['status'], error?: CommandRecord['error']) {
     if (activity.status !== 'active') return
     if (status === 'completed') {
       try { this.commitCompletion(activity) }
       catch (reason) { status = 'failed'; error = sceneError(reason) }
     }
     activity.status = status; activity.error = error
+    if (status === 'completed') this.completedActivities++
     this.startedAt.delete(activity.id); this.phaseReady.delete(activity.id)
     const settling: string[] = []
     for (const id of activity.participants) {
@@ -477,7 +467,7 @@ export class SceneRuntime {
       if (!activity.plan.claims.some(claim => claim.resource.startsWith(`prop:${prop.id}:`))) throw new SceneFault('INVALID_PLAN', '完成效果缺少物品资源声明')
       if (prop.stateRevision !== change.expectedStateRevision || prop.stateRevision !== activity.completionRevisions?.[prop.id]) throw new SceneFault('REVISION_CONFLICT', '物品状态已变更，未提交完成效果')
       const state = this.plugins.validateState(prop.templateId, change.state)
-      z.record(z.string(), z.json()).parse(state)
+      jsonObjectSchema.parse(state)
       return { prop, state: structuredClone(state) }
     })
     if (prepared.length && this.persistence) {
@@ -485,7 +475,7 @@ export class SceneRuntime {
       const checkpoint = this.checkpoint()
       for (const { prop, state } of prepared) {
         const saved = checkpoint.world.props.find(item => item.id === prop.id)!
-        saved.state = state; saved.stateRevision++
+        saved.state = state; saved.stateRevision++; saved.stateSource = undefined
       }
       checkpoint.activeActivities = checkpoint.activeActivities.filter(item => item.id !== activity.id)
       checkpoint.records.find(item => item.command.commandId === activity.commandId)!.status = 'completed'
@@ -496,13 +486,14 @@ export class SceneRuntime {
       }
     }
     // Validate and persist every proposal before changing any live object.
-    for (const { prop, state } of prepared) { prop.state = state; prop.stateRevision++ }
+    for (const { prop, state } of prepared) { prop.state = state; prop.stateRevision++; prop.stateSource = undefined }
   }
 
   private actor(id: string) { const actor = this.world.actors.find(a => a.id === id); if (!actor) throw new SceneFault('ENTITY_NOT_FOUND', id); return actor }
   private finish(record: CommandRecord, status: CommandRecord['status'], error?: CommandRecord['error']) {
     if (terminal(record.status)) return
     record.status = status; record.error = error
+    this.stateSources.delete(record.command.commandId)
     this.persist()
     this.emit('command.status', { commandId: record.command.commandId, status, error, activityId: record.activityId })
   }
@@ -530,6 +521,7 @@ export class SceneRuntime {
     if (this.disposed || !this.layoutRecovery || !this.persistence?.replaceWithBackup) throw new SceneFault('RECOVERY_UNAVAILABLE', '当前存档无法自动恢复布局')
     const { original, checkpoint } = this.layoutRecovery
     const restored = this.prepareRestoredCheckpoint(checkpoint)
+    this.plugins.validateWorld(restored.world)
     this.navigation.validate(restored.world)
     // Commit storage first; a quota or backup failure must leave the runtime locked.
     this.persistence.replaceWithBackup(original, { ...restored, activeActivities: [] })
@@ -575,33 +567,31 @@ export class SceneRuntime {
   private restore() {
     if (!this.persistence) return
     try {
-      const raw = this.persistence.load()
-      if (raw == null) return
-      const legacy = z.object({ version: z.literal(1), world: z.unknown() }).passthrough().safeParse(raw)
-      if (legacy.success && !this.migrateLegacyWorld) throw new Error('当前场景未提供旧存档迁移器，原存档未覆盖')
-      const data = legacy.success ? { ...legacy.data, version: 2, world: this.migrateLegacyWorld!(legacy.data.world, this.world, id => this.template(id), this.navigation) } : raw
-      const envelope = z.object({ version: z.literal(2), world: worldSchema, records: z.array(z.object({ command: savedCommand, status: z.enum(['queued', 'running', 'completed', 'rejected', 'failed', 'cancelled', 'expired']), acceptedAt: z.number(), error: z.object({ code: z.string(), message: z.string() }).optional(), activityId: idSchema.optional() })).max(512), pluginVersions: z.record(z.string(), z.string()),
-        activeActivities: z.array(z.strictObject({ id: idSchema, commandId: idSchema, capability: idSchema, title: z.string().max(200) })).max(128).default([]) }).parse(data)
-      if (legacy.success) envelope.pluginVersions['scene.furniture'] = '1.0.0'
+      const original = this.persistence.load()
+      if (original == null) return
+      const envelope = z.object({ version: z.literal(2), world: worldSchema, records: z.array(z.object({ command: commandSchema, status: z.enum(['queued', 'running', 'completed', 'rejected', 'failed', 'cancelled', 'expired']), acceptedAt: z.number(), error: z.object({ code: z.string(), message: z.string(), reasonCode: z.string().optional(), details: jsonObjectSchema.optional() }).optional(), activityId: idSchema.optional() })).max(MAX_RECORDS), pluginVersions: z.record(z.string(), z.string()),
+        activeActivities: z.array(z.strictObject({ id: idSchema, commandId: idSchema, capability: idSchema, title: z.string().max(200) })).max(MAX_RECORDS) }).parse(original)
       if (envelope.world.sceneId !== this.sceneId || this.plugins.list().some(p => envelope.pluginVersions[p.id] !== p.version)) throw new Error('场景或插件版本不匹配')
-      // Older checkpoints lack static room geometry; retain their layout and content.
-      if (!envelope.world.walkableArea && this.world.walkableArea && envelope.world.width === this.world.width && envelope.world.height === this.world.height) {
-        envelope.world.walkableArea = structuredClone(this.world.walkableArea)
+      const records = new Map(envelope.records.map(record => [record.command.commandId, record]))
+      if (records.size !== envelope.records.length) throw new Error('存档包含重复命令 ID')
+      if (envelope.records.some(record => record.command.sceneId !== this.sceneId)) throw new Error('存档命令不属于当前场景')
+      if (new Set(envelope.activeActivities.map(activity => activity.id)).size !== envelope.activeActivities.length) throw new Error('存档包含重复活动 ID')
+      for (const activity of envelope.activeActivities) {
+        const record = records.get(activity.commandId)
+        if (!record || activity.id !== activity.commandId || record.activityId !== activity.id || record.command.type !== 'activity.start'
+          || record.command.capability !== activity.capability || !['running', 'completed'].includes(record.status)) throw new Error(`存档活动与命令记录不一致：${activity.id}`)
       }
+      this.plugins.validateWorld(envelope.world)
       try { this.navigation.validate(envelope.world) }
       catch (error) {
-        if (error instanceof SceneFault && ['OVERLAP', 'OUT_OF_BOUNDS', 'SEAT_BLOCKED', 'NO_ROUTE'].includes(error.code)) this.offerLayoutRecovery(envelope, raw)
+        if (error instanceof SceneFault && ['OVERLAP', 'OUT_OF_BOUNDS', 'SEAT_BLOCKED', 'NO_ROUTE'].includes(error.code)) this.offerLayoutRecovery(envelope, original)
         throw error
       }
       const prepared = this.prepareRestoredCheckpoint(envelope)
-      if (legacy.success) {
-        if (!this.persistence.replaceWithBackup) throw new Error('迁移需要支持备份的存储适配器，原存档未覆盖')
-        this.persistence.replaceWithBackup(raw, { ...prepared, activeActivities: [] })
-      }
       this.applyRestoredCheckpoint(prepared)
     } catch (error) {
       this.persistenceError = this.layoutRecovery && this.persistence.replaceWithBackup
-        ? '旧存档的桌椅布局不兼容，任务已暂停。可备份并恢复默认位置，人物、白板内容和任务记录会保留。'
+        ? '存档的桌椅布局不符合当前规则，任务已暂停。可备份并恢复默认位置，人物、白板内容和任务记录会保留。'
         : `原存档已保留，未覆盖：${error instanceof Error ? error.message : String(error)}`
     }
   }

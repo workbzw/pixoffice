@@ -1,47 +1,73 @@
-import type { OfficeRuntime } from '@pixoffice/runtime/OfficeRuntime'
-import type { DashboardSnapshot, DashboardTask } from './contract.ts'
+import type { SceneRuntime } from '@pixoffice/runtime/SceneRuntime'
+import { canonical } from '@pixoffice/protocol'
+import type { DashboardSnapshot } from '@pixoffice/protocol/dashboard'
+import { officeActorPrimaryTasks } from './actorTasks.ts'
+import { dashboardWhiteboardTaskBoard } from './whiteboard.ts'
+import { whiteboardTaskBoardSchema } from '@pixoffice/protocol/office-ui'
 
 type Presentation = { status: 'idle' | 'working' | 'thinking'; title: string }
-const priority = (task: DashboardTask) => task.status === 'running' ? 2 : task.status === 'blocked' ? 1 : 0
+const summarySource = 'pixoffice.demo-summary'
+const eventCacheLimit = 1024
 
 /** Business task state selects a scene presentation; scene motion never completes a business task. */
 export class DashboardSceneBridge {
-  private readonly runtime: OfficeRuntime
-  private presentations = new Map<string, Presentation>()
+  private readonly runtime: SceneRuntime
   private seenEvents = new Set<string>()
   private initialized = false
+  private readonly whiteboardMode: 'external' | 'demo-summary'
 
-  constructor(runtime: OfficeRuntime) { this.runtime = runtime }
+  constructor(runtime: SceneRuntime, options: { whiteboard?: 'external' | 'demo-summary' } = {}) {
+    this.runtime = runtime; this.whiteboardMode = options.whiteboard ?? 'external'
+  }
 
-  sync(data: DashboardSnapshot): string[] {
+  sync(data: DashboardSnapshot, options: { replayEvents?: boolean } = {}): string[] {
     const errors: string[] = []
+    const board = this.runtime.readWorld().props.find(prop => prop.templateId === 'office.wall-whiteboard')
+    if (board && data.whiteboard !== undefined) {
+      const state = data.whiteboard.title ? { title: '', taskBoard: whiteboardTaskBoardSchema.parse(data.whiteboard) } : { title: '', tasks: [] }
+      if (canonical(state) !== canonical(board.state)) {
+        const result = this.runtime.submit({ protocolVersion: '2.0', sceneId: this.runtime.sceneId, commandId: `board-${globalThis.crypto.randomUUID()}`,
+          type: 'object.state.set', entityId: board.id, expectedStateRevision: board.stateRevision, state })
+        if (result.error) errors.push(`协作白板：${result.error.message}`)
+      }
+    }
+    if (board && data.whiteboard === undefined && this.whiteboardMode === 'demo-summary' && (board.stateRevision === 0 || board.stateSource === summarySource)) {
+      const tasks = data.tasks.slice(0, 12).map(({ title, status, progress }) => ({ title, status, ...(progress === undefined ? {} : { progress }) }))
+      const state = { title: data.workspace.name, tasks, taskBoard: whiteboardTaskBoardSchema.parse(dashboardWhiteboardTaskBoard(data)) }
+      const same = canonical(state) === canonical(board.state)
+      if (!same || board.stateSource !== summarySource) {
+        const result = this.runtime.submit({ protocolVersion: '2.0', sceneId: this.runtime.sceneId, commandId: `board-${globalThis.crypto.randomUUID()}`,
+          type: 'object.state.set', entityId: board.id, expectedStateRevision: board.stateRevision, state }, { stateSource: summarySource })
+        if (result.error) errors.push(`协作白板：${result.error.message}`)
+      }
+    }
     const actors = new Map(this.runtime.readActors().map(actor => [actor.id, actor]))
-    for (const employee of data.employees) {
-      const actor = employee.sceneActorId && actors.get(employee.sceneActorId)
-      if (!actor) continue
-      const task = data.tasks.filter(item => item.assigneeId === employee.id).sort((a, b) => priority(b) - priority(a))[0]
-      const next: Presentation = task && priority(task) ? {
+    const tasks = officeActorPrimaryTasks(data)
+    for (const actor of actors.values()) {
+      const task = tasks.get(actor.id)
+      const next: Presentation = task && (task.status === 'running' || task.status === 'blocked') ? {
         status: task.status === 'running' ? 'working' : 'thinking', title: task.title,
       } : { status: 'idle', title: '' }
-      const previous = this.presentations.get(actor.id)
-      if ((!previous && next.status === 'idle') || (previous?.status === next.status && previous.title === next.title)) continue
+      if (actor.presentation.status === next.status && actor.presentation.title === next.title) continue
       const result = this.runtime.submit({
         protocolVersion: '2.0', sceneId: this.runtime.sceneId, commandId: `dashboard-${globalThis.crypto.randomUUID()}`,
         type: 'actor.presentation.set', actorId: actor.id, status: next.status, title: next.title,
         sourceRevision: actor.presentation.sourceRevision + 1,
       })
-      if (result.error) errors.push(`${employee.name}：${result.error.message}`)
-      else this.presentations.set(actor.id, next)
+      if (result.error) errors.push(`${actor.name}：${result.error.message}`)
     }
 
     for (const event of [...data.events].reverse()) {
-      if (this.seenEvents.has(event.id)) continue
+      if (event.kind !== 'task.assigned') continue
+      const seen = this.seenEvents.delete(event.id)
       this.seenEvents.add(event.id)
-      if (!this.initialized || event.kind !== 'task.assigned' || !event.employeeId || !event.fromEmployeeId) continue
+      if (this.seenEvents.size > eventCacheLimit) this.seenEvents.delete(this.seenEvents.values().next().value!)
+      if (seen || !this.initialized || options.replayEvents === false || !event.employeeId || !event.fromEmployeeId) continue
       const visitor = data.employees.find(item => item.id === event.fromEmployeeId)?.sceneActorId
       const host = data.employees.find(item => item.id === event.employeeId)?.sceneActorId
       if (!visitor || !host || visitor === host || !actors.has(visitor) || !actors.has(host)) continue
       const task = data.tasks.find(item => item.id === event.taskId)
+      if (!task || task.assigneeId !== event.employeeId || task.status === 'completed' || task.status === 'failed') continue
       const result = this.runtime.submit({
         protocolVersion: '2.0', sceneId: this.runtime.sceneId, commandId: `dashboard-${globalThis.crypto.randomUUID()}`,
         type: 'activity.start', capability: 'office.visit',

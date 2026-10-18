@@ -4,6 +4,12 @@ import { WORKSTATION_DESK_OFFSET_Y, WORKSTATION_SEAT_Y } from './workstationArtw
 export const CLASSIC_DESK = { width: 920, height: 582, targetWidth: 152 * 2 / 3, anchorY: .62, splitY: 310, topHeightScale: 1.5 }
 export const TRIAL_DESK = { left: 92, top: 138, width: 1352, apron: 378, bottom: 894, targetWidth: 100, apronY: 26 }
 export const TRIAL_COMPUTER = { left: 298, top: 112, width: 1004, height: 818, targetWidth: 52, bottomY: 21 }
+// Right-edge midpoint measured in the computer source artwork, excluding its keyboard and mouse.
+export const TRIAL_MONITOR_RIGHT = { x: 1233, y: 362 }
+
+export function trialComputerPlacement() {
+  return { topY: TRIAL_COMPUTER.bottomY - TRIAL_COMPUTER.height * TRIAL_COMPUTER.targetWidth / TRIAL_COMPUTER.width }
+}
 
 export function classicDeskPlacement(width = CLASSIC_DESK.width, height = CLASSIC_DESK.height) {
   const scale = CLASSIC_DESK.targetWidth / width

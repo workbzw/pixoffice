@@ -1,0 +1,17 @@
+.whiteboard-reader { width: min(780px, calc(100vw - 32px)); max-height: calc(100dvh - 64px); margin: auto; padding: 0; border: 1px solid #dedfdd; border-radius: 28px; background: #fff; color: #343b36; box-shadow: 0 24px 80px #17221a24; }
+.whiteboard-reader::backdrop { background: #1b241e66; backdrop-filter: blur(3px); }
+.whiteboard-reader > header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 22px; }
+.whiteboard-reader > header h2 { margin: 0; font-size: 15px; font-weight: 600; }
+.whiteboard-reader > header > div { display: flex; gap: 4px; }
+.whiteboard-reader > header button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #777e78; cursor: pointer; }
+.whiteboard-reader > header button:hover { background: #f2f3f1; }
+.whiteboard-reader button:focus-visible { outline: 2px solid #718575; outline-offset: 2px; }
+.whiteboard-reader-content { min-height: 120px; max-height: calc(100dvh - 150px); overflow: auto; padding: 8px 28px 28px; font: 16px/1.6 system-ui, sans-serif; overflow-wrap: anywhere; }
+.whiteboard-reader-content a { color: #3e6854; text-underline-offset: 3px; }
+.whiteboard-reader-content code { font-family: ui-monospace, monospace; }
+.whiteboard-reader-content .task-whiteboard { font-size: 20px; }
+.whiteboard-reader-content .task-whiteboard a:focus-visible { outline: 2px solid #4c84e8; outline-offset: 4px; }
+.whiteboard-reader-content [role=progressbar] > div { transition: width .25s linear; }
+@media (prefers-reduced-motion: reduce) { .whiteboard-reader-content [role=progressbar] > div { transition: none; } }
+@media (max-width: 620px) { .whiteboard-reader { max-height: calc(100dvh - 32px); } .whiteboard-reader > header { padding: 12px 16px; } .whiteboard-reader-content { padding: 6px 18px 20px; } }
+@media (max-width: 620px) { .whiteboard-reader-content .task-whiteboard { font-size: 17px; } .whiteboard-reader-content .task-whiteboard-columns { grid-template-columns: minmax(0, 1fr) !important; gap: 24px !important; } .whiteboard-reader-content .task-whiteboard > header > span { display: none; } }

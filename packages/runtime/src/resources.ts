@@ -1,5 +1,5 @@
 import type { Claim } from './model.ts'
-import { SceneFault } from './protocol.ts'
+import { SceneFault } from '@pixoffice/protocol'
 
 export class ResourceManager {
   private capacities = new Map<string, number>()

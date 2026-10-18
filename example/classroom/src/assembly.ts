@@ -8,6 +8,7 @@ import { classroomAppearanceIds } from '@pixoffice/assets-classroom'
 
 export function createClassroomAssembly(assetBaseUrl: string, signal: AbortSignal): SceneAssembly {
   return {
+    product: { id: 'pixoffice.classic', storageNamespace: 'classic', presentationProfileId: 'classroom-character-v1' },
     scene: classroomScenePack, pack: createClassroomPresentation(assetBaseUrl),
     animations: new AnimationRegistry<Container>().register(new FrameAdapter()),
     resolveAppearance: createAppearanceResolver(id => {

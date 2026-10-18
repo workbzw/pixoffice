@@ -1,6 +1,6 @@
 import type { Agent, AgentState } from '../types.ts'
 import type { SceneReadPort } from '@pixoffice/runtime'
-import type { SceneCommand } from '@pixoffice/runtime/protocol'
+import type { SceneCommand } from '@pixoffice/protocol'
 import type { World } from '@pixoffice/runtime/model'
 import { actorVisualPose, cellCenter, seatPixels } from '../pixi/projection.ts'
 
@@ -41,7 +41,7 @@ export function projectAgents(runtime: SceneReadPort, includeMissions = true, pr
       facing: facing === 'left' ? -1 : 1, viewFacing: facing, customAnimation: actor.expression,
       bubbleText: actor.speech?.text, currentTask: focused.get(actor.id) ?? actor.presentation.title,
       state: transition ? stepping && !transition.waiting ? 'walking' : 'idle' : actor.step || actor.motion && !actor.motion.waiting ? 'walking' : actor.expression || actor.speech ? 'talking' : actor.posture === 'seated' ? focused.has(actor.id) ? 'working' : actor.presentation.status : 'idle' }
-    // Only the legacy HTTP queue consumes this projection; the runtime has no missions.
+    // The office view facade projects runtime activities into its character model.
     const activity = snapshot?.activities.find(a => a.status === 'active' && a.capability === 'office.visit' && a.participants[0] === actor.id)
     if (activity && snapshot) {
       const record = snapshot.records.find(r => r.command.commandId === activity.commandId)

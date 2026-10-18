@@ -1,8 +1,9 @@
-import type { DashboardAction, DashboardSnapshot, OfficeDataSource } from './contract.ts'
-import { parseDashboardSnapshot } from './contract.ts'
+import type { DashboardAction, DashboardSnapshot, OfficeDataSource } from '@pixoffice/protocol/dashboard'
+import { parseDashboardSnapshot } from '@pixoffice/protocol/dashboard'
+import { notifySubscribers } from '../notifications.ts'
 
 const initialEmployees: DashboardSnapshot['employees'] = [
-  { id: 'marvis', sceneActorId: 'marvis', name: '王明', role: '负责人', online: true },
+  { id: 'office-lead', sceneActorId: 'office-lead', name: '王明', role: '负责人', online: true },
   { id: 'code-agent', sceneActorId: 'code-agent', name: '李研', role: '信息检索', online: true },
   { id: 'file-agent', sceneActorId: 'file-agent', name: '周理', role: '资料整理', online: true },
   { id: 'app-agent', sceneActorId: 'app-agent', name: '陈书', role: '文案撰写', online: true },
@@ -10,12 +11,18 @@ const initialEmployees: DashboardSnapshot['employees'] = [
   { id: 'data-agent', sceneActorId: 'data-agent', name: '赵审', role: '内容审核', online: true },
 ]
 
+export type ExampleOfficeSeed = {
+  workspace?: DashboardSnapshot['workspace']
+  roles?: Record<string, string>
+  tasks?: Array<Omit<DashboardSnapshot['tasks'][number], 'updatedAt'>>
+}
+
 export class ExampleOfficeDataSource implements OfficeDataSource {
   readonly kind = 'example'
   private listeners = new Set<() => void>()
   private snapshot: DashboardSnapshot
 
-  constructor(now = new Date()) {
+  constructor(now = new Date(), seed: ExampleOfficeSeed = {}) {
     const at = now.toISOString()
     this.snapshot = parseDashboardSnapshot({
       schemaVersion: '1.0', workspace: { id: 'office-1', name: '我的空间' },
@@ -33,6 +40,16 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
         { id: 'example-3', kind: 'note', employeeId: 'data-agent', taskId: 'compliance', summary: '等待补充来源材料', occurredAt: at },
       ],
     })
+    if (seed.workspace) this.snapshot.workspace = { ...seed.workspace }
+    if (seed.roles) this.snapshot.employees = this.snapshot.employees.map(employee => ({ ...employee, role: seed.roles![employee.id] ?? employee.role }))
+    if (seed.tasks) {
+      this.snapshot.tasks = seed.tasks.map(task => ({ ...task, updatedAt: at }))
+      this.snapshot.events = this.snapshot.tasks.filter(task => task.status === 'running').map(task => ({
+        id: `${this.snapshot.workspace.id}-${task.id}`, kind: 'task.started', taskId: task.id,
+        employeeId: task.assigneeId, summary: `正在执行${task.title}`, occurredAt: at,
+      }))
+    }
+    this.snapshot = parseDashboardSnapshot(this.snapshot)
   }
 
   async getSnapshot() { return structuredClone(this.snapshot) }
@@ -59,11 +76,11 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
     this.snapshot.events.unshift({
       id: globalThis.crypto.randomUUID(),
       kind: action.type === 'task.assign' ? 'task.assigned' : action.type === 'task.start' ? 'task.started' : action.type === 'task.block' ? 'task.blocked' : 'task.completed',
-      taskId: task.id, employeeId: task.assigneeId, fromEmployeeId: action.type === 'task.assign' ? 'marvis' : undefined,
+      taskId: task.id, employeeId: task.assigneeId, fromEmployeeId: action.type === 'task.assign' ? 'office-lead' : undefined,
       summary: action.type === 'task.assign' ? `任务已交给${employee!.name}` : action.type === 'task.start' ? '开始执行任务' : action.type === 'task.block' ? '任务遇到阻塞' : '任务已完成',
       occurredAt: task.updatedAt,
     })
     this.snapshot.events = this.snapshot.events.slice(0, 100)
-    for (const listener of this.listeners) listener()
+    notifySubscribers(this.listeners, 'ExampleOfficeDataSource')
   }
 }

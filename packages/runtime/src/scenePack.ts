@@ -1,7 +1,6 @@
 import { z } from 'zod'
 import type { World } from './model.ts'
 import type { ScenePlugin } from './plugins.ts'
-import type { LegacyWorldMigration } from './SceneRuntime.ts'
 import type { PoseSupport } from './actionContract.ts'
 
 export const scenePackManifestSchema = z.strictObject({
@@ -14,5 +13,4 @@ export interface ScenePack {
   readonly plugins: readonly ScenePlugin[]
   createWorld(sceneId?: string): World
   supportsPose?: PoseSupport
-  migrateLegacyWorld?: LegacyWorldMigration
 }

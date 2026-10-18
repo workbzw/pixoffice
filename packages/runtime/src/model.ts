@@ -1,9 +1,11 @@
-import type { CommandRecord } from './protocol.ts'
+import type { CommandRecord, SceneError } from '@pixoffice/protocol'
 import type { MapDraftSnapshot } from './map/MapDraft.ts'
+import { facingFromWorldDirection, worldDirectionToward } from '@pixoffice/protocol/spatial'
+import type { LegacyFacing, WorldPoint, WorldBox } from '@pixoffice/protocol/spatial'
 
-export type Point = { x: number; y: number }
-export type Facing = 'front' | 'back' | 'left' | 'right'
-export type Box = { left: number; top: number; right: number; bottom: number }
+export type Point = WorldPoint
+export type Facing = LegacyFacing
+export type Box = WorldBox
 export type CellStep = { from: Point; to: Point; elapsedMs: number; durationMs: number }
 export type FurnitureInteraction = {
   name: string; anchor: string; approaches: string[]; cells: Point[]
@@ -25,7 +27,7 @@ export type Actor = {
   using?: { propId: string; interactionId: string }
   seatTransition?: SeatTransition
 }
-export type Prop = { id: string; name: string; templateId: string; position: Point; anchors?: Record<string, Point>; state: Record<string, unknown>; stateRevision: number }
+export type Prop = { id: string; name: string; templateId: string; position: Point; anchors?: Record<string, Point>; state: Record<string, unknown>; stateRevision: number; stateSource?: string }
 export type Template = {
   id: string; name: string; view: string
   footprint: Box
@@ -33,6 +35,7 @@ export type Template = {
   interactions?: Record<string, FurnitureInteraction>
   anchors: Record<string, Point>; resources: Record<string, number>
   optionalAnchors?: string[]
+  initialState?: Record<string, unknown>
 }
 export type World = {
   sceneId: string; unit: 'cell'; width: number; height: number; gridSize: 1; layoutRevision: number
@@ -60,7 +63,7 @@ export type ActivityPlan = { title: string; claims: Claim[]; phases: Phase[]; co
 export type Activity = {
   id: string; commandId: string; pluginId: string; capability: string; participants: string[]
   plan: ActivityPlan; phaseIndex: number; phaseStarted: boolean; elapsedMs: number; phaseElapsedMs: number
-  status: 'active' | 'completed' | 'cancelled' | 'failed'; error?: { code: string; message: string }
+  status: 'active' | 'completed' | 'cancelled' | 'failed'; error?: SceneError
   completionRevisions?: Record<string, number>
 }
 export type SceneEvent = { eventId: string; sequence: number; sceneId: string; runtimeId: string; type: string; timestamp: number; data: Record<string, unknown> }
@@ -79,6 +82,5 @@ export interface Persistence {
 }
 
 export function facingToward(from: Point, to: Point): Facing {
-  const dx = to.x - from.x, dy = to.y - from.y
-  return Math.abs(dx) >= Math.abs(dy) ? dx < 0 ? 'left' : 'right' : dy < 0 ? 'back' : 'front'
+  return facingFromWorldDirection(worldDirectionToward(from, to))
 }

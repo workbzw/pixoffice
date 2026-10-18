@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronLeft, ChevronRight, Pause, Play } from 'lucide-react'
-import { loadCharacterRegistry } from '../scene/assets/loadApartmentAssets.ts'
-import { characterPreviewTimeline, type CharacterRegistry } from '../scene/characters/packSchema.ts'
+import { loadCharacterRegistry } from '@pixoffice/assets-office/frame/resources'
+import { characterPreviewTimeline, type CharacterRegistry } from '@pixoffice/assets-office/frame/packSchema'
 import { CharacterArtwork } from './CharacterArtwork.tsx'
 import { useCharacterPack } from './useCharacterPack.ts'
 import './CharacterPreview.css'
@@ -53,7 +53,7 @@ function PreviewFigure({ id, label, clipName, playing, manualStep, guides }: {
       {error ? <span role="alert">{error}</span> : pack ? <CharacterArtwork pack={pack} clip={clipName} elapsedMs={elapsedMs} guides={guides} label={label} /> : <span role="status">加载中…</span>}
     </div>
     <figcaption>{label}</figcaption>
-    {pack && <div className="character-preview-meta"><Check size={12} />已加载 · {safeIndex + 1}/{count} 帧{clip?.fallback ? ' · 使用备用动作' : ''}</div>}
+    {clip && <div className="character-preview-meta"><Check size={12} />已加载 · {safeIndex + 1}/{count} 帧</div>}
   </figure>
 }
 
@@ -64,7 +64,7 @@ export function CharacterPreview({ onClose }: { onClose: () => void }) {
   const [selected, setSelected] = useState('all')
   const [clipName, setClipName] = useState('walk.back')
   const [comparisonOnly, setComparisonOnly] = useState(false)
-  const [comparisonCharacter, setComparisonCharacter] = useState('marvis')
+  const [comparisonCharacter, setComparisonCharacter] = useState('office-lead')
   const [comparisonMode, setComparisonMode] = useState('proportions')
   const [playing, setPlaying] = useState(true)
   const [manualStep, setManualStep] = useState(0)

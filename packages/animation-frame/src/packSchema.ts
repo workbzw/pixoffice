@@ -67,11 +67,12 @@ export function validateFrameSource(value: { canvas: { width: number; height: nu
 export const CharacterSourceSchema = z.object({ ...common, clips: z.record(clipName, sourceClip) }).strict().superRefine(validateFrameSource)
 export const CharacterManifestSchema = z.object({
   ...common, revision: z.string().regex(/^[a-f0-9]{16}$/),
-  pages: z.array(size.extend({ image: atlasFile, group: z.enum(['startup', 'deferred']).optional() })).min(1).max(64),
+  pages: z.array(size.extend({ image: atlasFile, group: z.enum(['startup', 'deferred']) })).min(1).max(64),
   frames: z.record(relativeFile, z.object({ page: z.number().int().nonnegative(), rect, offset: point }).strict()),
   clips: z.record(clipName, packedClip),
 }).strip().superRefine((value, ctx) => {
   validateFrameSource(value, ctx)
+  if (!value.pages.some(page => page.group === 'startup')) ctx.addIssue({ code: 'custom', message: 'At least one startup atlas page is required' })
   for (const [name, frame] of Object.entries(value.frames)) {
     const page = value.pages[frame.page]
     if (!page || frame.rect.x + frame.rect.width > page.width || frame.rect.y + frame.rect.height > page.height ||
@@ -87,7 +88,7 @@ export const CharacterManifestSchema = z.object({
 export const CharacterRegistrySchema = z.object({
   schemaVersion: z.literal(1),
   characters: z.array(z.object({ id, label: z.string(), manifest: z.string().regex(/^[a-z][a-z0-9-]*\/manifest-[a-f0-9]{16}\.json$/), clips: z.array(clipName),
-    portrait: z.object({ image: atlasFile, canvas: size, referenceHeight: z.number().positive().max(2048) }).strict().optional(),
+    portrait: z.object({ image: atlasFile, canvas: size, referenceHeight: z.number().positive().max(2048) }).strict(),
   }).strict()),
 }).strict().superRefine((value, ctx) => {
   if (new Set(value.characters.map(entry => entry.id)).size !== value.characters.length) ctx.addIssue({ code: 'custom', message: 'Duplicate character IDs' })
@@ -100,14 +101,6 @@ export type CharacterRegistry = z.infer<typeof CharacterRegistrySchema>
 export function resolveCharacterClip(manifest: Pick<CharacterManifest, 'clips'>, requested: string) {
   let name = requested
   let clip = manifest.clips[name]
-  let fallback = false
-  if (!clip) {
-    const direction = requested.split('.').at(-1) ?? 'front'
-    // A missing run may walk; a missing seated pose must never become a fake sit.
-    name = requested.startsWith('run.') ? `walk.${direction}` : requested.startsWith('emote.') ? 'idle.front' : ''
-    clip = manifest.clips[name]
-    fallback = true
-  }
   let mirrorX = false
   const seen = new Set<string>()
   while (clip && 'alias' in clip) {
@@ -117,7 +110,7 @@ export function resolveCharacterClip(manifest: Pick<CharacterManifest, 'clips'>,
     name = clip.alias
     clip = manifest.clips[name]
   }
-  return clip && !('alias' in clip) ? { ...clip, name, requested, mirrorX, fallback } : undefined
+  return clip && !('alias' in clip) ? { ...clip, name, requested, mirrorX } : undefined
 }
 
 /** Include every body and mouth dependency before a pose can render. */

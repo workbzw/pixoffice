@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { Texture, TextureSource, Rectangle } from 'pixi.js'
 import { buildCharacter } from '../../scripts/characters/build.mjs'
 
-export async function characterPackFixture(id = 'marvis') {
+export async function characterPackFixture(id = 'office-lead') {
   const registry = JSON.parse(await readFile(new URL('../../public/characters/registry.json', import.meta.url), 'utf8'))
   const entry = registry.characters.find(entry => entry.id === id)
   const manifest = JSON.parse(await readFile(new URL(`../../public/characters/${entry.manifest}`, import.meta.url), 'utf8'))

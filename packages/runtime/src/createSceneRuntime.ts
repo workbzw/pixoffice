@@ -14,7 +14,6 @@ export function createSceneRuntime(pack: ScenePack, options: CreateSceneRuntimeO
   return new SceneRuntime({
     ...options, world: pack.createWorld(options.sceneId), plugins: [...pack.plugins],
     supportsPose: options.supportsPose ?? pack.supportsPose,
-    migrateLegacyWorld: options.migrateLegacyWorld ?? pack.migrateLegacyWorld,
     createNavigation: options.createNavigation ?? (templates => new GridNavigation(templates)),
   })
 }

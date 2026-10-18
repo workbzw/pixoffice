@@ -1,0 +1,17 @@
+{
+  "name": "@pixoffice/protocol", "version": "0.1.0", "type": "module", "license": "MIT",
+  "files": ["dist", "LICENSE", "README.md"],
+  "exports": {
+    ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
+    "./schema": { "types": "./dist/schema.d.ts", "import": "./dist/schema.js" },
+    "./map": { "types": "./dist/map.d.ts", "import": "./dist/map.js" },
+    "./spatial": { "types": "./dist/spatial.d.ts", "import": "./dist/spatial.js" },
+    "./dashboard": { "types": "./dist/dashboard.d.ts", "import": "./dist/dashboard.js" },
+    "./chat": { "types": "./dist/chat.d.ts", "import": "./dist/chat.js" },
+    "./relay": { "types": "./dist/relay.d.ts", "import": "./dist/relay.js" },
+    "./office-integration": { "types": "./dist/office-integration.d.ts", "import": "./dist/office-integration.js" },
+    "./office-ui": { "types": "./dist/office-ui.d.ts", "import": "./dist/office-ui.js" }
+  },
+  "scripts": { "build": "tsc -p tsconfig.json" },
+  "dependencies": { "zod": "^4.6.5" }
+}

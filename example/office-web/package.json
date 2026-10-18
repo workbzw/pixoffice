@@ -8,6 +8,7 @@
     "build": "vite build"
   },
   "dependencies": {
+    "@pixoffice/protocol": "0.1.0",
     "@pixoffice/contracts": "0.1.0",
     "@pixoffice/runtime": "0.1.0",
     "@pixoffice/renderer-pixi": "0.1.0",

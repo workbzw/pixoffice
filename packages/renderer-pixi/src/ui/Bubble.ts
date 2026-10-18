@@ -2,11 +2,13 @@ import { Container, Graphics, Text } from 'pixi.js'
 
 const BUBBLE_STYLE = {
   fontFamily: 'system-ui, -apple-system, sans-serif',
-  fontSize: 11,
-  fill: 0x333333,
+  fontSize: 16,
+  fontWeight: '600',
+  fill: 0x263c36,
   wordWrap: true,
-  wordWrapWidth: 140,
-  lineHeight: 15,
+  wordWrapWidth: 180,
+  breakWords: true,
+  lineHeight: 22,
 } as const
 
 export class Bubble extends Container {
@@ -17,6 +19,7 @@ export class Bubble extends Container {
   constructor() {
     super()
     this.bg = new Graphics()
+    this.bg.alpha = 0.5
     this.messageText = new Text({ text: '', style: BUBBLE_STYLE })
     this.messageText.anchor.set(0.5, 0.5)
     this.addChild(this.bg, this.messageText)
@@ -58,14 +61,14 @@ export class Bubble extends Container {
 
     this.bg.clear()
     this.bg.roundRect(-w / 2, bodyTop, w, h, r)
-    this.bg.fill({ color: 0xffffff, alpha: 0.96 })
+    this.bg.fill({ color: 0xffffff })
     this.bg.stroke({ color: 0xe0e0e0, width: 1 })
 
     // tail
     this.bg.moveTo(-6, -14)
     this.bg.lineTo(0, -4)
     this.bg.lineTo(6, -14)
-    this.bg.fill({ color: 0xffffff, alpha: 0.96 })
+    this.bg.fill({ color: 0xffffff })
 
     // 背景在负 Y，文字中心需对齐圆角框中部（原点在尾巴处会漂到显示器上）
     this.messageText.position.set(0, bodyTop + h / 2)

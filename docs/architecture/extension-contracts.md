@@ -6,7 +6,7 @@
 
 一个场景分成两个独立入口：
 
-- `ScenePack`：清单、插件、初始世界、姿态能力检查，以及可选旧存档迁移。可在无 DOM/Pixi 的环境运行。
+- `ScenePack`：清单、插件、初始世界及姿态能力检查。可在无 DOM/Pixi 的环境运行，不包含旧存档迁移接口。
 - `ScenePresentationPack`：背景、物品资源、视图注册、格到像素投影、运行时状态到人物表现描述。
 
 场景清单当前为 `{ id, version, apiVersion: 1 }`，不是远程插件安装协议。模板、交互参数、物品状态沿用已有 `ScenePlugin` 和 Zod Schema。
@@ -139,7 +139,7 @@ const scene = new SceneView({
 // 页面退出时 scene.destroy(); runtime.dispose()
 ```
 
-生产页面通过 `application/OfficeScene` 门面额外接回原来的演示、办公数据和 HTTP/iframe 桥接。新场景不需要继承办公室门面。
+生产页面通过 `application/OfficeScene` 门面额外接入演示、办公数据和场景消息。新场景不需要继承办公室门面。
 
 增加骨骼实现时，只在应用注册新适配器，并让对应外观描述的 adapterId 指向它。Registry 可以同时存在多个适配器；真实帧/骨骼混合尚未验证。
 

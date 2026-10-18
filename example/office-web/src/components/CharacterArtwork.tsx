@@ -1,9 +1,8 @@
-import type { CharacterPack } from '../scene/assets/loadApartmentAssets.ts'
+import type { CharacterPack } from '@pixoffice/assets-office/frame/resources'
 import { useEffect, useState, type CSSProperties } from 'react'
-import { sampleCharacterLayers, type CharacterManifest } from '../scene/characters/packSchema.ts'
-import { useCharacterPack } from './useCharacterPack.ts'
-import { characterResourceUrl, loadCharacterRegistry } from '../scene/assets/loadApartmentAssets.ts'
-import type { CharacterRegistry } from '../scene/characters/packSchema.ts'
+import { sampleCharacterLayers, type CharacterManifest } from '@pixoffice/assets-office/frame/packSchema'
+import { characterResourceUrl, loadCharacterRegistry } from '@pixoffice/assets-office/frame/resources'
+import type { CharacterRegistry } from '@pixoffice/assets-office/frame/packSchema'
 
 export function CharacterArtwork({ pack, clip, elapsedMs = 0, height = 160, guides = false, label = '' }: {
   pack: CharacterPack; clip: string; elapsedMs?: number; height?: number; guides?: boolean; label?: string
@@ -39,23 +38,19 @@ export function CharacterArtwork({ pack, clip, elapsedMs = 0, height = 160, guid
   </span>
 }
 
-export function CharacterAvatar({ id }: { id: string }) {
+export function CharacterAvatar({ appearanceId }: { appearanceId?: string }) {
   const [entry, setEntry] = useState<CharacterRegistry['characters'][number]>()
   useEffect(() => {
     let active = true
+    if (!appearanceId) return
     void loadCharacterRegistry().then(registry => {
-      if (active) setEntry(registry.characters.find(character => character.id === id))
+      if (active) setEntry(registry.characters.find(character => character.id === appearanceId))
     }).catch(() => { /* The scene reports resource failures; avatars remain empty. */ })
     return () => { active = false }
-  }, [id])
-  const portrait = entry?.id === id ? entry.portrait : undefined
+  }, [appearanceId])
+  const portrait = entry?.id === appearanceId ? entry?.portrait : undefined
   return <span className="runtime-avatar">{portrait ? <img alt={entry!.label} draggable={false} decoding="async"
-    src={characterResourceUrl(`${id}/${portrait.image}`)}
+    src={characterResourceUrl(`${appearanceId}/${portrait.image}`)}
     style={{ width: portrait.canvas.width * 32 / portrait.referenceHeight, height: portrait.canvas.height * 32 / portrait.referenceHeight }} />
-    : entry?.id === id && <LegacyCharacterAvatar id={id} />}</span>
-}
-
-function LegacyCharacterAvatar({ id }: { id: string }) {
-  const { pack } = useCharacterPack(id)
-  return pack && <CharacterArtwork pack={pack} clip={pack.manifest.portrait} height={32} label={pack.manifest.label} />
+    : null}</span>
 }

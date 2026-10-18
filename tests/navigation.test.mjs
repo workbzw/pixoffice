@@ -7,7 +7,7 @@ let server, GridNavigation, createOfficeRuntime, compactPath
 before(async () => {
   server = await createTestServer()
   ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts'))
   ;({ compactPath } = await server.ssrLoadModule('/packages/runtime/src/orthogonalPath.ts'))
 })
 after(() => server?.close())

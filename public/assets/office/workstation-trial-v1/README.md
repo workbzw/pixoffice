@@ -7,7 +7,7 @@ office assets remain unchanged. These three PNGs preserve the generated alpha.
 - `chair.png`: compact gray low-back chair, rear view.
 - `computer.png`: separate monitor, keyboard and mouse.
 
-Only the workstation bound to `marvis` uses this trial. The chair button in the
+Only the workstation bound to `office-lead` uses this trial. The chair button in the
 scene toolbar switches back to the original artwork immediately. This is a
 renderer-only preview; it does not modify saved maps, grid geometry or movement.
 

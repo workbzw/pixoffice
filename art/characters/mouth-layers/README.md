@@ -2,7 +2,7 @@
 
 李研（code-agent）、周理（file-agent）、陈书（app-agent）、刘市（review-agent）、赵审（data-agent）沿用王明的局部修补方式。每个子目录的 `mouthless-faces.png` 由内置 ImageGen 编辑，仅用于提取嘴部皮肤补片；不替换整张脸或身体。原始动作图片保留。
 
-最终运行素材在 `art/characters/packs/<id>/body/` 与 `mouth/`；挂点写入各自的 `character.json`。统一导入逻辑位于 `scripts/characters/mouth-layer-tools.mjs`，五人的裁切、补片范围、挂点位于 `scripts/characters/create-office-mouth-layers.mjs`。
+最终运行素材在 `art/characters/packs/<id>/body/` 与 `mouth/`；挂点写入各自的 `character.json`。五人的裁切、补片范围和挂点保存在本目录 `registration.mjs`，仅用于来源记录和像素回归检查。旧的直接导入器已删除。
 
 ## 编辑输入
 
@@ -24,10 +24,7 @@
 
 ## 导入与约束
 
-```bash
-node scripts/characters/create-office-mouth-layers.mjs
-npm run characters:build
-```
+后续修改应准备独立候选包，按 [人物素材准入流程](../../../docs/character-admission.md) 审核和发布，不能直接覆盖正式包。
 
 只融合已标注嘴部范围内的 RGB，alpha 及范围外所有像素保持原值。闭嘴轮廓提取自各自原图；开口复用 `art/characters/speech-mouths/mouths.png` 的生成口型。坐着转头使用单独挂点与 0.85 倍口型，左侧显式镜像右侧。
 

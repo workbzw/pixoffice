@@ -4,18 +4,17 @@ import { createTestServer } from './helpers/vite.mjs'
 import { characterPackFixture } from './helpers/characterPack.mjs'
 import { Assets, Texture, TextureSource } from 'pixi.js'
 
-let server, animation, schema, surfaceModule, furniture, ApartmentCharacter, DeskEntity
+let server, animation, schema, surfaceModule, furniture, DeskEntity
 before(async () => {
   server = await createTestServer()
-  animation = await server.ssrLoadModule('/example/office-web/src/scene/characters/workAnimation.ts')
-  schema = await server.ssrLoadModule('/example/office-web/src/scene/characters/packSchema.ts')
-  surfaceModule = await server.ssrLoadModule('/example/office-web/src/scene/characters/workSurface.ts')
-  furniture = await server.ssrLoadModule('/example/office-web/src/scene/layout/workstationSurface.ts')
-  ;({ ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts'))
-  ;({ DeskEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/DeskEntity.ts'))
+  animation = await server.ssrLoadModule('@pixoffice/assets-office/frame/workAnimation')
+  schema = await server.ssrLoadModule('@pixoffice/assets-office/frame/packSchema')
+  surfaceModule = await server.ssrLoadModule('@pixoffice/contracts/contactSurface')
+  furniture = await server.ssrLoadModule('@pixoffice/scene-office/pixi/workstationSurface')
+  ;({ DeskEntity } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/views/DeskEntity'))
 })
 after(() => server?.close())
-const ids = ['marvis', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']
+const ids = ['office-lead', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']
 const near = (a, b) => assert(Math.abs(a - b) < 1e-7, `${a} != ${b}`)
 const pointNear = (a, b) => { near(a.x, b.x); near(a.y, b.y) }
 const transform = (part, p) => {
@@ -59,41 +58,9 @@ for (const id of ids) test(`${id}: both workstations preserve joints, reach and 
   }
 })
 
-test('legacy rig packs still use preview transforms and reject unreachable surfaces', async t => {
-  const pack = await characterPackFixture('code-agent'), character = new ApartmentCharacter('code-agent')
-  const manifest = { ...pack.manifest, clips: { ...pack.manifest.clips } }
-  delete manifest.clips['work.quiet-back']
-  character.pack = { ...pack, manifest }; t.after(() => { character.destroy(); pack.dispose() })
-  character.setAtDesk(true); character.setViewFacing('back'); character.playState('working')
-  assert.equal(character.sprite.texture, pack.textures.get(schema.sampleCharacterClip(manifest, 'sit.back').key))
-  const local = surfaceModule.transformWorkSurface(manifest.work.previewSurface, .3, -128 * .3, -344 * .3)
-  character.setWorkSurface(local); character.update(6.7)
-  const sampled = schema.sampleCharacterLayers(manifest, 'work.quiet-back', 6700)
-  for (const [i, part] of sampled.work.parts.entries()) {
-    const sprite = character.workSprites[i]
-    assert(sprite.visible); assert.equal(sprite.texture, pack.textures.get(part.key))
-    near(sprite.x, (part.position.x - 128) * .3); near(sprite.y, (part.position.y - 344) * .3)
-    near(sprite.rotation, part.rotation); near(Math.abs(sprite.scale.x), .3); near(sprite.scale.y, .3)
-  }
-  for (const state of ['walking', 'idle']) {
-    character.playState(state); character.update(0)
-    assert(character.workSprites.every(sprite => !sprite.visible))
-  }
-  character.playState('working'); character.setViewFacing('right'); character.update(0)
-  assert(character.workSprites.every(sprite => !sprite.visible))
-  character.setViewFacing('back'); character.setSeatTransition({ stage: 'rising', seatedAmount: .5 }); character.update(0)
-  assert(character.workSprites.every(sprite => !sprite.visible))
-  character.setSeatTransition(undefined)
-  character.setWorkSurface(surfaceModule.transformWorkSurface(local, 1, 0, -500)); character.update(1)
-  assert(character.workSprites.every(sprite => !sprite.visible))
-  assert.equal(character.sprite.texture, pack.textures.get(schema.sampleCharacterClip(manifest, 'sit.back').key))
-  character.setWorkSurface(local); character.update(0)
-  assert(character.workSprites.every(sprite => sprite.visible))
-})
-
 test('furniture landmarks translate with the desk and use the mounted artwork, not the requested unavailable artwork', async t => {
-  const { loadOfficeAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadOfficeAssets.ts')
-  const { loadWorkstationTrialAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadWorkstationTrialAssets.ts')
+  const { loadOfficeAssets } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/assets/loadOfficeAssets')
+  const { loadWorkstationTrialAssets } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/assets/loadWorkstationTrialAssets')
   const make = (width, height) => new Texture({ source: new TextureSource({ width, height }) })
   const textures = { 'office-background': make(1402, 1122), 'office-desk': make(920, 582), 'office-chair': make(474, 492),
     'office-workstation-trial-v1-desk': make(1536, 1024), 'office-workstation-trial-v1-chair': make(1214, 1295), 'office-workstation-trial-v1-computer': make(1536, 1024) }
@@ -130,4 +97,14 @@ test('work schema rejects dangling clips, zero-length parts and invalid contact 
   const clip = schema.characterPreviewTimeline(pack.manifest, 'work.computer-back')
   assert.equal(clip.frames.reduce((sum, frame) => sum + frame.durationMs, 0), animation.WORK_CYCLE_MS)
   assert(clip.loop)
+})
+
+test('missing work clips and unreachable work surfaces never substitute other poses', async t => {
+  const pack = await characterPackFixture(); t.after(() => pack.dispose())
+  const manifest = structuredClone(pack.manifest)
+  delete manifest.clips['work.quiet-back']
+  assert.equal(schema.sampleCharacterLayers(manifest, 'work.quiet-back'), undefined)
+  assert.equal(schema.characterPreviewTimeline(manifest, 'work.quiet-back'), undefined)
+  const surface = { ...manifest.work.previewSurface, keyboardLeft: { x: 10000, y: 10000 } }
+  assert.equal(schema.sampleCharacterLayers(manifest, 'work.computer-back', 0, undefined, undefined, surface), undefined)
 })

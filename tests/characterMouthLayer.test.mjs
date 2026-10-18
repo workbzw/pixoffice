@@ -2,28 +2,24 @@ import assert from 'node:assert/strict'
 import { before, after, test } from 'node:test'
 import { readFile } from 'node:fs/promises'
 import sharp from 'sharp'
-import { mouthRegistration } from '../scripts/characters/create-marvis-mouth-layer.mjs'
-import { officeMouthRegistrations } from '../scripts/characters/create-office-mouth-layers.mjs'
-import { CharacterSourceSchema, CharacterManifestSchema, sampleCharacterLayers, sampleCharacterClip, characterPreviewTimeline } from '../example/office-web/src/scene/characters/packSchema.ts'
+import { mouthRegistration } from '../art/characters/office-lead-mouth-layer/registration.mjs'
+import { officeMouthRegistrations } from '../art/characters/mouth-layers/registration.mjs'
+import { CharacterSourceSchema, CharacterManifestSchema, sampleCharacterLayers, sampleCharacterClip, characterPreviewTimeline } from '@pixoffice/assets-office/frame/packSchema'
 import { characterPackFixture, legacyCharacterPackFixture } from './helpers/characterPack.mjs'
 import { createTestServer } from './helpers/vite.mjs'
+import { frameVisualFixture } from './helpers/frameVisual.mjs'
 
-let server, ApartmentCharacter
+let server
 before(async () => {
   server = await createTestServer()
-  ;({ ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts'))
 })
 after(() => server?.close())
 
 async function figure(t, id) {
-  const pack = await characterPackFixture(id)
-  const character = new ApartmentCharacter(id)
-  character.pack = pack
-  t.after(() => { character.destroy(); pack.dispose() })
-  return { character, pack, texture: (name, time = 0) => pack.textures.get(sampleCharacterClip(pack.manifest, name, time).key) }
+  return frameVisualFixture(t, server, id)
 }
 
-for (const [id, registrations] of Object.entries({ marvis: mouthRegistration, ...officeMouthRegistrations })) {
+for (const [id, registrations] of Object.entries({ 'office-lead': mouthRegistration, ...officeMouthRegistrations })) {
 test(`${id}: mouthless bodies preserve the original pose, canvas, alpha and every pixel outside the mouth`, async () => {
   const root = new URL(`../art/characters/packs/${id}/`, import.meta.url)
   for (const { file, patch: [x, y, width, height] } of registrations) {
@@ -43,34 +39,28 @@ test(`${id}: mouthless bodies preserve the original pose, canvas, alpha and ever
 })
 
 test(`${id}: speech animates a second sprite without swapping or moving the body`, async t => {
-  const { character: c, pack, texture } = await figure(t, id)
-  c.setViewFacing('front'); c.playState('idle'); c.update(0)
+  const model = await figure(t, id), { pack, texture } = model
+  const c = model.sample()
   const body = c.sprite.texture
   assert(c.mouthSprite.visible)
   assert.equal(c.mouthSprite.texture, texture('mouth.front-closed'))
-  c.setSpeechText('Here is the task.')
+  model.sample({ speechMs: 0 })
   assert.equal(c.sprite.texture, body)
   assert.equal(c.mouthSprite.texture, texture('mouth.front-speaking'))
-  c.update(.12)
+  model.sample({ elapsedMs: 120, speechMs: 120 })
   assert.equal(c.sprite.texture, body)
   assert.equal(c.mouthSprite.texture, texture('mouth.front-speaking', 120))
-  c.setSpeechText('Here is the task.'); c.update(0)
-  assert.equal(c.speechElapsed, 120)
-  c.setSpeechText('New sentence.')
-  assert.equal(c.speechElapsed, 0)
-  c.setSpeechText(' ')
+  model.sample({ elapsedMs: 120 })
   assert.equal(c.sprite.texture, body)
   assert.equal(c.mouthSprite.texture, texture('mouth.front-closed'))
   assert.equal(c.sprite.scale.y, pack.manifest.displayHeight / pack.manifest.referenceHeight)
 })
 
 test(`${id}: walking keeps the mouth closed and follows per-frame anchors and mirrored directions`, async t => {
-  const { character: c, pack, texture } = await figure(t, id)
-  c.setSpeechText('Stale speech must not open a walking mouth.')
+  const model = await figure(t, id), { pack, texture } = model
   for (const direction of ['front', 'right', 'left']) {
-    c.setViewFacing(direction); c.playState('idle'); c.playState('walking')
     for (let i = 0; i < 4; i++) {
-      c.update(i === 0 ? 0 : .125)
+      const c = model.sample({ actionId: 'core.walk', view: direction, elapsedMs: i * 125 })
       const { body, mouth } = sampleCharacterLayers(pack.manifest, `walk.${direction}`, i * 125)
       assert(c.mouthSprite.visible)
       assert.equal(c.sprite.texture, texture(`walk.${direction}`, i * 125))
@@ -82,29 +72,27 @@ test(`${id}: walking keeps the mouth closed and follows per-frame anchors and mi
       assert.equal(Math.sign(c.mouthSprite.scale.x), mirror)
     }
   }
-  c.setViewFacing('back'); c.update(0)
-  assert.equal(c.mouthSprite.visible, false)
-  c.playState('talking', 'emotes/surprised'); c.update(0)
-  assert.equal(c.mouthSprite.visible, false, 'authored expression must not get a second mouth')
+  assert.equal(model.sample({ actionId: 'core.walk', view: 'back' }).mouthSprite.visible, false)
+  assert.equal(model.sample({ actionId: 'core.emote.surprised' }).mouthSprite.visible, false, 'authored expression must not get a second mouth')
 })
 
 test(`${id}: seated speech uses its own anchor and scale; transitions hide the side mouth without changing posture`, async t => {
-  const { character: c, pack, texture } = await figure(t, id)
-  c.setAtDesk(true); c.setViewFacing('right'); c.playState('idle'); c.update(0)
+  const model = await figure(t, id), { pack, texture } = model
+  const c = model.sample({ poseId: 'seated', view: 'right' })
   const body = c.sprite.texture
   const { mouth } = sampleCharacterLayers(pack.manifest, 'talk.seated-right')
   const scale = pack.manifest.displayHeight / pack.manifest.referenceHeight
   assert.equal(c.mouthSprite.y, (mouth.attachment.y - pack.manifest.pivot.y) * scale)
   assert.equal(c.mouthSprite.scale.y, scale * mouth.attachment.scale)
-  c.setSpeechText('Received.'); c.update(.12)
+  model.sample({ poseId: 'seated', view: 'right', speechMs: 120 })
   assert.equal(c.sprite.texture, body)
   assert.equal(c.mouthSprite.texture, texture('mouth.right-speaking', 120))
-  c.setViewFacing('left'); c.update(0)
+  model.sample({ poseId: 'seated', view: 'left', speechMs: 120 })
   assert(c.mouthSprite.scale.x < 0)
-  c.setSeatTransition({ stage: 'rising', seatedAmount: .75, progress: .25 }); c.update(0)
+  model.sample({ actionId: 'core.stand-up', poseId: 'transition', view: 'back', progress: .25 })
   assert.equal(c.sprite.texture, texture('pose.lean'))
   assert.equal(c.mouthSprite.visible, false)
-  c.setSeatTransition(undefined); c.setSpeechText(undefined); c.setViewFacing('back'); c.update(0)
+  model.sample({ poseId: 'seated', view: 'back' })
   assert.equal(c.mouthSprite.visible, false)
 })
 
@@ -153,29 +141,26 @@ test('legacy packs keep full-frame speech without a mouth layer', async t => {
 })
 
 test('scene gait is distance-driven, freezes at obstacles and retains phase through turns', async t => {
-  const { character: c, pack, texture } = await figure(t, 'marvis')
-  const cycle = pack.manifest.displayHeight * .72
-  c.setViewFacing('front'); c.playState('walking')
-  c.update(1, 0)
+  const model = await figure(t, 'office-lead'), { texture } = model
+  const c = model.sample({ actionId: 'core.walk', travelledDu: 0, elapsedMs: 1000 })
   assert.equal(c.sprite.texture, texture('walk.front', 0), 'blocked movement must not pedal')
-  c.update(.001, cycle * .3)
+  model.sample({ actionId: 'core.walk', travelledDu: .72 * .3 })
   assert.equal(c.sprite.texture, texture('walk.front', 240))
-  c.setViewFacing('back'); c.update(.5, 0)
+  model.sample({ actionId: 'core.walk', view: 'back', travelledDu: .72 * .3 })
   assert.equal(c.sprite.texture, texture('walk.back', 240), 'a turn must not restart the stride')
-  c.update(.001, cycle * .5)
+  model.sample({ actionId: 'core.walk', view: 'back', travelledDu: .72 * .8 })
   assert.equal(c.sprite.texture, texture('walk.back', 640))
-  c.playState('idle'); c.playState('walking'); c.update(0, 0)
+  model.sample({ actionId: 'core.walk', view: 'back', travelledDu: 0 })
   assert.equal(c.sprite.texture, texture('walk.back', 0), 'a new walk starts a fresh cycle')
 })
 
 test('scene stride phase is independent of frame rate', async t => {
-  const fixtures = [await figure(t, 'marvis'), await figure(t, 'marvis')]
+  const fixtures = [await figure(t, 'office-lead'), await figure(t, 'office-lead')]
   for (const [i, fps] of [30, 120].entries()) {
-    const { character: c, pack, texture } = fixtures[i]
-    c.setViewFacing('front'); c.playState('walking')
-    const distance = pack.manifest.displayHeight * .72 * 1.6
-    for (let frame = 0; frame < fps; frame++) c.update(1 / fps, distance / fps)
-    assert.equal(c.sprite.texture, texture('walk.front', 480))
+    const model = fixtures[i], actor = { id: 'one', displayHeight: 84, position: { x: 0, y: 0 }, intent: { actionId: 'core.walk', poseId: 'standing', view: 'front' } }
+    model.present(actor, 0)
+    for (let frame = 1; frame <= fps; frame++) { actor.position.y = 84 * .72 * 1.6 * frame / fps; model.present(actor, 1 / fps) }
+    assert.equal(model.root.sprite.texture, model.texture('walk.front', 480))
   }
 })
 

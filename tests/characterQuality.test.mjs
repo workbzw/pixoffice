@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises'
+import { access, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
@@ -10,6 +10,21 @@ import { publishCharacterCandidate } from '../scripts/characters/publish.mjs'
 import { prepareCharacterPreview } from '../scripts/characters/preview.mjs'
 import { createQualityDraft, main } from '../scripts/characters/quality-cli.mjs'
 import { qualityFixture, writeJson } from './helpers/characterQuality.mjs'
+import { OFFICE_IMAGES } from '../scripts/build-office-assets.mjs'
+import { readAssetCatalogFiles } from '../scripts/assets/export-pack.mjs'
+import { assertStagingArguments } from '../scripts/characters/staging.mjs'
+
+test('disabled one-time authoring entries are removed instead of retaining unreachable code', async () => {
+  for (const file of ['import-apartment.mjs', 'create-speech-frames.mjs', 'register-office-lead-poses.mjs', 'register-office-lead-standard.mjs', 'register-office-motion.mjs', 'mouth-layer-tools.mjs', 'create-office-lead-mouth-layer.mjs', 'create-office-mouth-layers.mjs', 'legacy-authoring.mjs']) {
+    await assert.rejects(access(new URL(`../scripts/characters/${file}`, import.meta.url)), { code: 'ENOENT' })
+  }
+})
+
+test('staging scripts reject retired publication and unknown flags before writing files', () => {
+  assert.doesNotThrow(() => assertStagingArguments(['--prepare'], ['--prepare']))
+  assert.throws(() => assertStagingArguments(['--publish']), /only prepares candidates/)
+  assert.throws(() => assertStagingArguments(['--unknown']), /Unknown option/)
+})
 
 async function temporary(t) {
   const root = await mkdtemp(path.join(os.tmpdir(), 'office-admission-'))
@@ -17,6 +32,14 @@ async function temporary(t) {
   return root
 }
 const hasIssue = (report, code) => report.issues.some(issue => issue.code === code)
+
+async function furnitureFixture(publicRoot) {
+  const image = await sharp({ create: { width: 2, height: 2, channels: 4, background: '#ffffff' } }).png().toBuffer()
+  for (const name of OFFICE_IMAGES) {
+    const file = path.join(publicRoot, `assets/office/${name}.png`)
+    await mkdir(path.dirname(file), { recursive: true }); await writeFile(file, image)
+  }
+}
 
 test('a complete candidate requires both automatic checks and version-bound visual acceptance', async t => {
   const root = await temporary(t), fixture = await qualityFixture(root)
@@ -132,23 +155,39 @@ test('the normal builder enforces admission and leaves the old registry untouche
 })
 
 test('publication preserves the previous version, rejects bad candidates and rolls back on build failure', async t => {
-  const root = await temporary(t), sourceRoot = path.join(root, 'packs'), outputRoot = path.join(root, 'out'), backupRoot = path.join(root, 'backups')
+  const root = await temporary(t), sourceRoot = path.join(root, 'packs'), publicRoot = path.join(root, 'public'), outputRoot = path.join(publicRoot, 'characters'), backupRoot = path.join(root, 'backups')
   const staged = path.join(root, 'staged'), fixture = await qualityFixture(staged)
-  await assert.rejects(publishCharacterCandidate(staged, { sourceRoot, outputRoot, backupRoot }), /review.json/)
+  await assert.rejects(publishCharacterCandidate(staged, { sourceRoot, publicRoot, backupRoot }), /review.json/)
   assert.deepEqual(await readdir(sourceRoot), [])
   await fixture.review()
-  await publishCharacterCandidate(staged, { sourceRoot, outputRoot, backupRoot })
+  await furnitureFixture(publicRoot)
+  await publishCharacterCandidate(staged, { sourceRoot, publicRoot, backupRoot })
+  await access(path.join(outputRoot, 'visuals/candidate.json'))
+  for (const name of ['candidate', 'office-furniture', 'office-complete']) {
+    const catalog = JSON.parse(await readFile(path.join(publicRoot, `asset-packs/${name}.json`)))
+    assert((await readAssetCatalogFiles(publicRoot, catalog)).size > 0)
+  }
   const original = await readFile(path.join(sourceRoot, 'candidate/character.json'))
   fixture.source.label = 'Second revision'; await fixture.save(); await fixture.review()
-  const second = await publishCharacterCandidate(staged, { sourceRoot, outputRoot, backupRoot })
+  const second = await publishCharacterCandidate(staged, { sourceRoot, publicRoot, backupRoot })
   assert((await readFile(path.join(second.backup, 'character.json'))).equals(original))
   const active = await readFile(path.join(sourceRoot, 'candidate/character.json')), registry = await readFile(path.join(outputRoot, 'registry.json'))
+  const visual = await readFile(path.join(outputRoot, 'visuals/candidate.json')), catalog = await readFile(path.join(publicRoot, 'asset-packs/office-complete.json'))
   await mkdir(path.join(sourceRoot, 'broken')); await writeFile(path.join(sourceRoot, 'broken/character.json'), '{}')
   fixture.source.label = 'Rejected third revision'; await fixture.save(); await fixture.review()
-  await assert.rejects(publishCharacterCandidate(staged, { sourceRoot, outputRoot, backupRoot }))
+  await assert.rejects(publishCharacterCandidate(staged, { sourceRoot, publicRoot, backupRoot }))
   assert((await readFile(path.join(sourceRoot, 'candidate/character.json'))).equals(active))
   assert((await readFile(path.join(outputRoot, 'registry.json'))).equals(registry))
+  assert((await readFile(path.join(outputRoot, 'visuals/candidate.json'))).equals(visual))
+  assert((await readFile(path.join(publicRoot, 'asset-packs/office-complete.json'))).equals(catalog))
+  await rm(path.join(sourceRoot, 'broken'), { recursive: true })
+  await rm(path.join(publicRoot, 'assets/office/desk.png'))
+  await assert.rejects(publishCharacterCandidate(staged, { sourceRoot, publicRoot, backupRoot }), /ENOENT/)
+  assert((await readFile(path.join(sourceRoot, 'candidate/character.json'))).equals(active))
+  assert((await readFile(path.join(outputRoot, 'registry.json'))).equals(registry))
+  assert((await readFile(path.join(publicRoot, 'asset-packs/office-complete.json'))).equals(catalog))
   assert(!(await readdir(sourceRoot)).some(name => name.startsWith('.')))
+  assert(!(await readdir(publicRoot)).some(name => name.startsWith('.character-publish-')))
 })
 
 test('drafting does not overwrite rules or fabricate registration and visual approval', async t => {
@@ -191,13 +230,13 @@ test('candidates can be previewed without approval, without writing a production
 test('archived v4 work frames reproduce body drift, while Wang Ming v2 keeps its body fixed', async () => {
   // Versioned regression artwork, deliberately not the current clip selected by character.json.
   const regions = [{ x: 25, y: 215, width: 55, height: 55 }, { x: 174, y: 215, width: 55, height: 55 }]
-  for (const id of ['marvis', 'code-agent', 'app-agent', 'data-agent']) {
-    const version = id === 'marvis' ? 'v2' : 'v4', directory = path.resolve('art/characters/packs', id, `work/quiet-back-${version}`)
+  for (const id of ['office-lead', 'code-agent', 'app-agent', 'data-agent']) {
+    const version = id === 'office-lead' ? 'v2' : 'v4', directory = path.resolve('art/characters/packs', id, `work/quiet-back-${version}`)
     const frames = []
     for (const file of ['001.png', '002.png', '004.png']) frames.push(await sharp(await readFile(path.join(directory, file))).ensureAlpha().raw().toBuffer())
     for (const raw of frames.slice(1)) {
       const diff = compareFrames(frames[0], raw, 256, regions)
-      if (id === 'marvis') assert.equal(diff.outsideChanges, 0)
+      if (id === 'office-lead') assert.equal(diff.outsideChanges, 0)
       else assert(diff.outsideChanges > 100, `${id}: the new gate detects the known redraw defect`)
     }
   }

@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { Actor, ActivityPlan, Phase } from '@pixoffice/runtime/model'
 import type { PluginContext, ScenePlugin } from '@pixoffice/runtime/plugins'
-import { SceneFault, idSchema } from '@pixoffice/runtime/protocol'
+import { SceneFault, idSchema } from '@pixoffice/protocol'
 import { scenePrimitives } from '@pixoffice/runtime/builtin/primitives'
 import { officeObjects } from './objects.ts'
 export { officeObjects } from './objects.ts'
@@ -33,6 +33,7 @@ const visitParams = z.strictObject({ stops: z.array(z.strictObject({ hostId: idS
 export const officeVisits: ScenePlugin = {
   id: 'office.visits', name: '工位拜访与交接', version: '1.0.0', apiVersion: 1, dependencies: ['office.objects'],
   capabilities: [{ id: 'office.visit', name: '拜访工位', params: visitParams,
+    participants: { min: 2, max: 11, roles: [{ role: 'visitor', min: 1, max: 1 }, { role: 'host', min: 1, max: 10 }], rules: ['host 必须包含 stops 中全部不同的 hostId；不能拜访自己；参与者必须绑定座位'] },
     build(context, raw): ActivityPlan {
       const params = visitParams.parse(raw), visitor = one(context, 'visitor')
       if (context.participants.some(p => p.role !== 'visitor' && p.role !== 'host')) throw new SceneFault('INVALID_PARTICIPANTS', '拜访仅支持 visitor 和 host 角色')
@@ -62,10 +63,11 @@ const meetingParams = z.strictObject({ boardId: idSchema, text: z.string().max(5
 export const officeMeetings: ScenePlugin = {
   id: 'office.meetings', name: '多人会议', version: '1.0.0', apiVersion: 1, dependencies: ['office.objects'],
   capabilities: [{ id: 'office.meeting', name: '白板会议', params: meetingParams,
+    participants: { min: 2, max: 4, roles: [{ role: 'speaker', min: 1, max: 1 }, { role: 'attendee', min: 1, max: 3 }], rules: ['参与者必须绑定座位；boardId 必须指向白板'] },
     build(context, raw) {
       const params = meetingParams.parse(raw), list = actors(context)
       if (list.length < 2 || list.length > 4 || context.participants.filter(p => p.role === 'speaker').length !== 1 || context.participants.some(p => p.role !== 'speaker' && p.role !== 'attendee')) throw new SceneFault('INVALID_PARTICIPANTS', '会议需 2–4 人、一位 speaker，其余为 attendee')
-      const board = context.world.props.find(p => p.id === params.boardId && p.templateId === 'office.whiteboard')
+      const board = context.world.props.find(p => p.id === params.boardId && ['office.whiteboard', 'office.wall-whiteboard'].includes(p.templateId))
       if (!board) throw new SceneFault('ENTITY_NOT_FOUND', params.boardId)
       const speaker = one(context, 'speaker')
       return { title: '团队会议', claims: [...bodies(list), ...speeches(list), claim(`prop:${board.id}:meeting`)], phases: [
@@ -82,13 +84,13 @@ const emoteParams = z.strictObject({ animation: z.enum(['emotes/wave', 'emotes/t
 export const officePersonal: ScenePlugin = {
   id: 'office.personal', name: '个人活动与表情', version: '1.0.0', apiVersion: 1, dependencies: ['office.objects'],
   capabilities: [
-    { id: 'office.focus', name: '持续专注', params: focusParams, build(context, raw) {
+    { id: 'office.focus', name: '持续专注', params: focusParams, participants: { min: 1, max: 1, roles: [{ role: 'worker', min: 1, max: 1 }], rules: ['参与者必须绑定座位'] }, build(context, raw) {
       if (context.participants.length !== 1) throw new SceneFault('INVALID_PARTICIPANTS', '个人活动只允许一位参与者')
       const a = one(context, 'worker'), p = focusParams.parse(raw)
       return { title: p.title, claims: bodies([a]), continuous: true, maxDurationMs: 3600000,
         phases: [...returnHome([a]), { title: p.title }] }
     } },
-    { id: 'office.emote', name: '表情', params: emoteParams, build(context, raw) {
+    { id: 'office.emote', name: '表情', params: emoteParams, participants: { min: 1, max: 1, roles: [{ role: 'actor', min: 1, max: 1 }], rules: [] }, build(context, raw) {
       if (context.participants.length !== 1) throw new SceneFault('INVALID_PARTICIPANTS', '个人活动只允许一位参与者')
       const a = one(context, 'actor'), p = emoteParams.parse(raw)
       return { title: '表情', claims: bodies([a]), phases: [{ title: '表情', durationMs: p.durationMs,
@@ -100,7 +102,7 @@ export const officePersonal: ScenePlugin = {
 const useParams = z.strictObject({ objectId: idSchema, interactionId: idSchema, durationMs: z.number().int().min(300).max(120000).default(4000) })
 export const furnitureUse: ScenePlugin = {
   id: 'scene.furniture', name: '家具使用', version: '1.0.0', apiVersion: 1, dependencies: ['office.objects'],
-  capabilities: [{ id: 'furniture.use', name: '使用家具', params: useParams, build(context, raw) {
+  capabilities: [{ id: 'furniture.use', name: '使用家具', params: useParams, participants: { min: 1, max: 1, roles: [{ role: 'user', min: 1, max: 1 }], rules: ['interactionId 必须是物品支持的交互；专属座位只允许本人使用'] }, build(context, raw) {
     const p = useParams.parse(raw), actor = one(context, 'user')
     if (context.participants.length !== 1) throw new SceneFault('INVALID_PARTICIPANTS', '每次家具使用需要一位 user')
     const prop = context.world.props.find(item => item.id === p.objectId)

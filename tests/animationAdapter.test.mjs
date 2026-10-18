@@ -3,12 +3,12 @@ import { before, after, test } from 'node:test'
 import { createTestServer } from './helpers/vite.mjs'
 import { characterPackFixture } from './helpers/characterPack.mjs'
 
-let server, FrameAdapter, bindOfficeFrames, ApartmentCharacter, AnimationRegistry, AnimationPresenter, AnimationResources, schema
+let server, FrameAdapter, FrameSprite, bindOfficeFrames, AnimationRegistry, AnimationPresenter, AnimationResources, schema
 before(async () => {
   server = await createTestServer()
   ;({ FrameAdapter } = await server.ssrLoadModule('/packages/animation-frame/src/FrameAdapter.ts'))
   ;({ bindOfficeFrames } = await server.ssrLoadModule('/example/office-web/src/application/officeFrames.ts'))
-  ;({ ApartmentCharacter } = await server.ssrLoadModule('/example/office-web/src/scene/characters/ApartmentCharacter.ts'))
+  ;({ FrameSprite } = await server.ssrLoadModule('/packages/animation-frame/src/FrameSprite.ts'))
   ;({ AnimationRegistry } = await server.ssrLoadModule('/packages/renderer-pixi/src/animation/AnimationRegistry.ts'))
   ;({ AnimationPresenter } = await server.ssrLoadModule('/packages/renderer-pixi/src/presentation/AnimationPresenter.ts'))
   ;({ AnimationResources } = await server.ssrLoadModule('/packages/renderer-pixi/src/presentation/AnimationResources.ts'))
@@ -20,12 +20,12 @@ const deferred = () => { let resolve; const promise = new Promise(r => { resolve
 
 test('the default frame adapter loads the manifest URI supplied by an external host', async t => {
   const resources = await server.ssrLoadModule('/packages/animation-frame/src/resources.ts')
-  const pack = await characterPackFixture('marvis')
+  const pack = await characterPackFixture('office-lead')
   t.after(() => pack.dispose())
   const uri = 'https://assets.example.invalid/custom/manifest.json'
   const acquire = t.mock.method(resources.characterAssets, 'acquire', async () => ({ value: pack, release() {} }))
   const lease = await new FrameAdapter().acquire(bindOfficeFrames(pack.manifest, uri), signal())
-  assert.deepEqual(acquire.mock.calls[0].arguments, ['marvis', uri])
+  assert.deepEqual(acquire.mock.calls[0].arguments, ['office-lead', uri])
   lease.release()
 })
 function state(manifest, actionId = 'core.idle', poseId = 'standing', view = 'front', clock = { mode: 'time', elapsedMs: 0, loop: true }, speak = false) {
@@ -34,7 +34,7 @@ function state(manifest, actionId = 'core.idle', poseId = 'standing', view = 'fr
   return { entityId: 'one', request: { poseId, view, variantIds: variants.map(v => v.variantId) }, contacts: [],
     actions: variants.map(v => ({ instanceId: v.variantId, variantId: v.variantId, clock })) }
 }
-async function fixture(t, id = 'marvis') {
+async function fixture(t, id = 'office-lead') {
   const pack = await characterPackFixture(id)
   pack.ensureClips = async () => {}
   const manifest = bindOfficeFrames(pack.manifest, '/test/character.json')
@@ -56,46 +56,46 @@ function sameSprites(actual, expected, height) {
   assert.equal(actual.getHeadOffsetY(), expected.getHeadOffsetY())
 }
 
-test('all six frame adapters preserve existing standing, walking, working, speech and transition samples', async t => {
-  for (const id of ['marvis', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']) {
+test('all six frame adapters sample the authored standing, walking, working, speech and transition clips', async t => {
+  for (const id of ['office-lead', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']) {
     const { pack, manifest, lease } = await fixture(t, id)
     for (const view of ['front', 'back', 'left', 'right']) for (const walking of [false, true]) {
-      const legacy = new ApartmentCharacter(id); legacy.pack = pack
-      legacy.setViewFacing(view); legacy.playState(walking ? 'walking' : 'idle')
+      const expected = new FrameSprite(pack)
       const visual = lease.create(state(manifest, walking ? 'core.walk' : 'core.idle', 'standing', view))
       let elapsed = 0
       for (const dt of [0, .1, .18, .5, 1]) {
-        elapsed += dt * 1000; legacy.update(dt)
+        elapsed += dt * 1000
+        expected.renderClip(`${walking ? 'walk' : 'idle'}.${view}`, elapsed)
         visual.sample(state(manifest, walking ? 'core.walk' : 'core.idle', 'standing', view, { mode: 'time', elapsedMs: elapsed, loop: true }))
-        sameSprites(visual.root, legacy, pack.manifest.displayHeight)
+        sameSprites(visual.root, expected, pack.manifest.displayHeight)
       }
-      visual.dispose(); legacy.destroy({ children: true })
+      visual.dispose(); expected.destroy({ children: true })
     }
     for (const [view, action, work] of [['back', 'core.idle', false], ['back', 'office.type', true], ['left', 'core.idle', false], ['right', 'core.idle', false]]) {
-      const legacy = new ApartmentCharacter(id); legacy.pack = pack
-      legacy.setAtDesk(true); legacy.setViewFacing(view); legacy.playState(work ? 'working' : 'idle')
+      const expected = new FrameSprite(pack)
+      const clip = work ? 'work.quiet-back' : view === 'back' ? 'sit.back' : `talk.seated-${view}`
       const visual = lease.create(state(manifest, action, 'seated', view))
-      legacy.update(.35); visual.sample(state(manifest, action, 'seated', view, { mode: 'time', elapsedMs: 350, loop: true }))
-      sameSprites(visual.root, legacy, pack.manifest.displayHeight)
+      expected.renderClip(clip, 350); visual.sample(state(manifest, action, 'seated', view, { mode: 'time', elapsedMs: 350, loop: true }))
+      sameSprites(visual.root, expected, pack.manifest.displayHeight)
       if (view !== 'back') {
-        legacy.setSpeechText('Hello'); legacy.update(.12)
+        expected.renderClip(clip, 470, undefined, 120)
         const speaking = state(manifest, action, 'seated', view, { mode: 'time', elapsedMs: 470, loop: true }, true)
         speaking.actions.find(a => a.variantId.startsWith('core.speak')).clock.elapsedMs = 120
         visual.sample(speaking)
-        sameSprites(visual.root, legacy, pack.manifest.displayHeight)
+        sameSprites(visual.root, expected, pack.manifest.displayHeight)
       }
-      visual.dispose(); legacy.destroy({ children: true })
+      visual.dispose(); expected.destroy({ children: true })
     }
     for (const stage of ['rising', 'sitting']) {
-      const legacy = new ApartmentCharacter(id); legacy.pack = pack
+      const expected = new FrameSprite(pack)
       const action = stage === 'rising' ? 'core.stand-up' : 'core.sit-down'
       const visual = lease.create(state(manifest, action, 'transition', 'back', { mode: 'progress', progress: 0 }))
       for (const progress of [0, .25, .5, .75, 1]) {
-        legacy.setSeatTransition({ stage, progress, seatedAmount: stage === 'rising' ? 1 - progress : progress }); legacy.update(0)
+        expected.renderClip(stage === 'rising' ? 'stand-up.back' : 'sit-down.back', 0, progress)
         visual.sample(state(manifest, action, 'transition', 'back', { mode: 'progress', progress }))
-        sameSprites(visual.root, legacy, pack.manifest.displayHeight)
+        sameSprites(visual.root, expected, pack.manifest.displayHeight)
       }
-      visual.dispose(); legacy.destroy({ children: true })
+      visual.dispose(); expected.destroy({ children: true })
     }
   }
 })

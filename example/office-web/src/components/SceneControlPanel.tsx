@@ -1,23 +1,24 @@
 import { useState } from 'react'
 import { Armchair, ArrowRight, Download, MessageSquare, Square } from 'lucide-react'
-import type { OfficeRuntime } from '@pixoffice/runtime/OfficeRuntime'
+import type { SceneRuntime } from '@pixoffice/runtime/SceneRuntime'
 import type { Snapshot } from '@pixoffice/runtime/model'
-import type { CommandResult } from '@pixoffice/runtime/protocol'
-import { commandBase, presentationCommand, visitCommand } from '../runtime/adapters/legacy.ts'
+import type { CommandResult } from '@pixoffice/protocol'
+import { stringifyDocumentObject } from '@pixoffice/protocol/schema'
+import { commandBase, presentationCommand, visitCommand } from '@pixoffice/scene-office/adapters/office'
 
 export type ScenePanel = 'controls' | 'plugins' | 'protocol'
 
 function download(value: unknown, filename: string) {
-  const url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' }))
+  const url = URL.createObjectURL(new Blob([stringifyDocumentObject(value, 2)], { type: 'application/json' }))
   const a = document.createElement('a')
   a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url)
 }
 
-export function SceneControlPanel({ runtime, snapshot, panel }: { runtime: OfficeRuntime; snapshot: Snapshot; panel: ScenePanel }) {
-  const [actorId, setActorId] = useState('marvis')
+export function SceneControlPanel({ runtime, snapshot, panel }: { runtime: SceneRuntime; snapshot: Snapshot; panel: ScenePanel }) {
+  const [actorId, setActorId] = useState('office-lead')
   const [hostId, setHostId] = useState('code-agent')
   const [text, setText] = useState('我们同步一下这一轮工作的进展。')
-  const [meetingIds, setMeetingIds] = useState(['marvis', 'code-agent', 'file-agent', 'app-agent'])
+  const [meetingIds, setMeetingIds] = useState(['office-lead', 'code-agent', 'file-agent', 'app-agent'])
   const [furniture, setFurniture] = useState('whiteboard-1:write')
   const [error, setError] = useState<string | null>(null)
   const [result, setResult] = useState<unknown>(null)
@@ -45,14 +46,10 @@ export function SceneControlPanel({ runtime, snapshot, panel }: { runtime: Offic
       <h3>会议成员 <span>{meetingIds.length}/4</span></h3>
       <div className="runtime-attendees">{world.actors.map(item => <label key={item.id}><input type="checkbox" checked={meetingIds.includes(item.id)} disabled={!meetingIds.includes(item.id) && meetingIds.length >= 4} onChange={event => setMeetingIds(ids => event.target.checked ? [...ids, item.id] : ids.filter(id => id !== item.id))} />{item.name}</label>)}</div>
       <div className="runtime-button-row"><button disabled={meetingIds.length < 2 || snapshot.editing} onClick={() => attempt(() => {
-        const board = world.props.find(prop => prop.templateId === 'office.whiteboard')
+        const board = world.props.find(prop => ['office.whiteboard', 'office.wall-whiteboard'].includes(prop.templateId))
         if (!board) throw new Error('地图中没有白板')
         check(runtime.submit({ ...commandBase(runtime), type: 'activity.start', capability: 'office.meeting', participants: meetingIds.map((entityId, index) => ({ entityId, role: index === 0 ? 'speaker' : 'attendee' })), params: { boardId: board.id, text, durationMs: 12000 } }))
-      })}>召集会议</button><button onClick={() => attempt(() => {
-        const board = world.props.find(prop => prop.templateId === 'office.whiteboard')
-        if (!board) throw new Error('地图中没有白板')
-        check(runtime.submit({ ...commandBase(runtime), type: 'object.state.set', entityId: board.id, expectedStateRevision: board.stateRevision, state: { title: '本轮议题', text } }))
-      })}>更新白板</button></div>
+      })}>召集会议</button></div>
       <label>家具互动<select value={selectedFurniture?.key ?? ''} onChange={event => setFurniture(event.target.value)}>{furnitureOptions.map(option => <option key={option.key} value={option.key}>{option.label}</option>)}</select></label>
       <button className="runtime-secondary" disabled={!selectedFurniture || snapshot.editing} onClick={() => selectedFurniture && check(runtime.submit({ ...commandBase(runtime), type: 'activity.start', capability: 'furniture.use', participants: [{ entityId: actor.id, role: 'user' }], params: { objectId: selectedFurniture.objectId, interactionId: selectedFurniture.interactionId } }))}><Armchair size={15} />使用家具</button>
     </>}

@@ -42,7 +42,7 @@ export function createFarmPlotView(textures: ReadonlyMap<string, Texture>, now: 
   return { roots: [root], hitTarget: root, update(prop) {
     root.position.set(prop.position.x * 50, prop.position.y * 50); root.zIndex = (prop.position.y + 1.8 * layout.scale) * 50
     const state = cropStatus(prop.state, now()), stage = state.stage === 'ready' ? 3 : state.stage === 'growing' ? 2 : 1
-    const key = `${state.crop}-${stage}:${Math.floor(state.progress * 100)}:${prop.name}`
+    const key = `${state.crop}-${state.stage}:${Math.floor(state.progress * 100)}:${prop.name}`
     if (key === previous) return
     previous = key; backCrops.visible = frontCrops.visible = Boolean(state.crop)
     // Soil never changes; every plant keeps one registered ground contact across stages.
@@ -53,7 +53,7 @@ export function createFarmPlotView(textures: ReadonlyMap<string, Texture>, now: 
     title.text = prop.name
     status.text = state.label
     progress.clear()
-    if (state.crop && state.wateredAt !== null) {
+    if (state.crop && state.wateredAt >= 0) {
       progress.roundRect(0, 0, 54, 2, 1).fill({ color: 0x795b35, alpha: .2 })
       if (state.progress) progress.roundRect(0, 0, Math.max(2, 54 * state.progress), 2, 1).fill(state.stage === 'ready' ? 0x8c6930 : 0x557a43)
     }

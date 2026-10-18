@@ -23,6 +23,7 @@ export class AnimationPresenter {
   private speechMs = 0
   private speechGeneration = 0
   private previousPosition?: PresentedActor['position']
+  private previousGroundPosition?: PresentedActor['position']
 
   sample(actor: PresentedActor, manifest: VisualAssetManifest, dt: number): EntityPresentation {
     const intent = actor.intent, key = `${intent.actionId}:${intent.poseId}`, ms = Math.max(0, Number.isFinite(dt) ? dt * 1000 : 0)
@@ -30,7 +31,14 @@ export class AnimationPresenter {
     if (this.speech !== (intent.speech ?? '')) { this.speech = intent.speech ?? ''; this.speechMs = 0; this.speechGeneration++ }
     this.elapsedMs += ms
     if (this.speech) this.speechMs += ms
-    if (intent.actionId === 'core.walk' && this.previousPosition) this.travelledDu += Math.hypot(actor.position.x - this.previousPosition.x, actor.position.y - this.previousPosition.y) / actor.displayHeight
+    if (actor.locomotion) {
+      if (!Number.isFinite(actor.locomotion.strideCells) || actor.locomotion.strideCells <= 0) throw new Error('Invalid ground-space stride')
+      if (intent.actionId === 'core.walk' && this.previousGroundPosition) this.travelledDu += Math.hypot(actor.locomotion.position.x - this.previousGroundPosition.x, actor.locomotion.position.y - this.previousGroundPosition.y) / actor.locomotion.strideCells * .72
+      this.previousGroundPosition = { ...actor.locomotion.position }
+    } else {
+      this.previousGroundPosition = undefined
+      if (intent.actionId === 'core.walk' && this.previousPosition) this.travelledDu += Math.hypot(actor.position.x - this.previousPosition.x, actor.position.y - this.previousPosition.y) / actor.displayHeight
+    }
     this.previousPosition = { ...actor.position }
     const request = resolveVisualRequest(manifest, intent)
     return { entityId: actor.id, request, contacts: intent.contacts ?? [], actions: request.variantIds.map(variantId => {

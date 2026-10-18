@@ -9,8 +9,8 @@ import sharp from 'sharp'
 import { validateCharacterStandard } from '../scripts/characters/standard.mjs'
 import { buildCharacter } from '../scripts/characters/build.mjs'
 
-const directory = fileURLToPath(new URL('../art/characters/packs/marvis/', import.meta.url))
-async function fixture(id = 'marvis') {
+const directory = fileURLToPath(new URL('../art/characters/packs/office-lead/', import.meta.url))
+async function fixture(id = 'office-lead') {
   const directory = fileURLToPath(new URL(`../art/characters/packs/${id}/`, import.meta.url))
   const source = JSON.parse(await readFile(path.join(directory, 'character.json'), 'utf8'))
   const standard = JSON.parse(await readFile(path.join(directory, 'standard.json'), 'utf8'))
@@ -19,12 +19,12 @@ async function fixture(id = 'marvis') {
   return { directory, source, standard, buffers }
 }
 
-for (const id of ['marvis', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']) {
+for (const id of ['office-lead', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']) {
 test(`${id}: locomotion, seat and typing clips share calibrated head areas and foot anchors`, async () => {
   const { directory, source, standard, buffers } = await fixture(id)
   const measured = await validateCharacterStandard(directory, source, buffers)
-  assert.equal(measured.length, id === 'marvis' ? 26 : 27)
-  if (id !== 'marvis') {
+  assert.equal(measured.length, id === 'office-lead' ? 26 : 27)
+  if (id !== 'office-lead') {
     for (const frame of source.clips['work.quiet-back'].frames) {
       assert(measured.some(result => result.file === frame.file), 'complete generated work frames are actually validated')
     }
@@ -52,9 +52,8 @@ test(`${id}: locomotion, seat and typing clips share calibrated head areas and f
     assert(frame.file.startsWith('work/typing-back-v2/'))
     assert.equal(standard.frames[frame.file].footY, 377)
   }
-  const registration = JSON.parse(await readFile(new URL('../art/characters/office-typing-v2/registered-frames.json', import.meta.url), 'utf8'))
-  assert.equal(new Set(registration.find(entry => entry.id === id).frames.map(frame => frame.scale)).size, 1,
-    'raising a forearm must not change the scale of the head and torso')
+  assert(typing.frames.every(frame => measured.some(result => result.file === frame.file)),
+    'validate the current typing pixels against the shared head and foot landmarks')
   const built = await buildCharacter(directory)
   assert(!('standard' in built.manifest), 'authoring checks do not add runtime state')
   assert.deepEqual(built.manifest.clips['stand-up.back'].frames.map(frame => frame.frame), [

@@ -348,7 +348,7 @@ test('the solid chair covers the actual seated hip pixels of all five students',
   }
 })
 
-test('shorter chair legs preserve the solid shell registration and do not resize the whole chair', async () => {
+test('the current solid chair matches its accepted shell, foot and seat landmarks', async () => {
   const measure = async file => {
     const { data, info } = await sharp(new URL(`../art/classroom/${file}`, import.meta.url).pathname).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
     let top = info.height, bottom = 0, left = info.width, right = 0, foot = 0
@@ -361,10 +361,8 @@ test('shorter chair legs preserve the solid shell registration and do not resize
     }
     return { width: info.width, height: info.height, top, bottom, left, right, foot }
   }
-  const original = await measure('chair-solid-v1.png'), shorter = await measure('chair-solid-v2.png')
-  for (const key of ['width', 'height', 'top', 'bottom', 'left', 'right']) assert(Math.abs(original[key] - shorter[key]) <= 8, `${key}: preserve shell size and registration`)
-  const ratio = (shorter.foot - shorter.bottom) / (original.foot - original.bottom)
-  assert(ratio >= .78 && ratio <= .9, `legs should be modestly shorter, got ${ratio}`)
+  const shorter = await measure('chair-solid-v2.png')
+  assert.deepEqual(shorter, { width: 1254, height: 1254, top: 84, bottom: 633, left: 256, right: 997, foot: 1080 })
   assert.equal(CLASSROOM_ARTWORK.chair.frontFootY, shorter.foot, 'calibrate from the new foot landmark')
   assert.deepEqual(CLASSROOM_ARTWORK.chair.contact, { x: 627, y: 600 }, 'leg edit keeps the shell contact landmark')
 })

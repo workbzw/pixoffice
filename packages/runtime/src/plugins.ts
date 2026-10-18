@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import type { ActivityPlan, ObjectStateChange, Template, World } from './model.ts'
-import { SceneFault } from './protocol.ts'
+import { SceneFault } from '@pixoffice/protocol'
+import { jsonObjectSchema } from '@pixoffice/protocol/schema'
 import { isCell, furnitureCells, sameCell } from './map/furnitureGrid.ts'
 
 function validateTemplate(t: Template) {
@@ -22,6 +23,7 @@ function validateTemplate(t: Template) {
 export type PluginContext = { world: World; participants: { entityId: string; role: string }[]; template: (id: string) => Template }
 export type Capability = {
   id: string; name: string; params: z.ZodType
+  participants?: { min: number; max: number; roles: { role: string; min: number; max: number }[]; rules: string[] }
   build(context: PluginContext, params: unknown): ActivityPlan
   /** Pure state proposals, validated and committed together before releasing activity claims. */
   complete?(context: PluginContext, params: unknown): ObjectStateChange[]
@@ -30,6 +32,8 @@ export type ScenePlugin = {
   id: string; name: string; version: string; apiVersion: 1; dependencies?: string[]
   templates?: Template[]; capabilities?: Capability[]
   stateSchemas?: Record<string, z.ZodType>
+  /** Scene-owned structural invariants, independent of editable geometry. */
+  validateWorld?(world: World): void
 }
 
 export class PluginHost {
@@ -44,6 +48,10 @@ export class PluginHost {
     const templateIds = plugin.templates?.map(t => t.id) ?? []
     if (new Set(ids).size !== ids.length || ids.some(id => existing.includes(id)) || new Set(templateIds).size !== templateIds.length || templateIds.some(id => templates.includes(id))) throw new SceneFault('PLUGIN_CONFLICT', plugin.id)
     plugin.templates?.forEach(validateTemplate)
+    for (const template of plugin.templates ?? []) if (template.initialState !== undefined) {
+      jsonObjectSchema.parse(template.initialState)
+      plugin.stateSchemas?.[template.id]?.parse(template.initialState)
+    }
     this.entries.set(plugin.id, { plugin, enabled: true })
   }
 
@@ -71,6 +79,16 @@ export class PluginHost {
     throw new SceneFault('STATE_READONLY', templateId)
   }
 
+  validateWorld(world: World) {
+    for (const { plugin, enabled } of this.entries.values()) if (enabled) {
+      for (const prop of world.props) {
+        const schema = plugin.stateSchemas?.[prop.templateId]
+        if (schema) prop.state = jsonObjectSchema.parse(schema.parse(prop.state))
+      }
+      plugin.validateWorld?.(structuredClone(world))
+    }
+  }
+
   setEnabled(id: string, enabled: boolean, inUse: (id: string) => boolean) {
     const entry = this.entries.get(id)
     if (!entry) throw new SceneFault('PLUGIN_NOT_FOUND', id)
@@ -83,5 +101,8 @@ export class PluginHost {
 
   list() { return [...this.entries.values()].map(({ plugin: p, enabled }) => ({ id: p.id, name: p.name, version: p.version, enabled, capabilities: p.capabilities?.map(c => c.id) ?? [] })) }
   templates() { return structuredClone([...this.entries.values()].filter(e => e.enabled).flatMap(e => e.plugin.templates ?? [])) }
-  describe() { return this.list().map(p => ({ ...p, operations: p.enabled ? p.capabilities.map(id => { const { capability: c } = this.capability(id); return { id, name: c.name, params: z.toJSONSchema(c.params) } }) : [] })) }
+  describe() { return this.list().map(p => ({ ...p,
+    stateSchemas: Object.fromEntries(Object.entries(this.entries.get(p.id)!.plugin.stateSchemas ?? {}).map(([id, schema]) => [id, z.toJSONSchema(schema, { io: 'input' })])),
+    operations: p.enabled ? p.capabilities.map(id => { const { capability: c } = this.capability(id); return { id, name: c.name, params: z.toJSONSchema(c.params, { io: 'input' }), participants: c.participants ?? { min: 0, max: -1, roles: [], rules: [] } } }) : [],
+  })) }
 }

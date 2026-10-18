@@ -31,6 +31,8 @@ npm run build:classroom
 
 课程台词是本地演示内容，不是模型生成。此版本没有自动判分、语音合成、持久化学籍或教师业务后台；举手、写字等新专属图片动作尚未制作。人物沿用项目现有完整帧，但独立导出所需动作，不包含敲键盘。学生服装目前是演示外观。
 
+完成数统计当前运行时内成功结束的有限活动，不随记录缓存清理而倒退；取消、失败和持续活动的启动不计入，刷新后重新计数。
+
 ## 装配与驱动
 
 ```ts
@@ -62,23 +64,15 @@ mounted.dispose()
 
 `classroom.lecture`：一位 `teacher`，可选多位 `student`，参数 `text`、`durationMs`、`boardId`。
 `classroom.settle`：一位 `teacher` 和需要回座位的 `student`，参数 `boardId`。
-通过 `runtime.describe()` 获取完整参数 Schema；传输层可由宿主接 HTTP、iframe 或自己的业务事件，不能把不可信 JavaScript 当插件执行。
+通过 `runtime.describe()` 获取完整参数 Schema；传输层可由应用接场景消息或自己的业务事件，不能把不可信 JavaScript 当插件执行。
 
 ## 可选 HTTP 接入
 
-默认不连接任何后台。使用公共协议 2.0 网关时，分别在两个终端执行：
+根目录 `npm run dev` 同时启动 Fastify 和 Vite，打开 `/classroom/` 并等动作准备好后即可接收消息。只看静态演示使用 `npm run dev:vite`，不连接后台。
 
-```sh
-PIXOFFICE_SCENE_ID=classroom OFFICE_ACTION_GATEWAY_PORT=8776 npm run action-gateway
-VITE_CLASSROOM_GATEWAY_URL=http://127.0.0.1:8776 npm run dev:classroom -- --port 5176
-```
+将下面的命令放在 `{teamId:"classroom", command:命令}` 内，携带默认演示密钥 POST 到 `http://127.0.0.1:8765/api/pixoffice/messages`。请求不使用响应外壳，协议字段禁止 null。浏览器通过 SSE 接收，运行时负责排队。参见[消息转发与部署](../../docs/message-relay.md)。
 
-访问教室并等待右上角显示连接后，将上面的命令 JSON `POST` 到 `http://127.0.0.1:8776/scene/commands`。
-`GET /scene/state` 查看真实场景和执行记录，`GET /scene/capabilities` 读取能力。
-不是旧办公室 `/actions` 接口。示例网关一次只接管一个页面，因此给教室使用独立端口，避免抢占正在运行的办公室。
-动作资源准备好后才连接，关闭页面后停止轮询，断线保护复用公共客户端。开发网关只供本机调试；生产接入需要宿主自行提供鉴权和持久化。
-
-`ClassroomApp` 也接受显式 `gatewayUrl` 属性。未配置时不启动网关、不轮询网络。
+办公室、教室和农场共用同一转发服务，按 teamId 分发，不需要每个场景独立端口。旧轮询、状态上传和结果查询接口已删除。`ClassroomApp` 可传入显式 `relayUrl`；静态模式未配置时不连接网络。
 
 黑板更新使用公共协议：
 

@@ -2,11 +2,12 @@
 
 ## 本轮边界
 
-通用四包不认识具体场景；办公室、教室与农场分别由两个可选包组成：
+通用五包不认识具体场景；办公室、教室与农场分别由两个可选包组成：
 
 | 层 | 包 | 依赖方向 |
 | --- | --- | --- |
-| 公共契约 | contracts | 无 PixOffice 实现依赖 |
+| 对接协议 | protocol | 不依赖实现包 |
+| 公共契约 | contracts | protocol；无 PixOffice 实现依赖 |
 | 核心运行时 | runtime | 无场景、渲染或播放器依赖 |
 | 渲染宿主 | renderer-pixi | runtime、contracts |
 | 帧播放器 | animation-frame | contracts |
@@ -67,18 +68,18 @@ abort.abort()
 npm run assets:build
 
 # 只构建选定人物，必须使用独立输出目录
-npm run characters:build -- --ids marvis,code-agent --out /tmp/my-character-packs
+npm run characters:build -- --ids office-lead,code-agent --out /tmp/my-character-packs
 
 # 仅导出家具或一个人物；目标目录必须不存在
 npm run assets:export:pack -- public/asset-packs/office-furniture.json /tmp/office-furniture
-npm run assets:export:pack -- public/asset-packs/marvis.json /tmp/marvis-assets
+npm run assets:export:pack -- public/asset-packs/office-lead.json /tmp/office-lead-assets
 
-# 兼容的完整办公室导出
+# 完整办公室当前资源导出
 npm run assets:export -- /tmp/office-assets
 ```
 
 目录清单版本为 1，含 ID、整体 revision、文件路径与 SHA-256、入口文件。
-导出只复制清单中当前版本的文件，不再复制所有历史图集和 PNG 源文件；导出前校验
+导出只复制清单中当前版本的文件（含当前加载器声明的 PNG 编码回退），不复制历史图集和制作中间文件；导出前校验
 哈希、相对路径和真实路径，拒绝越界符号链接及覆盖已有目录。
 人物目录清单的 appearance 入口就是 VisualAssetManifest；无需下载其他人物注册表。
 
@@ -94,8 +95,8 @@ npm run assets:export -- /tmp/office-assets
 - `example/isolated-scene`：无办公室依赖，一个人物只含站立/行走与嘴部资源，独立 dist。
 - `example/classroom`：独立教室资源和入口，生产打包禁止导入办公室包。
 - `example/farm`：独立农场资源和入口，生产打包禁止导入办公室或教室包。
-- `packages:check`：十个包的导入方向和公开入口检查。
-- `packages:smoke`：仓库外安装并验证各代码包与通用四包。
+- `packages:check`：十一个包的导入方向和公开入口检查。
+- `packages:smoke`：仓库外安装并验证各代码包与通用五包。
 - `tests/classroom.test.mjs`：五位学生往返、碰撞、串行排队、各阶段取消、角色与外观解耦。
 - `tests/farm.test.mjs`：种植闭环、并发照料、碰撞、取消、状态版本、持久化失败和重放幂等。
 - `tests/sceneIsolation.test.mjs`：自定义动作、选择性制作、清单导出安全、移动取消和按需解析。

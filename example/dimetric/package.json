@@ -1,0 +1,10 @@
+{
+  "name": "@pixoffice/example-dimetric", "version": "0.1.0", "private": true, "type": "module",
+  "scripts": {
+    "predev": "node ../../scripts/third-party-notices.mjs && node build-public.mjs",
+    "dev": "vite",
+    "prebuild": "node ../../scripts/third-party-notices.mjs && node build-public.mjs",
+    "build": "vite build"
+  },
+  "dependencies": { "@pixoffice/contracts": "0.1.0", "@pixoffice/protocol": "0.1.0", "@pixoffice/runtime": "0.1.0", "@pixoffice/renderer-pixi": "0.1.0", "pixi.js": "^8.18.1", "lucide-react": "^1.48.0", "react": "^19.2.6", "react-dom": "^19.2.6", "zod": "^4.6.5" }
+}

@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Armchair, Archive, Check, ChevronDown, Copy, Download, Grid2X2, House, MoreHorizontal, MousePointer2, Redo2, Route, Undo2, Upload, X } from 'lucide-react'
-import { mapDocumentSchema } from '@pixoffice/runtime/map/schema'
+import { mapDocumentSchema } from '@pixoffice/protocol/map'
 import { FURNITURE_CELL_SIZE, furnitureFootprint, snapFurniture } from '@pixoffice/runtime/map/furnitureGrid'
 import { downloadMap, editMap } from './commands.ts'
 import type { EditorProps, MapAction, MapFurniture } from './commands.ts'
@@ -73,7 +73,7 @@ export function RoomEditor(props: Props) {
         }} onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }} />
         {template.interactions?.seat ? <select aria-label="工位所属人物" value={binding?.actorId ?? ''} onChange={e => {
           const actorId = e.target.value
-          const oldHome = draft.document.bindings.find(b => b.actorId === actorId)?.homeId ?? null
+          const oldHome = draft.document.bindings.find(b => b.actorId === actorId)?.homeId ?? ''
           run({ action: 'patch', requireValid: true, operations: [
             ...(binding ? [{ op: 'binding.set' as const, actorId: binding.actorId, homeId: oldHome, position: { x: selected.position.x - 1, y: selected.position.y + 1 } }] : []),
             ...(actorId ? [{ op: 'binding.set' as const, actorId, homeId: selected.id }] : []),

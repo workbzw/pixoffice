@@ -1,6 +1,6 @@
 import type { Actor, Facing, Point, Pose, World } from './model.ts'
 import { facingToward } from './model.ts'
-import { SceneFault } from './protocol.ts'
+import { SceneFault } from '@pixoffice/protocol'
 
 export type PoseSupport = (templateId: string, posture: Actor['posture'], facing: Facing) => boolean
 export const unrestrictedPoses: PoseSupport = () => true

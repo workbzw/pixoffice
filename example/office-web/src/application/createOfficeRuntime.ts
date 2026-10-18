@@ -1,7 +1,7 @@
 import { createSceneRuntime } from '@pixoffice/runtime/createSceneRuntime'
 import type { CreateSceneRuntimeOptions } from '@pixoffice/runtime/createSceneRuntime'
-import { officeScenePack } from '@pixoffice/scene-office/core'
+import { officeScenePack, referenceOfficeScenePack } from '@pixoffice/scene-office/core'
 
-export function createOfficeRuntime(options: CreateSceneRuntimeOptions = {}) {
-  return createSceneRuntime(officeScenePack, options)
+export function createOfficeRuntime({ referenceLayout = false, ...options }: CreateSceneRuntimeOptions & { referenceLayout?: boolean } = {}) {
+  return createSceneRuntime(referenceLayout ? referenceOfficeScenePack : officeScenePack, options)
 }

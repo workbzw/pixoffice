@@ -1,7 +1,7 @@
-import type { OfficeRuntime } from '@pixoffice/runtime/OfficeRuntime'
+import type { SceneRuntime } from '@pixoffice/runtime/SceneRuntime'
 import type { Actor } from '@pixoffice/runtime/model'
-import type { SceneCommand } from '@pixoffice/runtime/protocol'
-import { commandBase } from '../../runtime/adapters/legacy.ts'
+import type { SceneCommand } from '@pixoffice/protocol'
+import { commandBase } from '@pixoffice/scene-office/adapters/office'
 
 const topics = [
   ['我们核对一下这轮的数据。', '好，我补充异常项，整理后再找你确认。'],
@@ -26,7 +26,7 @@ export function demoPairs(actors: Actor[], round: number): [Actor, Actor][] {
   return pairs
 }
 
-export function demoCommands(runtime: OfficeRuntime, round: number): SceneCommand[] {
+export function demoCommands(runtime: SceneRuntime, round: number): SceneCommand[] {
   return demoPairs(runtime.readActors(), round).map(([visitor, host], index) => {
     const [message, reply] = topics[(Math.floor(round / 2) + index) % topics.length]
     return {

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { Armchair, Play, ScanEye } from 'lucide-react'
 import { CharacterPreview } from '../components/CharacterPreview.tsx'
-import { acquireCharacterPacks, supportsCharacterPose } from '../scene/assets/loadApartmentAssets.ts'
-import { OfficeScene } from '../scene/OfficeScene.ts'
-import { seatStepDurationMs } from '../scene/gridProjection.ts'
-import { OfficeRuntime } from '@pixoffice/runtime/OfficeRuntime'
-import { builtinPlugins, createOfficeWorld } from '../runtime/builtin/officePack.ts'
+import { acquireCharacterPacks } from '@pixoffice/assets-office/frame/resources'
+import { supportsCharacterPose } from '../application/poseSupport.ts'
+import { OfficeScene } from '../application/OfficeScene.ts'
+import { seatStepDurationMs } from '@pixoffice/scene-office/pixi/projection'
+import { SceneRuntime } from '@pixoffice/runtime/SceneRuntime'
+import { builtinPlugins, createOfficeWorld } from '@pixoffice/scene-office/core/pack'
 import { GridNavigation } from '@pixoffice/runtime/navigation'
 import './CharacterLab.css'
 
@@ -24,7 +25,7 @@ export function CharacterLab({ id, label }: { id: string; label: string }) {
       actor.presentation = { status: 'working', title: '工作动作验收', sourceRevision: 0 }
     }
     // No persistence, business adapter or HTTP command connection in the lab.
-    const runtime = new OfficeRuntime({ world, plugins: builtinPlugins, createNavigation: templates => new GridNavigation(templates),
+    const runtime = new SceneRuntime({ world, plugins: builtinPlugins, createNavigation: templates => new GridNavigation(templates),
       supportsPose: supportsCharacterPose, seatStepDuration: seatStepDurationMs })
     const current = new OfficeScene({ runtime })
     scene.current = current

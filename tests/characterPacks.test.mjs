@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os'
 import path from 'node:path'
 import sharp from 'sharp'
 import { buildCharacter, buildCharacters } from '../scripts/characters/build.mjs'
-import { CharacterSourceSchema, CharacterManifestSchema, resolveCharacterClip, sampleCharacterClip, characterFrameDependencies } from '../example/office-web/src/scene/characters/packSchema.ts'
-import { ResourceLeaseCache } from '../example/office-web/src/scene/assets/ResourceLeaseCache.ts'
+import { CharacterSourceSchema, CharacterManifestSchema, CharacterRegistrySchema, resolveCharacterClip, sampleCharacterClip, characterFrameDependencies } from '@pixoffice/assets-office/frame/packSchema'
+import { ResourceLeaseCache } from '@pixoffice/animation-frame/resources/ResourceLeaseCache'
 import { characterPackFixture } from './helpers/characterPack.mjs'
 
 async function temporary(t) {
@@ -65,9 +65,7 @@ test('lossless WebP atlases keep PNG frame coordinates, timing, dimensions and v
       if (before.data[offset + 3]) assert(before.data.subarray(offset, offset + 3).equals(after.data.subarray(offset, offset + 3)))
     }
   }
-  const legacy = structuredClone(webp.manifest)
-  legacy.pages.forEach(page => { page.image = page.image.replace('.webp', '.png') })
-  assert(CharacterManifestSchema.safeParse(legacy).success, 'old PNG packs remain compatible')
+  assert(CharacterManifestSchema.safeParse(png.manifest).success, 'PNG and WebP are both current atlas encodings')
 })
 
 test('adding a source directory registers a new character without editing renderer code', async t => {
@@ -86,12 +84,12 @@ test('adding a source directory registers a new character without editing render
 })
 
 test('office packs put only seated/work dependencies in startup atlases and publish small stable portraits', async () => {
-  const built = await buildCharacter(new URL('../art/characters/packs/marvis/', import.meta.url).pathname)
+  const built = await buildCharacter(new URL('../art/characters/packs/office-lead/', import.meta.url).pathname)
   const expected = new Set(characterFrameDependencies(built.manifest, ['sit.back', 'work.quiet-back']))
   const startup = Object.entries(built.manifest.frames).filter(([, frame]) => built.manifest.pages[frame.page].group === 'startup').map(([key]) => key)
   assert.deepEqual(new Set(startup), expected)
   assert.equal(built.manifest.pages[built.manifest.frames[resolveCharacterClip(built.manifest, 'walk.back').frames[0].frame].page].group, 'deferred')
-  const source = JSON.parse(await readFile(new URL('../art/characters/packs/marvis/character.json', import.meta.url)))
+  const source = JSON.parse(await readFile(new URL('../art/characters/packs/office-lead/character.json', import.meta.url)))
   assert.equal(Object.keys(built.manifest.frames).length, new Set(Object.values(source.clips).flatMap(clip => clip.frames?.map(frame => frame.file) ?? [])).size)
   assert.deepEqual(built.portrait.canvas, source.canvas)
   assert.equal(built.portrait.referenceHeight, source.referenceHeight)
@@ -112,7 +110,8 @@ test('action dependencies include aliased bodies, independent mouths and procedu
   }, mouth: { views: { front: { closed: 'mouth.closed', speaking: 'mouth.speaking' } } },
   work: { upper: { clip: 'arm.upper' }, forearm: { clip: 'arm.forearm' }, hand: { clip: 'arm.hand' } } }
   assert.deepEqual(new Set(characterFrameDependencies(rig, ['idle.left', 'idle.front'])), new Set(['body.png', 'closed.png', 'open.png']))
-  assert.deepEqual(new Set(characterFrameDependencies(rig, ['work.quiet-back'])), new Set(['work.png', 'upper.png', 'forearm.png', 'hand.png']))
+  assert.deepEqual(new Set(characterFrameDependencies(rig, ['work.computer-back'])), new Set(['work.png', 'upper.png', 'forearm.png', 'hand.png']))
+  assert.deepEqual(characterFrameDependencies(rig, ['work.quiet-back']), [])
 })
 
 test('bad source sizes, empty frames, missing files, escaping symlinks and stale output are rejected', async t => {
@@ -151,17 +150,30 @@ test('manifest contracts reject missing office actions, alias cycles, broken fra
     value => { value.frames['walk/001.png'].offset.x = 2048 },
     value => { delete value.frames['walk/001.png'] },
     value => { value.pages[0].image = 'https://example.com/a.png' },
+    value => { delete value.pages[0].group },
+    value => { value.pages.forEach(page => { page.group = 'deferred' }) },
   ]) { const invalid = structuredClone(manifest); mutate(invalid); assert(!CharacterManifestSchema.safeParse(invalid).success) }
 })
 
-test('clip sampling supports variable timing, loop boundaries, explicit mirrors and safe fallbacks', async t => {
+test('character registries require generated portraits and reject retired entries', async t => {
+  const root = await temporary(t), sourceRoot = path.join(root, 'source'), outputRoot = path.join(root, 'output')
+  await fixture(path.join(sourceRoot, 'first'), 'first')
+  const registry = await buildCharacters({ sourceRoot, outputRoot, requireAdmission: false })
+  assert(CharacterRegistrySchema.safeParse(registry).success)
+  const invalid = structuredClone(registry)
+  delete invalid.characters[0].portrait
+  assert.equal(CharacterRegistrySchema.safeParse(invalid).success, false)
+})
+
+test('clip sampling supports variable timing, loop boundaries and explicit aliases without silent substitutions', async t => {
   const directory = await temporary(t)
   await fixture(directory)
   const { manifest } = await buildCharacter(directory)
   assert.deepEqual([0, 49, 50, 149, 150, 299, 300, 499, 500].map(time => sampleCharacterClip(manifest, 'walk.front', time).index), [0, 0, 1, 1, 2, 2, 3, 3, 0])
   assert.equal(resolveCharacterClip(manifest, 'walk.left').mirrorX, true)
   assert.equal(resolveCharacterClip(manifest, 'walk.right').mirrorX, false)
-  assert.equal(resolveCharacterClip(manifest, 'run.front').fallback, true)
+  assert.equal(resolveCharacterClip(manifest, 'run.front'), undefined)
+  assert.equal(resolveCharacterClip(manifest, 'emote.wave'), undefined)
   assert.equal(resolveCharacterClip(manifest, 'sit.back'), undefined, 'standing cannot impersonate a missing seated action')
   assert.equal(sampleCharacterClip(manifest, 'idle.front', 99999).completed, true)
   assert.equal(sampleCharacterClip(manifest, 'walk.front', 0, 1).index, 3, 'transition progress 1 holds its final pose, never wraps')

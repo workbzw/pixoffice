@@ -4,12 +4,14 @@
 
 六个现有人物已迁移到 `art/characters/packs/`。每个人独立维护单帧 PNG 与 `character.json`，构建时自动打包为多页图集。运行时不再分析透明区猜切片、不依赖六个人在旧图集中的排列，也不按每一帧的包围盒重新缩放。
 
-视觉资源管线与寻路、碰撞、座位坐标、多人协作和场景协议保持独立。走路、坐起与默认工作动作使用完整图片帧；旧手臂约束试验仅保留兼容。制作尺寸见[人物尺寸标准](./character-art-standard.md)，新增与修改的强制流程见[人物素材准入](./character-admission.md)。
+负责人统一使用中性技术 ID `office-lead`，显示名仍为“王明”；素材目录、脚本和对接示例使用相同 ID，当前源图片内容不变。只支持当前格式存档和 ID，不提供旧命名别名或自动迁移。
+
+视觉资源管线与寻路、碰撞、座位坐标、多人协作和场景协议保持独立。走路、坐起与默认工作动作使用完整图片帧；当前包内的历史动作仍可显式预览，但不承担缺失动作的兼容回退。制作尺寸见[人物尺寸标准](./character-art-standard.md)，新增与修改的强制流程见[人物素材准入](./character-admission.md)。
 
 ## 目录
 
 ```text
-art/characters/packs/marvis/
+art/characters/packs/office-lead/
   character.json
   standard.json
   quality.json                     # 新增/修改正式素材必需
@@ -30,10 +32,10 @@ art/characters/packs/marvis/
 
 public/characters/                 # 自动生成，不提交 Git
   registry.json
-  marvis/
+  office-lead/
     manifest-<内容版本>.json
-    atlas-0-<内容哈希>.png
-    atlas-1-<内容哈希>.png
+    atlas-0-<内容哈希>.webp
+    atlas-1-<内容哈希>.webp
 ```
 
 源素材是维护入口；不要直接编辑生成的图集、注册表或 manifest。图片布局改变后，业务仍通过 `walk.back` 等名称访问动作。
@@ -46,11 +48,11 @@ public/characters/                 # 自动生成，不提交 Git
 - 左右镜像必须通过显式 alias 配置；不能默认翻转非对称人物。
 - 图片中不包含桌椅、阴影、对白或名字。碰撞体和工位归属属于场景配置，不属于人物 PNG。
 - 原始混合图集已通过一次性迁移脚本归一化。这个校准只在导入时发生，运行时不再按姿态重复计算比例。
-- 六人的坐姿、前倾、起身、坐着转头及正背面行走以各自站姿头部可见面积校准，额外检查宽高，而不是分别凑到预设身体高度。`scripts/characters/register-office-motion.mjs` 和 `art/characters/office-motion-v2/` 保存原图与标注，可复现本版校准；日常构建不重新处理原图。
+- 六人的坐姿、前倾、起身、坐着转头及正背面行走以各自站姿头部可见面积校准，额外检查宽高，而不是分别凑到预设身体高度。`art/characters/office-motion-v2/` 保留原图与标注；历史一次性导入脚本已删除，后续修改使用当前素材准入流程，日常构建不重新处理原图。
 
 ## 配置示例
 
-下面是 `character.json` 的字段示意，省略了其他必需方向与动作，不能直接作为完整资源包构建。完整可用例子见 `art/characters/packs/marvis/character.json`。
+下面是 `character.json` 的字段示意，省略了其他必需方向与动作，不能直接作为完整资源包构建。完整可用例子见 `art/characters/packs/office-lead/character.json`。
 
 ```json
 {
@@ -80,7 +82,7 @@ public/characters/                 # 自动生成，不提交 Git
 
 ## 必需动作与降级
 
-六人默认使用完整 `work.quiet-back` 图片帧动画。王明保留已验收的生成帧；其他五人各自生成完整办公姿态及左右按键帧，导入时只裁切、等比缩放和配准整个人物，不拼接手臂、不复用王明的手部。播放顺序和时长读取王明配置：按键阶段重复 3 秒，随后静止 1 秒。六个工位使用同一套新桌椅。人物预览可选择任一员工查看“坐姿与轻微办公”。制作记录见 [王明办公坐姿 v2](../art/characters/marvis-quiet-work-v2/README.md) 和 [五人整图工作帧 v4](../art/characters/office-quiet-work-v4/README.md)。
+六人默认使用完整 `work.quiet-back` 图片帧动画。王明保留已验收的生成帧；其他五人各自生成完整办公姿态及左右按键帧，导入时只裁切、等比缩放和配准整个人物，不拼接手臂、不复用王明的手部。播放顺序和时长读取王明配置：按键阶段重复 3 秒，随后静止 1 秒。六个工位使用同一套新桌椅。人物预览可选择任一员工查看“坐姿与轻微办公”。制作记录见 [王明办公坐姿 v2](../art/characters/office-lead-quiet-work-v2/README.md) 和 [五人整图工作帧 v4](../art/characters/office-quiet-work-v4/README.md)。
 
 `basic` 要求 `idle` 和 `walk` 的 front/back/left/right 四方向，以及有效的 portrait 动作。
 
@@ -88,13 +90,15 @@ public/characters/                 # 自动生成，不提交 Git
 
 可选动作包括 `run.back`、`emote.wave`、`emote.thinking`、`emote.surprised`、`talk.seated-right`、`talk.seated-left`。缺少跑步时可降级到同方向行走；缺少表情可显示正面站姿；缺少坐姿不能伪装为坐姿，办公室资源包会在校验阶段被拒绝。没有转头帧时保留真实坐姿。
 
-`work.computer-back` 是保留在素材与预览中的旧桌面适配动作：输入、移到鼠标、操作鼠标、停手查看屏幕、返回键盘，共 12 秒；不再作为办公室的默认 `working` 动作。旧的 `bake-quiet-work.mjs` 拼接方案已停用发布；当前使用 `register-generated-work.mjs` 导入完整生成图片。
+`work.computer-back` 是现有包内保留的显式制作预览：输入、移到鼠标、操作鼠标、停手查看屏幕、返回键盘，共 12 秒；不作为办公室的默认 `working` 动作。对应的拼接试稿与一次性制作脚本已删除。当前工作帧的制作来源保留在 `office-lead-quiet-work-v2` 和 `office-quiet-work-v4`。
 
-可选 `work` 配置声明两侧肩部、三个部件的动作引用及起止锚点、预览接触面。`part.work-*` 是内部贴图，不出现在动作列表。桌椅视图的 `getWorkSurface()` 返回世界渲染坐标，经 `AgentEntity` 转为人物局部坐标，再按资源包统一倍率换算到素材坐标。家具绘制与接触点共用 `workstationSurface.ts` 的变换参数。它不参与地面整数格、碰撞和协议命令。
+默认工作动作必须具有独立的 `work.quiet-back` 图片帧；缺失时不会回退到旧手臂试验或坐姿。注册表必须包含独立头像，每个图集页必须声明 `startup` / `deferred`，并至少有一个首屏页。旧格式不会自动补齐或全量加载。
 
-只有坐好、背向桌面且处于 `working` 时启用轻微办公。侧身交谈、行走和入座/起身优先，立刻切离工作帧。六人默认工作动画播放完整图片，不依赖运行时工作面；保留旧 `work.computer-back` 供预览和未提供完整工作帧的旧资源包使用。
+可选 `work` 配置用于素材制作预览，声明两侧肩部、三个部件的动作引用及起止锚点、预览接触面。`part.work-*` 是内部贴图，不出现在动作列表。当前场景通过 FrameAdapter 播放完整工作帧，不在运行时拼接手臂；家具绘制与接触点共用 `workstationSurface.ts` 的变换参数，不参与地面整数格、碰撞和协议命令。
 
-旧 `work.typing-back` 四帧动作仍保留在预览和素材中，没有 `work` 配置的旧资源包仍可使用它；没有两种工作动作的包保持普通坐姿。原有工具和素材记录见 [桌面适配电脑办公](../art/characters/office-computer-work-v1/README.md)。完整帧直接进入人物图集，没有新增渲染循环或运行时图片加工。
+只有坐好、背向桌面且处于 `working` 时启用轻微办公。侧身交谈、行走和入座/起身优先，立刻切离工作帧。六人默认工作动画播放完整图片，不依赖运行时工作面；`work.computer-back` 只通过显式预览调用。
+
+`work.typing-back` 的四张成品帧仍保留在当前人物包及显式预览中；其原始试稿和导入脚本已删除。它不是缺少默认工作帧时的兼容方案。完整帧直接进入人物图集，没有新增渲染循环或运行时图片加工。
 
 `office.focus` 活动完成返回工位、入座后，展示层将其映射为持续 `working`，直到活动结束；重复刷新状态不重置打字计时器。外部通过 `actor.presentation.set` 设置的 `working` 同样持续播放，直到状态改变。活动的临时展示不覆盖外部任务标题、状态或版本，结束专注后恢复外部展示。
 
@@ -104,7 +108,7 @@ public/characters/                 # 自动生成，不提交 Git
 
 ### 可选独立嘴部
 
-现有六人均使用“无嘴身体帧 + 独立嘴部 Sprite”。正面/侧面站立、室内行走、坐着转头已拆分；背面不显示嘴，原有表情和历史行走暂保留原画。原图不覆盖，新底图位于各人物包的 `body/`，口型位于 `mouth/`。生成来源及导入脚本见 `art/characters/marvis-mouth-layer/README.md` 与 `art/characters/mouth-layers/README.md`。
+现有六人均使用“无嘴身体帧 + 独立嘴部 Sprite”。正面/侧面站立、室内行走、坐着转头已拆分；背面不显示嘴，原有表情和历史行走暂保留原画。原图不覆盖，新底图位于各人物包的 `body/`，口型位于 `mouth/`。生成来源及导入脚本见 `art/characters/office-lead-mouth-layer/README.md` 与 `art/characters/mouth-layers/README.md`。
 
 资源包可增加可选 `mouth`：`pivot` 定义口型贴图在统一画布中的中心，`views` 按视角指向闭嘴与说话动作。身体动作每帧可增加 `mouth: { x, y, view, scale, rotation }`，挂点基于未裁切人物画布，旋转单位为度。没有挂点的帧隐藏独立嘴部；不根据人物 ID 在播放器里硬编码坐标。
 
@@ -144,7 +148,7 @@ npm run build
 
 输出文件带内容版本；文件先写入，注册表最后原子替换。失败构建不会破坏旧注册表。旧的内容版本暂不自动删除，以免开发中仍打开的页面请求不到贴图。生产发布使用新的 dist 目录。
 
-`characters:check` 不修改文件，会在生成资源缺失或过期时失败。生成资源已被 Git 忽略；CI/新电脑应先安装依赖，再运行构建或测试。工具使用 Node.js 的原生 TypeScript 加载能力，要求 Node.js 22.18+ 或 24+。
+`characters:check` 不修改文件，会在生成资源缺失或过期时失败。生成资源已被 Git 忽略；CI/新电脑应先安装依赖，再运行构建或测试。工具使用已构建的包入口，推荐 Node.js 24，最低版本要求与根目录 `package.json` 的 `engines` 保持一致。
 
 ## 加载与释放
 
@@ -152,8 +156,8 @@ npm run build
 
 相同人物的并发加载合并为一次。场景、头像和预览各持有引用；只有全部释放且闲置 30 秒后，才卸载贴图。重新加载会等待尚未完成的卸载，避免关闭预览导致办公室白屏。
 
-## 旧资源
+## 素材保留范围
 
-`public/assets/characters/apartment/` 保留原创帧素材与生成提示词，作为来源记录和一次性导入输入，不再由正常帧动画播放器加载。页面统一使用独立人物包，不再提供旧角色切换或旧动画回退。人物包加载失败时只使用程序绘制的占位人物，并在控制台报告加载错误。
+早期人物整图、拼接行走试验、废弃工作动作试稿及其专属导入脚本已删除。当前人物包的图片、动作配置和尺寸规则未改动；当前工作帧、嘴型和尺寸配准所需的制作来源仍保留。
 
-迁移脚本 `scripts/characters/import-apartment.mjs` 只用于最初迁移，现在直接写库入口已停用，不应在日常修改素材后重跑。其他历史 README 中的直接发布命令也以新准入流程为准。
+页面统一使用独立人物包，不提供旧角色切换或旧动画回退。人物包加载失败时显示占位或错误状态，不偷偷切换到其他人物。其他历史 README 中的直接发布命令均以当前素材准入流程为准。

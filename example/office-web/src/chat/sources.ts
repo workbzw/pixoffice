@@ -1,5 +1,6 @@
-import { chatEventSchema } from './contract.ts'
-import type { ChatEvent, ChatRequest, OfficeChatSource } from './contract.ts'
+import { chatEventSchema, chatRequestSchema } from '@pixoffice/protocol/chat'
+import { parseProtocolObject, stringifyProtocolObject } from '@pixoffice/protocol/schema'
+import type { ChatEvent, ChatRequest, OfficeChatSource } from '@pixoffice/protocol/chat'
 
 function delay(ms: number, signal: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
@@ -27,17 +28,19 @@ export class PreviewChatSource implements OfficeChatSource {
 
 export class HttpChatSource implements OfficeChatSource {
   readonly kind = 'http'
+  readonly historyKey: string
   private readonly url: string
   constructor(url: string) {
     const parsed = new URL(url, globalThis.location?.href ?? 'http://localhost')
     if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error('聊天接口必须使用 HTTP 或 HTTPS')
     this.url = parsed.href
+    this.historyKey = this.url
   }
 
   async *stream(request: ChatRequest, signal: AbortSignal): AsyncIterable<ChatEvent> {
     const response = await fetch(this.url, {
       method: 'POST', signal, headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson' },
-      body: JSON.stringify(request),
+      body: stringifyProtocolObject(chatRequestSchema.parse(request)),
     })
     if (!response.ok) throw new Error(`聊天服务请求失败（${response.status}）`)
     if (!response.headers.get('content-type')?.includes('application/x-ndjson')) throw new Error('聊天服务未返回 NDJSON 数据流')
@@ -56,7 +59,7 @@ export class HttpChatSource implements OfficeChatSource {
           buffer = newline < 0 ? '' : buffer.slice(newline + 1)
           if (line.length > 32000) throw new Error('聊天服务的单条消息过大')
           if (line.trim()) {
-            const event = chatEventSchema.parse(JSON.parse(line))
+            const event = chatEventSchema.parse(parseProtocolObject(line))
             yield event
             if (event.type === 'done' || event.type === 'error') return
           }

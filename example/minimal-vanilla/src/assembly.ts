@@ -8,7 +8,7 @@ import type { Container } from 'pixi.js'
 
 export function createAssembly(signal: AbortSignal): SceneAssembly {
   configureOfficeAssets({ baseUrl: `${import.meta.env.BASE_URL}assets/office` })
-  return { scene: officeScenePack, pack: createOfficePresentation(),
+  return { product: { id: 'pixoffice.classic', storageNamespace: 'classic', presentationProfileId: 'office-character-v1' }, scene: officeScenePack, pack: createOfficePresentation(),
     animations: new AnimationRegistry<Container>().register(new FrameAdapter(manifest => characterAssets.acquire(manifest.asset.id, manifest.source.uri))),
     resolveAppearance: createAppearanceResolver(id => new URL(`${import.meta.env.BASE_URL}characters/visuals/${encodeURIComponent(id)}.json`, document.baseURI).href, signal),
   }

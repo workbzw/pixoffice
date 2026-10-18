@@ -9,7 +9,7 @@ The rejected v3 arm/hand composition is not used in these images.
 - Each character directory contains the original `neutral.png`, exact `neutral-prompt.txt`,
   two-column whole-character `motion-input.png`, generated `motion.png`, and exact `motion-prompt.txt`.
 - Neutral generation references: the character's own `standard-v2/sit/back/001.png` for identity,
-  and `../marvis-quiet-work-v2/pose-attempt-3.png` for the working pose.
+  and `../office-lead-quiet-work-v2/pose-attempt-3.png` for the working pose.
 - Motion generation edits only that character's two-column complete neutral sheet.
 - `registration.json` records output IDs, complete-frame crops and authored head bands.
 - `registered-frames.json` records whole-image uniform scale and translation.
@@ -18,15 +18,16 @@ The rejected v3 arm/hand composition is not used in these images.
 
 ```sh
 node scripts/characters/register-generated-work.mjs
-node scripts/characters/register-generated-work.mjs --publish
-npm run characters:build
 ```
 
 Only complete generated images are cropped, uniformly scaled and translated. No body parts,
 Wang Ming hand pixels, local motion patches or skeleton transforms are used by this importer.
 The one-pixel canvas perimeter is transparent; the character artwork is not cut there.
 
-Each character publishes `work/quiet-back-v4/001.png` through `004.png`:
+This historical script only stages candidates. Follow the [character admission workflow](../../../docs/character-admission.md)
+for audit, visual review and publication. It does not write to the active library.
+
+Each candidate contains `work/quiet-back-v4/001.png` through `004.png`:
 neutral, left press, neutral, right press. The two neutral frames are intentionally identical.
 Timing is read from Wang Ming's clip: 250 ms per phase, three rounds, then a 1000 ms neutral pause.
 All four files are included in the character's mandatory proportion validation.

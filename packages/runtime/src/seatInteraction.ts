@@ -1,6 +1,6 @@
 import type { Actor, Point, World, FurnitureInteraction } from './model.ts'
 import type { NavigationAdapter, NavigationObstacle, NavigationTemplates } from './navigationAdapter.ts'
-import { SceneFault } from './protocol.ts'
+import { SceneFault } from '@pixoffice/protocol'
 import { addCell, sameCell } from './map/furnitureGrid.ts'
 import { advanceCell, occupiedCells, cellAvailable, CELL_STEP_MS } from './cellMovement.ts'
 

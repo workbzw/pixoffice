@@ -1,7 +1,7 @@
 # @pixoffice/assets-office
 
 Optional office asset profile. This code package contains office-specific frame validation,
-semantic bindings, and the legacy work-rig preview compatibility layer. It bundles no images.
+semantic bindings, and work-rig sampling for artwork previews. It bundles no images or a separate character player.
 
 ```ts
 import { bindOfficeFrames } from '@pixoffice/assets-office/frame/bindings'
@@ -12,11 +12,11 @@ const adapter = new FrameAdapter(manifest => characterAssets.acquire(manifest.as
 
 Use this same resource store for office scene playback and character previews. Do not load
 the same textures through two independently owned stores. Configure its registry URL before
-loading when using the legacy registry entry points.
+loading when using the registry entry points.
 
-`/frame/packSchema` retains the office admission rules. `/frame/workAnimation` and
-`OfficeFrameSprite` retain old preview compatibility; current published office work clips
-are whole-body frames. Generic frame consumers do not import this package.
+`/frame/packSchema` contains the office admission rules. `/frame/workAnimation` supports
+artwork previews; live scenes use the shared FrameAdapter with whole-body work frames.
+Generic frame consumers do not import this package.
 
 Deploy images separately using the generated asset catalogs. Office furniture and each
 character have independent catalogs under `public/asset-packs/`. New scenes and skeletal

@@ -32,6 +32,8 @@ export class StatusLabel extends Container {
   private taskText: Text
   private stateDot: Graphics
   private taskBg: Graphics
+  private taskLayer = new Container()
+  private nameBg = new Graphics()
   private currentState = 'idle'
 
   constructor(name: string) {
@@ -45,7 +47,8 @@ export class StatusLabel extends Container {
     this.taskText.anchor.set(0.5, 0)
 
     this.stateDot = new Graphics()
-    this.addChild(this.taskBg, this.nameText, this.taskText, this.stateDot)
+    this.taskLayer.addChild(this.taskBg, this.taskText)
+    this.addChild(this.nameBg, this.taskLayer, this.nameText, this.stateDot)
     this.taskBg.visible = false
     this.paintStateDot()
   }
@@ -73,12 +76,13 @@ export class StatusLabel extends Container {
     const w = this.taskText.width + padX * 2
     const h = this.taskText.height + padY * 2
     const nameH = this.nameText.height
-    const taskTop = -(nameH + NAME_TASK_GAP + h)
+    const taskTop = -h
 
     this.taskBg.clear()
     this.taskBg.roundRect(-w / 2, taskTop, w, h, 3)
     this.taskBg.fill({ color: 0xffffff, alpha: 0.9 })
     this.taskText.position.set(0, taskTop + padY)
+    this.taskLayer.position.set(0, -nameH - NAME_TASK_GAP)
   }
 
   setState(state: string) {
@@ -88,17 +92,28 @@ export class StatusLabel extends Container {
 
   /** 发顶 Y：名字贴在发顶上方，任务叠在名字上面 */
   layout(crownTopY: number) {
+    this.scale.set(1); this.nameBg.clear()
     this.position.set(0, crownTopY - CROWN_GAP)
+    this.taskLayer.position.set(0, this.taskBg.visible ? -this.nameText.height - NAME_TASK_GAP : 0)
+  }
+
+  layoutBeside(x: number, y: number, scale = 1, crownTopY?: number) {
+    this.position.set(x, y); this.scale.set(scale)
+    const width = this.nameText.width + 27, height = this.nameText.height + 12
+    this.nameBg.clear().roundRect(-width / 2, -this.nameText.height - 6, width, height, 6).fill({ color: 0xffffff, alpha: .96 })
+    if (crownTopY !== undefined) {
+      // Keep the task over the actor even when the identity label sits beside the seat.
+      this.taskLayer.position.set(-x / scale, (crownTopY - CROWN_GAP - y) / scale)
+    }
   }
 
   /** 名字/任务标签块顶边 Y（Agent 本地坐标） */
   getLabelTopY(crownTopY: number): number {
     const baselineY = crownTopY - CROWN_GAP
     if (!this.taskBg.visible) {
-      return baselineY - this.nameText.height
+      return baselineY - this.nameText.height * this.scale.y
     }
-    const taskBoxH = this.taskText.height + 6
-    return baselineY - this.nameText.height - NAME_TASK_GAP - taskBoxH
+    return this.y + (this.taskLayer.y - this.taskText.height - 6) * this.scale.y
   }
 
   private paintStateDot() {

@@ -10,6 +10,6 @@
 
 官网的 GitHub 入口随语言打开仓库中的 `README.md`（中文，仓库默认）或 `README.en.md`（英文）。两份 README 提供相互切换链接，返回官网时也保留对应语言。
 
-主要装配位于 `src/application/OfficeScene.ts` 与 `createOfficeRuntime.ts`。所有核心能力通过 `@pixoffice/*` 包的公开 exports 导入；`src/scene` 等少量转发文件服务于既有 UI 和测试，不是另一套核心实现。
+主要装配位于 `src/application/OfficeScene.ts` 与 `src/application/createOfficeRuntime.ts`。所有核心能力通过 `@pixoffice/*` 包的公开 exports 导入；旧源码路径和转发文件已删除，不再保留第二套导入入口。
 
 修改包代码后执行 `npm run packages:build`，或另开终端运行 `npm run packages:watch`。不要通过 Vite alias 绕过发布产物。

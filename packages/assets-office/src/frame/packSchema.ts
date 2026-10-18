@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { CharacterSourceSchema as BaseSource, CharacterManifestSchema as BaseManifest, validateFrameSource, characterFrameDependencies as frameDependencies, sampleCharacterClip } from '@pixoffice/animation-frame/packSchema'
 import { validWorkSurface, type WorkSurface } from '@pixoffice/contracts/contactSurface'
-import { sampleComputerWork, sampleQuietWork, QUIET_WORK_CYCLE_MS, WORK_CYCLE_MS } from './workAnimation.ts'
+import { sampleComputerWork, WORK_CYCLE_MS } from './workAnimation.ts'
 export { CharacterRegistrySchema, resolveCharacterClip, sampleCharacterClip } from '@pixoffice/animation-frame/packSchema'
 export type { CharacterRegistry } from '@pixoffice/animation-frame/packSchema'
 
@@ -50,7 +50,7 @@ export type CharacterManifest = z.infer<typeof CharacterManifestSchema>
 
 export function characterFrameDependencies(manifest: Pick<CharacterManifest, 'clips' | 'mouth' | 'work'>, names: string[]) {
   const expanded = [...names]
-  if (manifest.work && names.some(name => name === 'work.computer-back' || name === 'work.quiet-back' && !manifest.clips[name])) {
+  if (manifest.work && names.includes('work.computer-back')) {
     expanded.push('work.computer-back', manifest.work.upper.clip, manifest.work.forearm.clip, manifest.work.hand.clip)
   }
   return frameDependencies(manifest, expanded)
@@ -58,12 +58,10 @@ export function characterFrameDependencies(manifest: Pick<CharacterManifest, 'cl
 
 /** Body timing and speech timing are independent; attachments belong to the sampled body frame. */
 export function sampleCharacterLayers(manifest: CharacterManifest, name: string, elapsedMs = 0, progress?: number, speechElapsedMs?: number, surface?: WorkSurface) {
-  const generatedQuiet = name === 'work.quiet-back' && !manifest.clips[name] && Boolean(manifest.work)
-  const work = manifest.work && (generatedQuiet
-    ? sampleQuietWork(manifest.work, surface ?? manifest.work.previewSurface, elapsedMs)
-    : name === 'work.computer-back' ? sampleComputerWork(manifest.work, surface ?? manifest.work.previewSurface, elapsedMs) : undefined)
-  const bodyName = generatedQuiet ? work ? 'work.computer-back' : 'sit.back' : name === 'work.computer-back' && !work ? 'sit.back' : name
-  const body = sampleCharacterClip(manifest, bodyName, elapsedMs, progress)
+  const work = name === 'work.computer-back' && manifest.work
+    ? sampleComputerWork(manifest.work, surface ?? manifest.work.previewSurface, elapsedMs) : undefined
+  if (name === 'work.computer-back' && !work) return undefined
+  const body = sampleCharacterClip(manifest, name, elapsedMs, progress)
   if (!body) return undefined
   const attachment = body.clip.frames[body.index].mouth
   const rig = manifest.mouth, view = attachment && rig?.views[attachment.view]
@@ -78,8 +76,6 @@ export function sampleCharacterLayers(manifest: CharacterManifest, name: string,
 
 export function characterPreviewTimeline(manifest: CharacterManifest, name: string) {
   const layers = sampleCharacterLayers(manifest, name)
-  if (name === 'work.quiet-back' && !manifest.clips[name] && manifest.work) return { loop: true, fallback: false,
-    frames: [...Array.from({ length: 12 }, () => ({ durationMs: 250 })), { durationMs: QUIET_WORK_CYCLE_MS - 3000 }] }
-  if (name === 'work.computer-back' && manifest.work) return { loop: true, fallback: false, frames: Array.from({ length: WORK_CYCLE_MS / 80 }, () => ({ durationMs: 80 })) }
+  if (name === 'work.computer-back' && layers?.work) return { loop: true, frames: Array.from({ length: WORK_CYCLE_MS / 80 }, () => ({ durationMs: 80 })) }
   return name.startsWith('speak.') && layers?.mouth ? layers.mouth.clip : layers?.body.clip
 }

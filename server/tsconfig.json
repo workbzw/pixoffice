@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "lib": ["ES2023"], "module": "NodeNext", "moduleResolution": "NodeNext",
+    "rootDir": "src", "outDir": "dist", "types": ["node"], "strict": true,
+    "rewriteRelativeImportExtensions": true, "verbatimModuleSyntax": true,
+    "skipLibCheck": true, "noEmitOnError": true, "noUnusedLocals": true, "noUnusedParameters": true
+  },
+  "include": ["src"]
+}

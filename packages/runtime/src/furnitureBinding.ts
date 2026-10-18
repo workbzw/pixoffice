@@ -1,5 +1,5 @@
 import type { Actor, Template, World } from './model.ts'
-import { SceneFault } from './protocol.ts'
+import { SceneFault } from '@pixoffice/protocol'
 
 export function restoreBoundActor(world: World, actor: Actor, template: (id: string) => Template) {
   const prop = world.props.find(item => item.id === actor.homeId)

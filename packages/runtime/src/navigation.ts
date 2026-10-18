@@ -1,7 +1,7 @@
 import PF from 'pathfinding'
 import type { Point, World } from './model.ts'
 import type { NavigationAdapter, NavigationQuery, NavigationTemplates } from './navigationAdapter.ts'
-import { SceneFault } from './protocol.ts'
+import { SceneFault } from '@pixoffice/protocol'
 import { compactPath, comparePaths, elbowPaths, shortenPath } from './orthogonalPath.ts'
 import { convexAreaContains } from './walkableArea.ts'
 import { addCell, cellKey, isCell, sameCell, furnitureCells, validateFurnitureFootprints } from './map/furnitureGrid.ts'
@@ -71,10 +71,11 @@ export class GridNavigation implements NavigationAdapter {
       grid.setWalkableAt(x, y, floor && !blocked.has(key) && (!within || within.has(key)))
     }
     const walkable = (p: Point) => isCell(p) && grid.isInside(p.x, p.y) && grid.isWalkableAt(p.x, p.y)
-    if (!walkable(from) || !walkable(to)) throw new SceneFault('NO_ROUTE', '起点或目标格不可通行')
+    if (!walkable(from)) throw new SceneFault('NO_ROUTE', '起点格不可通行', { reasonCode: 'START_BLOCKED', details: { from, to } })
+    if (!walkable(to)) throw new SceneFault('NO_ROUTE', '目标格不可通行', { reasonCode: 'TARGET_BLOCKED', details: { from, to } })
     if (sameCell(from, to)) return []
     const found = new PF.AStarFinder({ diagonalMovement: PF.DiagonalMovement.Never }).findPath(from.x, from.y, to.x, to.y, grid)
-    if (!found.length) throw new SceneFault('NO_ROUTE', '没有可达的整数格路径')
+    if (!found.length) throw new SceneFault('NO_ROUTE', '起点与目标之间没有连通路径', { reasonCode: 'PATH_DISCONNECTED', details: { from, to } })
     const clear = (a: Point, b: Point) => {
       if (a.x !== b.x && a.y !== b.y) return false
       let p = a

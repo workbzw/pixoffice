@@ -43,13 +43,24 @@ async function dependencies(entry) {
 
 test('headless core cannot import office definitions, Pixi, React, application or texture code', async () => {
   const graph = await dependencies('runtime/src/index.ts')
-  assert(graph.files.every(file => file.startsWith('runtime/')), graph.files.join('\n'))
+  assert(graph.files.every(file => /^(runtime|protocol)\//.test(file)), graph.files.join('\n'))
   assert.deepEqual(graph.imports.sort(), ['pathfinding', 'zod'])
 })
 test('generic rendering and presentation do not import concrete scenes or frame players', async () => {
   const graph = await dependencies('renderer-pixi/src/index.ts')
   assert(!graph.files.some(file => /^(scene-|assets-|animation-frame\/)/.test(file)), graph.files.join('\n'))
   assert(!graph.imports.some(id => id.startsWith('react')))
+})
+
+test('the public protocol is headless and the dimetric product cannot import classic scenes or artwork', async () => {
+  for (const entry of ['index', 'map', 'schema', 'spatial', 'chat', 'dashboard', 'relay', 'office-integration']) {
+    const graph = await dependencies(`protocol/src/${entry}.ts`)
+    assert(graph.files.every(file => file.startsWith('protocol/')), graph.files.join('\n'))
+    assert(graph.imports.every(id => id === 'zod'))
+  }
+  const graph = await dependencies('../example/dimetric/src/assembly.ts')
+  assert(!graph.files.some(file => /^(?:scene|assets)-(?:office|classroom|farm)\//.test(file)), graph.files.join('\n'))
+  assert(!graph.files.some(file => /^\.\.\/example\/(office-web|classroom|farm|minimal-vanilla|isolated-scene)\//.test(file)))
 })
 
 test('classroom and office are peer scenes; classroom core is headless and assets cannot pull in scene rules', async () => {

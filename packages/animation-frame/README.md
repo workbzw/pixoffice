@@ -13,6 +13,11 @@ Use a URI-resolving appearance resolver, or configure the optional character reg
 
 Supports complete body frames plus an optional mouth layer. Dynamic contact retargeting, arbitrary gesture mixing and IK are not implemented; unsupported combinations fail explicitly.
 
+Atlas pages require an explicit `startup` or `deferred` group, with at least one
+startup page. Character registry entries require a generated portrait. Ungrouped
+manifests and portrait-less registry entries are rejected. Clip reuse must use
+explicit aliases; missing run, emote or seated actions never substitute another action.
+
 The frame schema has no required office, sitting, typing or walking actions. Scene-specific
 requirements belong to asset profiles. Office rules and legacy preview rigs moved to
 `@pixoffice/assets-office/frame`; do not import that package for an independent scene.

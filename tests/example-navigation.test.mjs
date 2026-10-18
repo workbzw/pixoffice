@@ -60,7 +60,7 @@ for (const base of ['/', '/preview/']) {
 
       const entry = await readFile(new URL('../example/office-web/src/minimal.ts', import.meta.url), 'utf8')
       assert.match(entry, /minimal-vanilla\/src\/main\.ts/)
-      const source = await readFile(new URL('../example/office-web/src/components/RuntimeWorkspace.tsx', import.meta.url), 'utf8')
+      const source = await readFile(new URL('../example/office-web/src/ui/OfficeShell.tsx', import.meta.url), 'utf8')
       assert.match(source, /最小装配/)
       assert.ok(source.includes('href={`${import.meta.env.BASE_URL}minimal/`}'))
       assert.match(source, /官网首页/)

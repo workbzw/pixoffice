@@ -2,7 +2,7 @@ import { z } from 'zod'
 
 const id = z.string().min(1).max(200)
 const point = z.strictObject({ x: z.number().finite(), y: z.number().finite() })
-export const viewDirectionSchema = z.enum(['front', 'back', 'left', 'right'])
+export const viewDirectionSchema = z.enum(['front', 'back', 'left', 'right', 'front-left', 'front-right', 'back-left', 'back-right'])
 export type ViewDirection = z.infer<typeof viewDirectionSchema>
 export type PointDu = z.infer<typeof point>
 export type BoundsDu = { left: number; top: number; right: number; bottom: number }

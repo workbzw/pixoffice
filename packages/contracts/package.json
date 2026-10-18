@@ -9,6 +9,7 @@
     "README.md"
   ],
   "exports": {
+    "./projection": { "types": "./dist/projection.d.ts", "import": "./dist/projection.js" },
     ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" },
     "./animation": {
       "types": "./dist/animation.d.ts",
@@ -35,6 +36,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@pixoffice/protocol": "0.1.0",
     "zod": "^4.6.5"
   }
 }

@@ -23,25 +23,30 @@ export async function createAssetCatalog(root, id, files, entrypoints = {}) {
   }
   return schema.parse({ schemaVersion: 1, id, revision: sha(JSON.stringify({ files: entries, entrypoints })), files: entries, entrypoints })
 }
-export async function exportAssetPack({ root, catalog, output }) {
+export async function readAssetCatalogFiles(root, catalog) {
   const manifest = schema.parse(catalog), base = await realpath(root)
   const names = new Set(manifest.files.map(file => file.path))
   if (names.size !== manifest.files.length || names.has('asset-pack.json')) throw new Error('Duplicate or reserved asset path')
   for (const entry of Object.values(manifest.entrypoints)) if (!names.has(entry)) throw new Error(`Undeclared entrypoint: ${entry}`)
   if (manifest.revision !== sha(JSON.stringify({ files: manifest.files, entrypoints: manifest.entrypoints }))) throw new Error('Catalog revision mismatch')
-  const buffers = []
+  const buffers = new Map()
   for (const file of manifest.files) {
     const buffer = await readInside(base, file.path)
     if (sha(buffer) !== file.sha256) throw new Error(`Asset hash mismatch: ${file.path}`)
-    buffers.push(buffer)
+    buffers.set(file.path, buffer)
   }
+  return buffers
+}
+export async function exportAssetPack({ root, catalog, output }) {
+  const manifest = schema.parse(catalog)
+  const buffers = await readAssetCatalogFiles(root, manifest)
   // All validation precedes creating a new destination; existing directories are never touched.
   await mkdir(output, { recursive: false })
   try {
-    for (let i = 0; i < manifest.files.length; i++) {
-      const target = path.join(output, manifest.files[i].path)
+    for (const [file, buffer] of buffers) {
+      const target = path.join(output, file)
       await mkdir(path.dirname(target), { recursive: true })
-      await writeFile(target, buffers[i], { flag: 'wx' })
+      await writeFile(target, buffer, { flag: 'wx' })
     }
     await writeFile(path.join(output, 'asset-pack.json'), JSON.stringify(manifest, null, 2) + '\n')
   } catch (error) { await rm(output, { recursive: true, force: true }); throw error }

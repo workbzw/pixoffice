@@ -5,11 +5,11 @@ import { createTestServer } from './helpers/vite.mjs'
 let server, createOfficeRuntime, SeatInteractions, actorPixels, seatStepPixels, seatStepDurationMs, projectAgents, computeAgentDepthZ
 before(async () => {
   server = await createTestServer()
-  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts'))
+  ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts'))
   ;({ SeatInteractions } = await server.ssrLoadModule('/packages/runtime/src/seatInteraction.ts'))
-  ;({ actorPixels, seatStepPixels, seatStepDurationMs } = await server.ssrLoadModule('/example/office-web/src/scene/gridProjection.ts'))
-  ;({ projectAgents } = await server.ssrLoadModule('/example/office-web/src/runtime/adapters/legacy.ts'))
-  ;({ computeAgentDepthZ } = await server.ssrLoadModule('/example/office-web/src/scene/systems/deskDepthSort.ts'))
+  ;({ actorPixels, seatStepPixels, seatStepDurationMs } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/projection'))
+  ;({ projectAgents } = await server.ssrLoadModule('@pixoffice/scene-office/adapters/office'))
+  ;({ computeAgentDepthZ } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/depth'))
 })
 after(() => server?.close())
 

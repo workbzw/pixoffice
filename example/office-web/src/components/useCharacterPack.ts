@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { characterAssets, getCharacterPack, type CharacterPack } from '../scene/assets/loadApartmentAssets.ts'
+import { characterAssets, getCharacterPack, type CharacterPack } from '@pixoffice/assets-office/frame/resources'
 
 export function useCharacterPack(id: string | undefined, enabled = true) {
   const [pack, setPack] = useState<CharacterPack | undefined>(() => {

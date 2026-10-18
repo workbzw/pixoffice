@@ -56,6 +56,8 @@ export class AnimationResources<TNode> {
   release() {
     if (this.released) return
     this.released = true
-    this.leases.forEach(lease => lease.release())
+    for (const [id, lease] of this.leases) {
+      try { lease.release() } catch (error) { console.warn(`[AnimationResources] release failed: ${id}`, error) }
+    }
   }
 }

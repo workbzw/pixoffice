@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { ScenePlugin } from '@pixoffice/runtime'
+import { SceneFault } from '@pixoffice/protocol'
 
 export const blackboardStateSchema = z.strictObject({
   title: z.string().max(36), text: z.string().max(180),
@@ -20,8 +21,13 @@ export const classroomObjects: ScenePlugin = {
     { id: 'classroom.blackboard', name: '黑板', view: 'classroom.blackboard',
       footprint: { left: 0, top: 0, right: 8, bottom: 1 },
       anchors: { teacher: { x: 1, y: 3 }, speaker: { x: 5, y: 2 } },
-      resources: { lesson: 1 },
+      resources: { lesson: 1 }, initialState: { title: '', text: '' },
     },
   ],
   stateSchemas: { 'classroom.blackboard': blackboardStateSchema },
+  validateWorld(world) {
+    if (!world.props.some(prop => prop.id === 'blackboard' && prop.templateId === 'classroom.blackboard')) {
+      throw new SceneFault('REQUIRED_ENTITY_MISSING', '教室缺少必需对象：blackboard')
+    }
+  },
 }

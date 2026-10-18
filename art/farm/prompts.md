@@ -12,7 +12,7 @@ Bright miniature farm, elevated straight-on camera, 4:3 landscape. Empty central
 
 Output: `exec-8f209d32-9354-4a2b-a9f8-3ef4dc30122b.png`, copied to `originals/work-sheet.png`.
 
-Identity reference: `art/characters/packs/marvis/idle/back/001.png`, inspected before generation. Transparent sheet, four columns by three rows. Same full-body back-facing chibi character in off-white hoodie and navy trousers. Row 1: planting seeds, four ordered frames. Row 2: holding and tilting a blue watering can, four ordered frames. Row 3: reaching then lifting a carrot bunch, four ordered frames. Fixed proportions, visible shoes, no sitting/kneeling, no body-part assembly, no scenery or UI. Registration uses one common scale and per-row shared floor baseline.
+Identity reference: `art/characters/packs/office-lead/idle/back/001.png`, inspected before generation. Transparent sheet, four columns by three rows. Same full-body back-facing chibi character in off-white hoodie and navy trousers. Row 1: planting seeds, four ordered frames. Row 2: holding and tilting a blue watering can, four ordered frames. Row 3: reaching then lifting a carrot bunch, four ordered frames. Fixed proportions, visible shoes, no sitting/kneeling, no body-part assembly, no scenery or UI. Registration uses one common scale and per-row shared floor baseline.
 
 ## Crop beds
 

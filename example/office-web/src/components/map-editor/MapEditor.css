@@ -2,7 +2,6 @@
 .runtime-workspace.map-editing > .runtime-sidebar, .runtime-workspace.map-editing > .runtime-inspector, .runtime-workspace.map-editing .runtime-stats { display: none; }
 .runtime-workspace.map-editing .runtime-center { height: 100%; min-height: 0; padding: 0; gap: 0; }
 .runtime-workspace.map-editing .office-main { border: 0; border-radius: 0; }
-.runtime-workspace.map-editing .character-preview-trigger { display: none; }
 .office-render-surface { position: absolute; inset: 0; pointer-events: none; }
 .office-canvas.is-decorating > canvas, .office-canvas.is-decorating > .map-overlay, .office-canvas.is-decorating > .office-render-surface { position: absolute; inset: 78px 0 205px; width: 100% !important; height: calc(100% - 283px) !important; }
 .office-canvas.is-decorating.catalog-closed > canvas, .office-canvas.is-decorating.catalog-closed > .map-overlay, .office-canvas.is-decorating.catalog-closed > .office-render-surface { bottom: 86px; height: calc(100% - 164px) !important; }

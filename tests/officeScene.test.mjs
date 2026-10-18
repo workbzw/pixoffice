@@ -6,14 +6,14 @@ import { createTestServer } from './helpers/vite.mjs'
 async function loadScene(t) {
   const server = await createTestServer()
   t.after(() => server.close())
-  return server.ssrLoadModule('/example/office-web/src/scene/OfficeScene.ts')
+  return server.ssrLoadModule('/example/office-web/src/application/OfficeScene.ts')
 }
 
 test('tabletop and legs share artwork but keep stable independent ground depths', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { loadOfficeAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadOfficeAssets.ts')
-  const { DeskEntity } = await server.ssrLoadModule('/example/office-web/src/scene/entities/DeskEntity.ts')
+  const { loadOfficeAssets } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/assets/loadOfficeAssets')
+  const { DeskEntity } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/views/DeskEntity')
   const table = new Texture({ source: new TextureSource({ width: 920, height: 582 }) })
   const chair = new Texture({ source: new TextureSource({ width: 474, height: 492 }) })
   t.mock.method(Assets, 'load', async alias => alias === 'office-chair' ? chair : table)
@@ -47,10 +47,10 @@ test('tabletop and legs share artwork but keep stable independent ground depths'
 test('the new workstation artwork applies to every desk and remains reversible without changing the map', async t => {
   const server = await createTestServer()
   t.after(() => server.close())
-  const { loadOfficeAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadOfficeAssets.ts')
-  const { loadWorkstationTrialAssets } = await server.ssrLoadModule('/example/office-web/src/scene/assets/loadWorkstationTrialAssets.ts')
-  const { createOfficePropViews } = await server.ssrLoadModule('/example/office-web/src/scene/views/propViews.ts')
-  const { createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/runtime/createOfficeRuntime.ts')
+  const { loadOfficeAssets } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/assets/loadOfficeAssets')
+  const { loadWorkstationTrialAssets } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/assets/loadWorkstationTrialAssets')
+  const { createOfficePropViews } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/views')
+  const { createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts')
   const make = (width, height) => new Texture({ source: new TextureSource({ width, height }) })
   const textures = {
     'office-background': make(1402, 1122), 'office-desk': make(920, 582), 'office-chair': make(474, 492),
@@ -64,7 +64,7 @@ test('the new workstation artwork applies to every desk and remains reversible w
   let trial = true
   const registry = createOfficePropViews(() => trial)
   const props = original.props.slice(0, 2), template = runtime.template(props[0].templateId)
-  const actors = [{ id: 'marvis', assignedDeskId: props[0].id, seated: true }]
+  const actors = [{ id: 'office-lead', furniture: { propId: props[0].id, seated: true } }]
   const views = props.map(prop => registry.create(prop, template))
   t.after(() => {
     views.forEach(view => view.roots.forEach(root => root.destroy({ children: true })))
@@ -89,7 +89,7 @@ test('the new workstation artwork applies to every desk and remains reversible w
   }
   assert.equal(oldSlice.destroyed, true, 'switching releases only derived texture views')
   assert.notEqual(oldSource.destroyed, true, 'shared asset textures remain usable')
-  trial = true; actors[0].assignedDeskId = props[1].id; update()
+  trial = true; actors[0].furniture.propId = props[1].id; update()
   assert.equal(views[0].hitTarget.children.length, 2)
   assert.equal(views[1].hitTarget.children.length, 2, 'artwork does not depend on who owns the desk')
   assert.deepEqual(runtime.readWorld(), original, 'artwork switching never changes the saved map')
@@ -225,7 +225,7 @@ test('expressions and HTTP visits share body resources; view state is not author
   const { OfficeScene } = await loadScene(t)
   const scene = new OfficeScene()
   t.after(() => scene.destroy())
-  assert.equal(scene.playAgentAnimation('marvis', 'emotes/wave').status, 'running')
+  assert.equal(scene.playAgentAnimation('office-lead', 'emotes/wave').status, 'running')
   const visit = scene.requestDeskVisit(1, 2, '外部拜访')
   assert.equal(visit.status, 'queued')
   const projection = scene.getAgents()

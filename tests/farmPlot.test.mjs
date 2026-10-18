@@ -7,6 +7,22 @@ import { createFarmPlotView, FARM_PLOT_LAYOUT } from '../packages/scene-farm/dis
 import { createFarmWorld, farmObjects } from '@pixoffice/scene-farm'
 import { createFarmPresentation } from '@pixoffice/scene-farm/pixi'
 
+test('watering redraws the sign immediately even while the farm clock is paused', t => {
+  const textures = new Map(['soil', 'plot-sign', 'plant-carrot-1'].map(key => [key, Texture.WHITE]))
+  const view = createFarmPlotView(textures, () => 1000), root = view.roots[0]
+  t.after(() => root.destroy({ children: true }))
+  const prop = { id: 'plot-1', name: 'Plot', position: { x: 3, y: 5 }, state: { crop: 'carrot', plantedAt: 1000, wateredAt: -1 } }
+  view.update(prop)
+  const sign = root.children[2], status = sign.children[2], progress = sign.children[3]
+  assert.equal(status.text, '需要浇水')
+  const position = { x: root.x, y: root.y }
+  prop.state.wateredAt = 1000
+  view.update(prop)
+  assert.equal(status.text, '幼苗')
+  assert(progress.context.instructions.length > 0)
+  assert.deepEqual({ x: root.x, y: root.y }, position)
+})
+
 test('soil and planting contacts stay fixed through every crop stage and harvest', t => {
   const textures = new Map(), texture = (width, height) => new Texture({ source: new TextureSource({ width, height }) })
   textures.set('soil', texture(480, 320))
@@ -24,15 +40,15 @@ test('soil and planting contacts stay fixed through every crop stage and harvest
   assert.equal(view.hitTarget, root)
   assert(root.hitArea.contains(FARM_PLOT_LAYOUT.sign.x, FARM_PLOT_LAYOUT.sign.y + FARM_PLOT_LAYOUT.sign.titleY))
   assert(root.hitArea.contains(1, FARM_PLOT_LAYOUT.soil.height))
-  for (const crop of ['carrot', 'tomato', 'cabbage']) for (const time of [null, 0, 22000, 50000]) {
-    now = time ?? 0; prop.state = { crop, plantedAt: 0, wateredAt: time === null ? null : 0 }
+  for (const crop of ['carrot', 'tomato', 'cabbage']) for (const time of [-1, 0, 22000, 50000]) {
+    now = Math.max(0, time); prop.state = { crop, plantedAt: 0, wateredAt: time === -1 ? -1 : 0 }
     view.update(prop)
     assert(backPlants.visible && frontPlants.visible); assert(sign.visible)
     assert.deepEqual(geometry(), original, `${crop} at ${time} moved its ground contact`)
     assert.equal(sign.children[1].text, '菜地')
     assert.equal(root.x, 250); assert.equal(root.y, 250)
   }
-  prop.state = { crop: null, plantedAt: null, wateredAt: null }; view.update(prop)
+  prop.state = { crop: '', plantedAt: -1, wateredAt: -1 }; view.update(prop)
   assert.equal(backPlants.visible, false); assert.equal(frontPlants.visible, false); assert(sign.visible)
   assert.equal(sign.children[2].text, '待播种'); assert.deepEqual(geometry(), original)
   assert.deepEqual(original.plants.map(p => ({ x: p.x, y: p.y })), FARM_PLOT_LAYOUT.plantingPoints)

@@ -17,7 +17,7 @@ export function resolveWebsiteLocale(requested: string | null, saved: string | n
 
 export function readWebsiteLocale(): WebsiteLocale {
   let saved: string | null = null
-  try { saved = localStorage.getItem(websiteLocaleKey) } catch { /* Storage can be unavailable in embedded or private browsers. */ }
+  try { saved = localStorage.getItem(websiteLocaleKey) } catch { /* Storage can be unavailable under restrictive browser policies. */ }
   return resolveWebsiteLocale(new URLSearchParams(location.search).get('lang'), saved, navigator.languages)
 }
 

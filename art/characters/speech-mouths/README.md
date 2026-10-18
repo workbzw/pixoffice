@@ -6,6 +6,6 @@
 
 > Create one production sprite atlas for subtle talking mouth overlays in a chibi office character animation. Use the two supplied character pictures ONLY as style reference, do not redraw any character, head, face, body or skin. The output is ONLY six isolated small illustrated open mouths on a genuinely transparent background. Grid exactly 3 columns x 2 rows with very large even transparent gutters. Top row: front-view mouth shapes in three stages: tiny slightly open, medium open speaking, relaxed wider open speaking. Bottom row: the same three stages seen in right-facing three-quarter profile. Mouths are soft compact rounded shapes with a fine dark warm-brown outline, muted dark reddish interior and a tiny muted pink tongue, matching the gentle hand-painted chibi reference. Keep outer mouth shapes modest, not shouting, no teeth, no lips, no noses, no faces, no surrounding skin patches, no shadows, no text, no labels, no checkerboard. Flat isolated 2D animation artwork. Each sprite centered in its grid cell, consistent line thickness, ready to be downscaled to roughly 8-14 pixels wide in a 256px character source frame.
 
-`placement.json` 是现有六人的口型局部校准区域 `[x, y, width, height]`，坐标基于各自资源包的完整画布。脚本 `node scripts/characters/create-speech-frames.mjs` 从原闭嘴帧制作说话帧，区域外像素不变；日常构建直接使用人物包内的帧，不运行此脚本。
+`placement.json` 是现有六人的口型局部校准区域 `[x, y, width, height]`，坐标基于各自资源包的完整画布。这是历史制作记录；一次性说话帧脚本已删除。日常构建直接使用人物包内的帧，后续修改走当前素材准入流程。
 
 现有坐着转头 `talk.seated-*` 仍为聆听姿态，`speak.*` 才是发言动作。背面看不到嘴巴，不伪造嘴部动画。此次只提供视觉口型，不包含语音合成或音频口型同步。

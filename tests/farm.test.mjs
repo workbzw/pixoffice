@@ -56,7 +56,7 @@ test('paused wall time and accelerated crop growth do not expire farm execution 
 
 test('plant, water, grow and harvest commit real state exactly once', t => {
   const { runtime, clock, advance } = setup(t)
-  runtime.submit(command(runtime, 'plant', 'plant')); assert.equal(plot(runtime).state.crop, null)
+  runtime.submit(command(runtime, 'plant', 'plant')); assert.equal(plot(runtime).state.crop, '')
   finish(runtime, advance, ['plant']); assert.equal(cropStatus(plot(runtime).state, clock.now()).stage, 'thirsty')
   advance(50000); assert.equal(cropStatus(plot(runtime).state, clock.now()).progress, 0)
   runtime.submit(command(runtime, 'water', 'water')); finish(runtime, advance, ['water'])
@@ -64,7 +64,7 @@ test('plant, water, grow and harvest commit real state exactly once', t => {
   const harvest = command(runtime, 'harvest', 'harvest')
   runtime.submit(harvest); assert.equal(inventory(runtime).carrot, 0)
   finish(runtime, advance, ['harvest'])
-  assert.equal(inventory(runtime).carrot, 3); assert.equal(plot(runtime).state.crop, null)
+  assert.equal(inventory(runtime).carrot, 3); assert.equal(plot(runtime).state.crop, '')
   assert.equal(runtime.submit(harvest).status, 'completed'); advance(5000)
   assert.equal(inventory(runtime).carrot, 3)
   assert(runtime.snapshot().resources.every(r => !r.holders.length))
@@ -79,7 +79,7 @@ for (const stage of ['walking', 'working']) test(`cancelling while ${stage} does
   }
   runtime.submit({ protocolVersion: '2.0', sceneId: runtime.sceneId, commandId: 'cancel', type: 'command.cancel', targetCommandId: 'plant' })
   advance(3000); assert.equal(runtime.getRecord('plant').status, 'cancelled')
-  assert.equal(plot(runtime).state.crop, null); assert.equal(inventory(runtime).carrot, 0)
+  assert.equal(plot(runtime).state.crop, ''); assert.equal(inventory(runtime).carrot, 0)
 })
 
 test('different plots run concurrently, but a plot and shared harvest inventory serialize', t => {
@@ -125,7 +125,7 @@ test('completion cannot mutate a prop without reserving its resource', t => {
   }) }))
   runtime.submit(command(runtime, 'plant', 'plant')); advance(30000)
   assert.equal(runtime.getRecord('plant').error.code, 'INVALID_PLAN')
-  assert.equal(plot(runtime).state.crop, null); assert.equal(inventory(runtime).carrot, 0)
+  assert.equal(plot(runtime).state.crop, ''); assert.equal(inventory(runtime).carrot, 0)
 })
 
 test('continuous activities cannot declare finite completion effects', t => {
@@ -133,7 +133,7 @@ test('continuous activities cannot declare finite completion effects', t => {
     ...plugin, capabilities: plugin.capabilities.map(cap => cap.id !== 'farm.plant' ? cap : { ...cap, build(context, params) { return { ...cap.build(context, params), continuous: true } } }),
   }) }))
   assert.equal(runtime.submit(command(runtime, 'plant', 'plant')).error.code, 'INVALID_PLAN')
-  assert.equal(plot(runtime).state.crop, null)
+  assert.equal(plot(runtime).state.crop, '')
 })
 
 test('failed durable completion keeps both crop and inventory unchanged', t => {
@@ -154,7 +154,7 @@ test('durable harvest survives restart and replay cannot reward twice', t => {
   const harvest = command(runtime, 'harvest', 'harvest'); runtime.submit(harvest); finish(runtime, advance, ['harvest'])
   const restored = createSceneRuntime(createFarmScenePack(clock.now), { persistence }); t.after(() => restored.dispose())
   assert.equal(restored.submit(harvest).status, 'completed'); restored.tick(1000)
-  assert.equal(inventory(restored).carrot, 3); assert.equal(plot(restored).state.crop, null)
+  assert.equal(inventory(restored).carrot, 3); assert.equal(plot(restored).state.crop, '')
 })
 
 test('farm clocks pause, accelerate, and give the same growth at 30/60/120 fps', () => {

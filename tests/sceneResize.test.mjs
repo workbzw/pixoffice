@@ -10,7 +10,7 @@ before(async () => {
 })
 after(async () => { await server?.close() })
 
-function fixture(t) {
+function fixture(t, overrides = {}) {
   const original = Object.getOwnPropertyDescriptor(globalThis, 'window')
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { devicePixelRatio: 1 } })
   t.after(() => {
@@ -21,7 +21,7 @@ function fixture(t) {
   let ticks = 0
   const scene = new SceneView({
     runtime: { readWorld: () => data, isEditing: false },
-    pack: { cellPixels: 50, createPropViews: () => ({}), projectActors: () => [] },
+    pack: { cellPixels: 50, createPropViews: () => ({}), projectActors: () => [], ...overrides },
     onStep: () => ticks++,
   })
   const renderer = { resolution: 1, screen: { width: 1, height: 1 }, resize(width, height, resolution) {
@@ -83,6 +83,19 @@ test('a suspended scene stays hidden during resize and repaints when resumed', t
   assert.deepEqual(events, ['resize', 'render'])
 })
 
+test('prop display frames run while visible but stop when suspended or destroyed', t => {
+  const { scene } = fixture(t), updates = []
+  scene.runtime.getRevision = () => 0
+  scene.propViews.set('board', { roots: [], hitTarget: new Container(), update() {}, updateFrame(dt) { updates.push(dt) } })
+  scene.onTick({ deltaTime: 1.2 })
+  assert.deepEqual(updates, [.02])
+  scene.setRenderingSuspended(true)
+  scene.onTick({ deltaTime: 1.2 })
+  assert.deepEqual(updates, [.02])
+  scene.destroy(); scene.onTick({ deltaTime: 1.2 })
+  assert.deepEqual(updates, [.02])
+})
+
 test('changed world dimensions update the camera without needlessly resizing the framebuffer', t => {
   const { scene, data, world, events } = fixture(t)
   scene.resize(800, 600); events.length = 0
@@ -104,4 +117,21 @@ test('optional ambient views share the scene frame, pause while editing, and dis
   assert.equal(frames.at(-1).dt, 0)
   scene.destroy(); scene.destroy()
   assert.equal(disposed, 1)
+})
+
+test('dimetric viewport contains all four map corners and reverses picking after resize', async t => {
+  const { createDimetricProjection } = await server.ssrLoadModule('/packages/renderer-pixi/src/projection.ts')
+  const projection = createDimetricProjection(), { scene, world, data } = fixture(t, { projection })
+  for (const [width, height] of [[900, 600], [360, 480], [1400, 600]]) {
+    scene.resize(width, height)
+    for (const p of projection.areaPolygon({ left: 0, top: 0, right: data.width, bottom: data.height })) {
+      const screen = { x: p.x * world.scale.x + world.x, y: p.y * world.scale.y + world.y }
+      assert(screen.x >= -1e-7 && screen.x <= width + 1e-7)
+      assert(screen.y >= -1e-7 && screen.y <= height + 1e-7)
+    }
+    const point = projection.cellCenter({ x: 8, y: 6 })
+    assert.deepEqual(scene.screenToCell({ x: point.x * world.scale.x + world.x, y: point.y * world.scale.y + world.y }), { x: 8, y: 6 })
+    const outside = projection.cellCenter({ x: -1, y: 3 })
+    assert.equal(scene.screenToCell({ x: outside.x * world.scale.x + world.x, y: outside.y * world.scale.y + world.y }), null)
+  }
 })
