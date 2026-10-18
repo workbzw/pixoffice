@@ -28,5 +28,5 @@ authentication and request routing.
 
 Import schemas through the package exports listed above. The scene command
 protocol version is `2.0`, the office snapshot schema version is `1.0`, and the
-chat request version is `1.0`. See the [Office HTTP Integration Guide](../../docs/office-integration.md)
+chat request version is `1.0`. See the [Office HTTP Integration Guide](../../integration/docs/office-integration.md)
 for endpoints, request examples, response fields and error handling.

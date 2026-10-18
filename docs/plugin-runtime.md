@@ -1,6 +1,6 @@
 # 场景运行时 SDK 与命令协议
 
-本文面向直接使用 `SceneRuntime` 或开发场景插件的前端开发者，定义场景命令、运行时结果和扩展接口。外部业务后端通过 HTTP 接入时，使用[办公室 HTTP 接入协议](./office-integration.md)。
+本文面向直接使用 `SceneRuntime` 或开发场景插件的前端开发者，定义场景命令、运行时结果和扩展接口。外部业务后端通过 HTTP 接入时，使用[办公室 HTTP 接入协议](../integration/docs/office-integration.md)。
 
 下文 JSON 命令可传入 `runtime.submit(command)`；HTTP 发送时，将命令放入 `{teamId, command}` 的 `command` 字段。SDK 返回命令执行状态，HTTP 动画接口返回转发结果，二者的字段和返回时机不同。
 
@@ -21,7 +21,7 @@ npm run dev
 npm run dev:vite
 ```
 
-纯静态部署展示本地演示数据。服务器部署使用 Fastify HTTP 接口和浏览器 SSE，浏览器运行时管理动画队列。Docker 和联合开发模式通过 `/pixoffice-config.js` 配置连接，详见[部署文档](./message-relay.md)。
+纯静态部署展示本地演示数据。服务器部署使用 Fastify HTTP 接口和浏览器 SSE，浏览器运行时管理动画队列。Docker 和联合开发模式通过 `/pixoffice-config.js` 配置连接，详见[部署文档](../integration/docs/message-relay.md)。
 
 ## 已实现的模块
 
@@ -174,9 +174,9 @@ server/src/             Fastify 接口、最新业务快照缓存、连接表、
 
 ### 消息投递
 
-PixOffice Fastify 服务接收 `POST /api/pixoffice/messages`，通过浏览器 SSE 发送消息。办公室主入口使用工作区订阅，独立场景可按团队订阅。调用样例和密钥配置见[消息转发与部署](./message-relay.md)。
+PixOffice Fastify 服务接收 `POST /api/pixoffice/messages`，通过浏览器 SSE 发送消息。办公室主入口使用工作区订阅，独立场景可按团队订阅。调用样例和密钥配置见[消息转发与部署](../integration/docs/message-relay.md)。
 
-每页只有一条场景 SSE，按团队 ID 路由到既有运行时。多个在线页面分别收到消息，各页独立视觉执行，不承诺动画同步。临时动画不保存历史、不补播；办公室业务状态由最新快照缓存恢复，首次连接或重连自动同步，见[业务接入](./office-integration.md)。
+每页只有一条场景 SSE，按团队 ID 路由到既有运行时。多个在线页面分别收到消息，各页独立视觉执行，不承诺动画同步。临时动画不保存历史、不补播；办公室业务状态由最新快照缓存恢复，首次连接或重连自动同步，见[业务接入](../integration/docs/office-integration.md)。
 
 HTTP 动画请求返回 `200` 表示已写入至少一个在线页面连接。场景执行结果保存在浏览器运行时中，可由源码宿主读取。外部业务后端管理业务完成状态，并通过完整快照同步。
 

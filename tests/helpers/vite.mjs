@@ -6,8 +6,9 @@ import { createServer } from 'vite'
 export async function createTestServer() {
   const root = fileURLToPath(new URL('../..', import.meta.url))
   const alias = []
-  for (const name of await readdir(path.join(root, 'packages'))) {
-    const directory = path.join(root, 'packages', name)
+  for (const entry of await readdir(path.join(root, 'packages'), { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue
+    const directory = path.join(root, 'packages', entry.name)
     const manifest = JSON.parse(await readFile(path.join(directory, 'package.json'), 'utf8'))
     for (const [key, entry] of Object.entries(manifest.exports)) {
       const spec = manifest.name + (key === '.' ? '' : key.slice(1))

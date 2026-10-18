@@ -60,7 +60,7 @@ npm start
 
 如果 HTTPS 在反向代理处终止、容器内部使用 HTTP，请为 PixOffice 服务进程设置 `PIXOFFICE_PUBLIC_ORIGIN=https://你的域名`（不带路径或末尾斜杠），用于校验浏览器请求来源。
 
-可运行 `node scripts/check-relay-service.mjs` 检查页面、写入鉴权及 SSE 转发。目标地址和密钥分别由 `PIXOFFICE_URL`、`PIXOFFICE_API_KEY` 环境变量提供；脚本使用独立的测试团队，不会给现有办公室下达动作。
+可运行 `npm run test:service` 检查页面、写入鉴权及 SSE 转发。脚本位于 `tests/checks/check-relay-service.mjs`，目标地址和密钥分别由 `PIXOFFICE_URL`、`PIXOFFICE_API_KEY` 环境变量提供；脚本使用独立的测试团队，不会给现有办公室下达动作。测试分类和运行方式见[测试说明](../../tests/README.md)。
 
 Vercel 静态演示使用构建命令 `npm run build`、输出目录 `dist/`。浏览器通过 `/pixoffice-config.js` 读取连接配置：静态部署默认关闭业务连接，Fastify 在该路径提供启用同源连接的配置，联合开发模式由 Vite 代理该文件。自定义 API Key 仅保存在 PixOffice 服务端和外部业务后端。
 
@@ -92,7 +92,7 @@ curl -X POST http://localhost:8765/api/pixoffice/messages \
 }
 ```
 
-`command` 可以是单条场景命令，也可以是含 `mode` 和 `commands` 的批次对象。`mode` 为 `sequence` 或 `parallel`，分别表示顺序或并行执行；批次最多 32 条。每条命令的 `sceneId` 必须等于顶层 `teamId`，每条新指令使用唯一 `commandId`。请求最大 64 KiB。字段定义见[场景协议](./plugin-runtime.md)。
+`command` 可以是单条场景命令，也可以是含 `mode` 和 `commands` 的批次对象。`mode` 为 `sequence` 或 `parallel`，分别表示顺序或并行执行；批次最多 32 条。每条命令的 `sceneId` 必须等于顶层 `teamId`，每条新指令使用唯一 `commandId`。请求最大 64 KiB。字段定义见[场景协议](../../docs/plugin-runtime.md)。
 
 场景请求字段为 `teamId` 和 `command`。业务请求通过 `type` 区分操作。所有 HTTP 响应含 `code`、`msg`、`data`，其中 `data` 为对象，`code` 与 HTTP 状态码一致。数据字段和默认值见[办公室 HTTP 接入协议](./office-integration.md)。
 
@@ -131,7 +131,7 @@ curl -X POST http://localhost:8765/api/pixoffice/messages \
 
 多个页面订阅同一团队时，每页收到一份消息并独立播放。各页面不保证逐帧同步。SSE 按连接发送当前事件，重连通过最新业务快照恢复状态。
 
-内部 SSE 的业务事件用 `type` 指定事件类别，状态同步事件为 `{type: "office.sync", snapshot: ...}`，场景指令为 `{teamId, command}`。需浏览器处理的业务请求包含服务端生成的 `responseToken` 和剩余有效期 `remainingMs`；浏览器采用本地单调时钟计时，服务端负责最终超时判定，不要求两端系统时钟一致。浏览器向 `/api/pixoffice/reply` 提交 `{responseToken, result: {code, msg, data}}`，服务端据此完成对应 HTTP 响应。多个页面回报同一请求时，最先收到的有效成功结果完成请求；后续回报返回 `410`，页面按请求已结束处理。内部事件结构定义于 [`office-integration.ts`](../packages/protocol/src/office-integration.ts) 和 [`relay.ts`](../packages/protocol/src/relay.ts)。
+内部 SSE 的业务事件用 `type` 指定事件类别，状态同步事件为 `{type: "office.sync", snapshot: ...}`，场景指令为 `{teamId, command}`。需浏览器处理的业务请求包含服务端生成的 `responseToken` 和剩余有效期 `remainingMs`；浏览器采用本地单调时钟计时，服务端负责最终超时判定，不要求两端系统时钟一致。浏览器向 `/api/pixoffice/reply` 提交 `{responseToken, result: {code, msg, data}}`，服务端据此完成对应 HTTP 响应。多个页面回报同一请求时，最先收到的有效成功结果完成请求；后续回报返回 `410`，页面按请求已结束处理。内部事件结构定义于 [`office-integration.ts`](../../packages/protocol/src/office-integration.ts) 和 [`relay.ts`](../../packages/protocol/src/relay.ts)。
 
 ## 安全与范围
 

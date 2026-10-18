@@ -12,7 +12,7 @@ npm run build:farm
 
 The full website also serves `/farm/`. The standalone build contains only farm assets and rejects imports from office/classroom packages.
 
-For external driving, use the shared Fastify POST + SSE relay with team ID `farm`. Root `npm run dev` enables the connection; `npm run dev:vite` and static hosting remain local demos. The same frontend build is used in Docker, with runtime configuration. Automatic tending is disabled when a relay is configured. See [message relay deployment](../../docs/message-relay.md).
+For external driving, use the shared Fastify POST + SSE relay with team ID `farm`. Root `npm run dev` enables the connection; `npm run dev:vite` and static hosting remain local demos. The same frontend build is used in Docker, with runtime configuration. Automatic tending is disabled when a relay is configured. See [message relay deployment](../../integration/docs/message-relay.md).
 
 ```json
 {

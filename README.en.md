@@ -16,7 +16,7 @@ It includes six frame-animated characters, seated poses and office assets, with 
 
 Maps and character movement use integer grid cells. Each scene package defines furniture footprints, entrance cells, use cells and resource reservations. Smooth motion is interpolated only in the rendering layer. The current command protocol is `2.0`; see [Integer Grid and Furniture Interactions](./docs/integer-grid-and-interactions.md).
 
-[Office Business Integration](./docs/office-integration.md) · [Dashboard Data Integration](./docs/dashboard-integration.md) · [Plugins, Scene Protocol, and External Integration](./docs/plugin-runtime.md) · [Map Editor and AI Editing Protocol](./docs/map-editor.md) · [Message Relay and Deployment](./docs/message-relay.md)
+[External Integration](./integration/README.md) · [Office Business Integration](./integration/docs/office-integration.md) · [Dashboard Data Integration](./integration/docs/dashboard-integration.md) · [Plugins, Scene Protocol, and External Integration](./docs/plugin-runtime.md) · [Map Editor and AI Editing Protocol](./docs/map-editor.md) · [Message Relay and Deployment](./integration/docs/message-relay.md)
 
 [Scene Extensions and Animation Architecture](./docs/architecture/README.md) covers independent office, classroom and farm packages, the shared runtime, frame animation, and integration interfaces. The classroom supports lectures and student answers. The farm supports planting, watering, growth, harvest and automatic care. A skeletal animation engine is not implemented yet.
 
@@ -40,13 +40,17 @@ Scenes are lazily assembled through `SceneAssembly`. Furniture and individual ch
 
 ## Office Chat
 
-A floating input sits at the bottom of the animated scene. Sending a message expands the conversation panel upward. An animated multicolor border indicates generation, with controls to stop, collapse, or start a new conversation. By default, this is a clearly labeled interaction preview: it does not call a model or execute tasks. Connect a real streaming service through `VITE_PIXOFFICE_CHAT_URL` or the `chatSource` prop of `OfficeApp`. See the [Chat Integration Protocol](./docs/chat-integration.md).
+A floating input sits at the bottom of the animated scene. Sending a message expands the conversation panel upward. An animated multicolor border indicates generation, with controls to stop, collapse, or start a new conversation. By default, this is a clearly labeled interaction preview: it does not call a model or execute tasks. Connect a real streaming service through `VITE_PIXOFFICE_CHAT_URL` or the `chatSource` prop of `OfficeApp`. See the [Chat Integration Protocol](./integration/docs/chat-integration.md).
 
 In the local preview, starting the demo shows one confirmation in the current office after about 15 seconds and one side choice card from another office after about 30 seconds. Each run contains only these two questions, with no follow-up queue. Each question receives a fresh deadline when it appears. Stopping the demo cancels questions that have not appeared yet. Connected-backend menus are still triggered by backend requests.
 
 ## Map Editing
 
 The grid button in the top-right corner of the office opens the full-screen layout editor; the top-left button opens the team-space overview. Choose assets from the furniture catalog at the bottom, drag furniture onto the floor grid, and select it to duplicate, remove, or reassign a workstation. Invalid placements return to their previous positions. Undo and redo are supported; the advanced menu offers JSON import/export and route testing. External AI systems can modify the same shared draft through the `map.edit` protocol without simulating mouse input.
+
+## Testing
+
+Test cases, check scripts and generated reports are grouped under `tests/`. See [Testing and Acceptance](./tests/README.md) for commands and report locations.
 
 ## Updating Preview Media
 
@@ -88,7 +92,7 @@ npm run dev:vite
 
 The development server serves the project website at `/`. Navigation opens the full office at `/office/`, the minimal example at `/minimal/`, the classroom at `/classroom/`, and the farm at `/farm/`. `npm run build` generates all five pages in the root `dist/` directory for deployment.
 
-The frontend-only demo uses local business data. In server mode, the backend pushes offices and task snapshots without business polling. Run `npm run dev`, open `/office/`, then run `npm run integration-example` in another terminal to exercise initialization, task delivery, user confirmation and completion. See [Office Business Integration](./docs/office-integration.md) for the contract and runnable backend example.
+The frontend-only demo uses local business data. In server mode, the backend pushes offices and task snapshots without business polling. Run `npm run dev`, open `/office/`, then run `npm run integration-example` in another terminal to exercise initialization, task delivery, user confirmation and completion. See [Office Business Integration](./integration/docs/office-integration.md) for the contract and runnable backend example.
 
 ## Messaging and Deployment
 
@@ -101,9 +105,9 @@ One repository and one React build: Vercel publishes only `dist/` as a local-dat
 - Browser runtimes own animation scheduling, deduplication, expiry and cancellation. Fastify caches the latest full snapshot per office, never animation history. New or reconnected SSE clients automatically recover current state without rebuilding existing runtimes.
 - Snapshots include a monotonically increasing per-office `seq` and structured `whiteboard` data. Offline snapshots return HTTP 202 (cached, not browser-ready); online application returns 200. Offline animations and decisions return 409; decisions time out with 408 and no default choice.
 - The default key is a public demo value. Override `PIXOFFICE_API_KEY` for public deployment; custom keys never enter the frontend build.
-- Messages support `offices.initialize`, `office.snapshot`, `office.read`, `office.capabilities`, `decision.request`, `ui.next` and `ui.respond`. Run `npm run integration-ui-example` to handle actor clicks and task actions and return dialogs or whiteboard snapshots. The conversation input uses the [Chat Streaming API](./docs/chat-integration.md).
+- Messages support `offices.initialize`, `office.snapshot`, `office.read`, `office.capabilities`, `decision.request`, `ui.next` and `ui.respond`. Run `npm run integration-ui-example` to handle actor clicks and task actions and return dialogs or whiteboard snapshots. The conversation input uses the [Chat Streaming API](./integration/docs/chat-integration.md).
 
-See [Message Relay and Deployment](./docs/message-relay.md) for boundaries, batches, security and Docker details.
+See [Message Relay and Deployment](./integration/docs/message-relay.md) for boundaries, batches, security and Docker details.
 
 ```bash
 docker build -t pixoffice .
@@ -114,7 +118,7 @@ Open `http://localhost:3000/office/`, then POST to `/api/pixoffice/messages` on 
 
 ## HTTP Messages
 
-Business requests are JSON objects containing `type` and the operation's parameters, such as `{"type":"office.read","teamId":"office-1"}`. Scene requests contain `teamId` and `command`, whose `sceneId` matches `teamId`. HTTP responses contain `code`, `msg` and an object-valued `data`. All protocol values prohibit `null`. See the [Office HTTP Integration Guide](./docs/office-integration.md) for field definitions and examples.
+Business requests are JSON objects containing `type` and the operation's parameters, such as `{"type":"office.read","teamId":"office-1"}`. Scene requests contain `teamId` and `command`, whose `sceneId` matches `teamId`. HTTP responses contain `code`, `msg` and an object-valued `data`. All protocol values prohibit `null`. See the [Office HTTP Integration Guide](./integration/docs/office-integration.md) for field definitions and examples.
 
 This desk-visit example targets `office-1`, created by `integration-example`. Keep the office page online when sending it:
 

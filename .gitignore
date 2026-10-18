@@ -44,9 +44,7 @@ yarn-error.log*
 pnpm-debug.log*
 /coverage/
 /.nyc_output/
-/playwright-report/
-/test-results/
-/integration-e2e-report/
+/tests/artifacts/
 
 # Local editor files (shared editor configuration stays trackable)
 .idea/

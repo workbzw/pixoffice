@@ -16,7 +16,7 @@ PixOffice 是独立的二维办公室前端项目，采用 Vite + React + Pixi�
 
 地图与人物行走统一使用整数格。家具占地、入口格、使用格和资源预约由各场景包定义；平滑动画只在渲染层插值。当前命令协议为 `2.0`，详见[整数格与家具互动](./docs/integer-grid-and-interactions.md)。
 
-[办公室 HTTP 接入协议](./docs/office-integration.md) · [业务快照字段说明](./docs/dashboard-integration.md) · [场景运行时 SDK 与命令协议](./docs/plugin-runtime.md) · [地图编辑器与 AI 编辑协议](./docs/map-editor.md) · [消息转发与部署](./docs/message-relay.md)
+[外部对接入口](./integration/README.md) · [办公室 HTTP 接入协议](./integration/docs/office-integration.md) · [业务快照字段说明](./integration/docs/dashboard-integration.md) · [场景运行时 SDK 与命令协议](./docs/plugin-runtime.md) · [地图编辑器与 AI 编辑协议](./docs/map-editor.md) · [消息转发与部署](./integration/docs/message-relay.md)
 
 [场景扩展与动画架构](./docs/architecture/README.md)：办公室、教室与农场平级独立，复用公共运行时和帧动画适配器。农场支持播种、浇水、生长、采收和双农夫自动照料。骨骼引擎尚未实现。
 
@@ -38,13 +38,17 @@ PixOffice 是独立的二维办公室前端项目，采用 Vite + React + Pixi�
 
 ## 办公室对话
 
-动画区域底部提供悬浮输入框。发送消息后，对话面板向上展开；生成时输入框显示流动彩色边框，支持停止、收起和新建对话。默认是明确标注的交互预览，不调用模型或执行任务。通过 `VITE_PIXOFFICE_CHAT_URL` 或 `OfficeApp` 的 `chatSource` 接入真实流式服务，详见[聊天接入协议](./docs/chat-integration.md)。
+动画区域底部提供悬浮输入框。发送消息后，对话面板向上展开；生成时输入框显示流动彩色边框，支持停止、收起和新建对话。默认是明确标注的交互预览，不调用模型或执行任务。通过 `VITE_PIXOFFICE_CHAT_URL` 或 `OfficeApp` 的 `chatSource` 接入真实流式服务，详见[聊天接入协议](./integration/docs/chat-integration.md)。
 
 本地预览点击“开始演示”后，约 15 秒弹出当前办公室的一条确认问题，约 30 秒在另一个办公室显示一条侧边选择卡。每轮仅这两条，回答后不追加问题；有效期从出现时计算，停止演示会取消尚未出现的问题。真实后端菜单仍由后端请求触发。
 
 ## 地图编辑
 
 办公室右上角网格按钮进入全屏「布置办公室」；左上角按钮打开团队空间总览。从底部家具目录选取素材，拖动家具并吸附地面网格，选中后可复制、收起或调整工位所属人物。非法摆放自动回原位；支持撤销 / 重做，高级菜单提供 JSON 导入导出与路线测试。外部 AI 可通过同一套 `map.edit` 协议修改共享草稿，不需要模拟鼠标。
+
+## 测试与验收
+
+测试用例、检查脚本及测试产物统一位于 `tests/`，运行命令与报告位置见[测试与验收](./tests/README.md)。
 
 ## 更新预览素材
 
@@ -86,7 +90,7 @@ npm run dev:vite
 
 开发服务首页 `/` 为项目介绍，顶部菜单可进入完整办公室 `/office/`、最小装配 `/minimal/`、教室 `/classroom/` 和农场 `/farm/`。`npm run build` 同时生成五个页面，部署时仍使用根目录 `dist/`。
 
-页面顶部指标、左侧员工、右侧任务流由业务数据源驱动。纯前端演示使用本地数据；服务器模式由外部业务后端向 PixOffice 服务端提交办公室和任务。运行 `npm run dev`，打开 `/office/`，再在另一个终端运行 `npm run integration-example`，可以查看初始化、任务展示、用户确认和任务完成流程。接口字段与调用示例见[办公室 HTTP 接入协议](./docs/office-integration.md)。
+页面顶部指标、左侧员工、右侧任务流由业务数据源驱动。纯前端演示使用本地数据；服务器模式由外部业务后端向 PixOffice 服务端提交办公室和任务。运行 `npm run dev`，打开 `/office/`，再在另一个终端运行 `npm run integration-example`，可以查看初始化、任务展示、用户确认和任务完成流程。接口字段与调用示例见[办公室 HTTP 接入协议](./integration/docs/office-integration.md)。
 
 ## 消息对接与部署
 
@@ -99,9 +103,9 @@ npm run dev:vite
 - 浏览器队列负责动画排队、去重、过期及取消；Fastify 缓存每个办公室最新完整快照，不保存动画历史。SSE 首次连接或重连自动同步最新状态，已有运行时不重建。
 - 快照包含递增的 `seq` 和固定格式 `whiteboard`，旧版本不会覆盖新版本。离线快照返回 HTTP 202（仅已缓存）；在线应用后返回 200。动画和菜单离线返回 409，菜单超时 408，不默认同意。
 - 默认密钥是公开演示值；公网部署通过 `PIXOFFICE_API_KEY` 覆盖。真正的自定义密钥不会进入前端产物。
-- 支持 `offices.initialize`、`office.snapshot`、`office.read`、`office.capabilities`、`decision.request`、`ui.next` 和 `ui.respond`。运行 `npm run integration-ui-example`，可接收人物点击、任务按钮操作，并返回详情或白板内容。对话输入框使用[聊天流式接口](./docs/chat-integration.md)。
+- 支持 `offices.initialize`、`office.snapshot`、`office.read`、`office.capabilities`、`decision.request`、`ui.next` 和 `ui.respond`。运行 `npm run integration-ui-example`，可接收人物点击、任务按钮操作，并返回详情或白板内容。对话输入框使用[聊天流式接口](./integration/docs/chat-integration.md)。
 
-完整边界、批量指令、安全说明和 Docker 命令见[消息转发与部署](./docs/message-relay.md)。
+完整边界、批量指令、安全说明和 Docker 命令见[消息转发与部署](./integration/docs/message-relay.md)。
 
 ```bash
 docker build -t pixoffice .
@@ -112,7 +116,7 @@ docker run --rm -p 3000:3000 -e PIXOFFICE_API_KEY=your-private-key pixoffice
 
 ## HTTP 消息
 
-业务请求为含 `type` 及对应参数的 JSON 对象，例如 `{"type":"office.read","teamId":"office-1"}`。场景指令请求含 `teamId` 和 `command`，其中命令的 `sceneId` 与 `teamId` 一致。响应包含 `code`、`msg`、对象类型的 `data`，所有协议数据禁止 `null`。完整字段见[办公室 HTTP 接入协议](./docs/office-integration.md)。
+业务请求为含 `type` 及对应参数的 JSON 对象，例如 `{"type":"office.read","teamId":"office-1"}`。场景指令请求含 `teamId` 和 `command`，其中命令的 `sceneId` 与 `teamId` 一致。响应包含 `code`、`msg`、对象类型的 `data`，所有协议数据禁止 `null`。完整字段见[办公室 HTTP 接入协议](./integration/docs/office-integration.md)。
 
 以下工位拜访示例使用 `integration-example` 创建的 `office-1`，调用时保持办公室页面在线：
 

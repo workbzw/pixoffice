@@ -51,7 +51,7 @@
 
 正常回复应输出文本并以 `done` 结束；提前断开或没有回复文本时，页面显示失败。`status` 只描述处理阶段。用户点击停止时浏览器中止请求，聊天服务应监听断开并取消上游生成。
 
-请求字段和每条响应事件中的任何层级都禁止 `null`。字段定义见 [`chatRequestSchema` 和 `chatEventSchema`](../packages/protocol/src/chat.ts)。
+请求字段和每条响应事件中的任何层级都禁止 `null`。字段定义见 [`chatRequestSchema` 和 `chatEventSchema`](../../packages/protocol/src/chat.ts)。
 
 浏览器单次输入最多 4000 字符，一次回复最多 50000 字符，请求最长 180 秒。请求包含当前输入，以及最近最多 10 轮完整历史对话；历史部分总计最多 100000 字符。中断或失败的回复保留在页面中，不作为完整历史发送。HTTP 事件单行最多 32000 字符，其中 `delta.text` 最多 16000 字符。
 
@@ -83,6 +83,6 @@ const chatSource: OfficeChatSource = {
 <OfficeApp dataSource={dataSource} chatSource={chatSource} />
 ```
 
-`OfficeApp` 的源码入口为 [`example/office-web/src/office.ts`](../example/office-web/src/office.ts)。自定义聊天源可用稳定的 `historyKey` 隔离历史记录，默认使用 `kind`。自定义持久化实现 `ChatPersistence.write(archive, expected)` 时，应原子校验 `expected`，冲突时抛出 `ChatStorageConflict`。
+`OfficeApp` 的源码入口为 [`example/office-web/src/office.ts`](../../example/office-web/src/office.ts)。自定义聊天源可用稳定的 `historyKey` 隔离历史记录，默认使用 `kind`。自定义持久化实现 `ChatPersistence.write(archive, expected)` 时，应原子校验 `expected`，冲突时抛出 `ChatStorageConflict`。
 
 回复作为纯文本展示。聊天服务产生的业务变化由外部业务后端执行，再通过办公室 HTTP 接口更新任务或发送场景指令。

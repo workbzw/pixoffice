@@ -8,9 +8,7 @@ node_modules
 **/.DS_Store
 *.log
 coverage
-test-results
-playwright-report
-integration-e2e-report
+tests/artifacts
 .character-preview
 .character-staging
 .character-backups

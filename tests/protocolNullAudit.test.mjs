@@ -223,7 +223,7 @@ test('all project and published asset JSON files contain no null values', async 
       }
     }
   }
-  for (const root of ['packages', 'server', 'example', 'examples', 'public', 'art']) await inspect(new URL(`../${root}/`, import.meta.url))
+  for (const root of ['packages', 'server', 'example', 'integration', 'public', 'art']) await inspect(new URL(`../${root}/`, import.meta.url))
   assert(count > 0)
   t.diagnostic(`${count} project and asset JSON files checked recursively`)
 })

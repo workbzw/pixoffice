@@ -74,10 +74,10 @@ npm run integration-example
 
 ## 源码装配接口
 
-直接集成 React 应用源码的开发者，可实现 [`OfficeDataSource`](../packages/protocol/src/dashboard.ts) 并注入组件，用于提供、订阅和处理业务数据。HTTP 接入开发者使用 `POST /api/pixoffice/messages`。
+直接集成 React 应用源码的开发者，可实现 [`OfficeDataSource`](../../packages/protocol/src/dashboard.ts) 并注入组件，用于提供、订阅和处理业务数据。HTTP 接入开发者使用 `POST /api/pixoffice/messages`。
 
 ## 边界
 
-[`sceneBridge.ts`](../example/office-web/src/dashboard/sceneBridge.ts) 将业务状态转换为人物展示状态，并在收到新任务分配事件时安排工位拜访。业务任务完成由外部业务后端设置 `status: "completed"` 后提交快照。场景协议与地图编辑接口见[插件运行时文档](./plugin-runtime.md)。
+[`sceneBridge.ts`](../../example/office-web/src/dashboard/sceneBridge.ts) 将业务状态转换为人物展示状态，并在收到新任务分配事件时安排工位拜访。业务任务完成由外部业务后端设置 `status: "completed"` 后提交快照。场景协议与地图编辑接口见[插件运行时文档](../../docs/plugin-runtime.md)。
 
 PixOffice 服务端提供访问密钥校验、最新快照的内存缓存和消息转发。外部业务后端负责业务持久化和业务权限；部署方负责页面及浏览器消息接口的访问控制。部署配置见[部署文档](./message-relay.md)。

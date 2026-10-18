@@ -4,7 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ts from 'typescript'
 
-const root = fileURLToPath(new URL('..', import.meta.url))
+const root = fileURLToPath(new URL('../..', import.meta.url))
 const allowed = {
   protocol: [], contracts: ['protocol'], runtime: ['protocol'],
   'renderer-pixi': ['protocol', 'contracts', 'runtime'],

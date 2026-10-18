@@ -5,7 +5,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { execFileSync } from 'node:child_process'
 
-const root = fileURLToPath(new URL('..', import.meta.url))
+const root = fileURLToPath(new URL('../..', import.meta.url))
 const temp = await mkdtemp(path.join(tmpdir(), 'pixoffice-packages-'))
 const isolated = await mkdtemp(path.join(tmpdir(), 'pixoffice-isolated-'))
 const classroom = await mkdtemp(path.join(tmpdir(), 'pixoffice-classroom-packages-'))

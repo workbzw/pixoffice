@@ -70,7 +70,7 @@ mounted.dispose()
 
 根目录 `npm run dev` 同时启动 Fastify 和 Vite，打开 `/classroom/` 并等动作准备好后即可接收消息。只看静态演示使用 `npm run dev:vite`，不连接后台。
 
-将下面的命令放在 `{teamId:"classroom", command:命令}` 内，携带默认演示密钥 POST 到 `http://127.0.0.1:8765/api/pixoffice/messages`。请求不使用响应外壳，协议字段禁止 null。浏览器通过 SSE 接收，运行时负责排队。参见[消息转发与部署](../../docs/message-relay.md)。
+将下面的命令放在 `{teamId:"classroom", command:命令}` 内，携带默认演示密钥 POST 到 `http://127.0.0.1:8765/api/pixoffice/messages`。请求不使用响应外壳，协议字段禁止 null。浏览器通过 SSE 接收，运行时负责排队。参见[消息转发与部署](../../integration/docs/message-relay.md)。
 
 办公室、教室和农场共用同一转发服务，按 teamId 分发，不需要每个场景独立端口。旧轮询、状态上传和结果查询接口已删除。`ClassroomApp` 可传入显式 `relayUrl`；静态模式未配置时不连接网络。
 

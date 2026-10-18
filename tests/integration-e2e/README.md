@@ -66,14 +66,14 @@ PIXOFFICE_E2E_BROWSER_CHANNEL=chrome npx playwright test --config tests/integrat
 
 ## 报告
 
-- `integration-e2e-report/index.html`：HTML 验收报告。
-- `test-results/integration-e2e-results.json`：机器可读结果。
-- `test-results/integration-e2e/`：各用例的外部请求与响应 JSONL，失败截图、浏览器执行轨迹和容器日志。
+- `tests/artifacts/integration-e2e-report/index.html`：HTML 验收报告。
+- `tests/artifacts/test-results/integration-e2e-results.json`：机器可读结果。
+- `tests/artifacts/test-results/integration-e2e/`：各用例的外部请求与响应 JSONL，失败截图、浏览器执行轨迹和容器日志。
 
 请求日志不记录鉴权头。测试业务数据由本套测试生成。结果目录已加入 Git 和 Docker 构建忽略规则。
 
 ```sh
-npx playwright show-report integration-e2e-report
+npm run test:report
 ```
 
 ## 针对已有镜像复测

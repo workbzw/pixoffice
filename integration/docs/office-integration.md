@@ -117,9 +117,9 @@ npm run dev
 npm run integration-example
 ```
 
-该示例创建两个办公室、绑定业务成员、更新任务与白板，并等待用户在页面选择确认或拒绝。运行 `npm run integration-ui-example` 可以接收人物点击和任务按钮操作，并返回详情内容。示例源码位于 [`examples/integration/`](../examples/integration/)。
+该示例创建两个办公室、绑定业务成员、更新任务与白板，并等待用户在页面选择确认或拒绝。运行 `npm run integration-ui-example` 可以接收人物点击和任务按钮操作，并返回详情内容。示例源码位于 [`integration/clients/`](../clients/)。
 
-执行 `npm run test:integration` 可运行独立 HTTP 客户端、真实浏览器和临时 Docker 服务之间的自动验收，覆盖初始化、用户操作、菜单、状态同步及异常恢复。环境要求、范围和报告位置见[端到端验收说明](../tests/integration-e2e/README.md)。
+执行 `npm run test:integration` 可运行独立 HTTP 客户端、真实浏览器和临时 Docker 服务之间的自动验收，覆盖初始化、用户操作、菜单、状态同步及异常恢复。环境要求、范围和报告位置见[端到端验收说明](../../tests/integration-e2e/README.md)。
 
 示例客户端通过 `PIXOFFICE_URL` 指定 PixOffice 服务地址，默认 `http://127.0.0.1:8765`；通过 `PIXOFFICE_API_KEY` 指定访问密钥。开发环境默认密钥为公开演示值 `pixoffice-demo-key`。服务器与 Docker 配置见[消息转发与部署](./message-relay.md)。
 
@@ -454,7 +454,7 @@ Content-Type: application/json
 }
 ```
 
-`teamId` 与命令的 `sceneId` 必须一致。每条新指令使用唯一 `commandId`；人物 ID、行为名称、角色及参数通过能力查询获取。指令也可按顺序或并行组成最多 32 条的批次，详见[场景协议](./plugin-runtime.md)。
+`teamId` 与命令的 `sceneId` 必须一致。每条新指令使用唯一 `commandId`；人物 ID、行为名称、角色及参数通过能力查询获取。指令也可按顺序或并行组成最多 32 条的批次，详见[场景协议](../../docs/plugin-runtime.md)。
 
 HTTP `200` 表示指令已发送到至少一个在线页面连接。浏览器负责排队、寻路、资源占用和动画播放；本接口不返回动画开始或完成通知，业务流程应以外部业务后端的状态为准。无在线页面返回 `409`。
 
@@ -510,4 +510,4 @@ PixOffice 服务端重启会清空内存缓存，外部业务后端需要重新�
 
 公网部署时配置私有 `PIXOFFICE_API_KEY`、HTTPS 及页面和浏览器消息接口的访问控制。模型调用和审批等业务逻辑由外部业务后端实现。对话输入框的流式回复接入见[聊天接口](./chat-integration.md)。
 
-字段定义以 [`@pixoffice/protocol/office-integration`](../packages/protocol/src/office-integration.ts) 及关联 Schema 为准。本文示例用于说明请求和响应的用法；完整客户端见[业务操作示例](../examples/integration/client.mjs)和[用户操作示例](../examples/integration/ui-client.mjs)。
+字段定义以 [`@pixoffice/protocol/office-integration`](../../packages/protocol/src/office-integration.ts) 及关联 Schema 为准。本文示例用于说明请求和响应的用法；完整客户端见[业务操作示例](../clients/client.mjs)和[用户操作示例](../clients/ui-client.mjs)。

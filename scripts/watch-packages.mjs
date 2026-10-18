@@ -17,8 +17,9 @@ function build() {
   })
 }
 const watchers = []
-for (const name of await readdir(path.join(root, 'packages'))) {
-  watchers.push(watch(path.join(root, 'packages', name), { recursive: true }, (_event, filename) => {
+for (const entry of await readdir(path.join(root, 'packages'), { withFileTypes: true })) {
+  if (!entry.isDirectory()) continue
+  watchers.push(watch(path.join(root, 'packages', entry.name), { recursive: true }, (_event, filename) => {
     if (!filename || !/^(src\/|package\.json$|tsconfig\.json$)/.test(String(filename))) return
     clearTimeout(timer)
     timer = setTimeout(build, 150)
