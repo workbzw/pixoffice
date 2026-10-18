@@ -102,7 +102,7 @@ test('background notices use the first pending question deadline and advance wit
   const pending = [
     { id: 'first', title: '先处理的问题', createdAt, expiresAt: createdAt + 20000 },
     { id: 'second', title: '稍后处理的问题', createdAt, expiresAt: createdAt + 50000 },
-  ]
+  ].map(request => ({ ...request, teamId: 'b', kind: 'confirmation', description: '', confirmLabel: '确认', rejectLabel: '拒绝', requester: { name: 'B', appearanceId: 'office-lead' } }))
   const states = teams.slice(0, 2).map(() => ({ dashboard: null }))
   const decisions = [{ pending: [] }, { pending }]
   const sessions = teams.slice(0, 2).map((team, index) => ({
@@ -121,6 +121,21 @@ test('background notices use the first pending question deadline and advance wit
   decisions[1] = { pending: [pending[1]] }
   const second = renderToStaticMarkup(createElement(Directory))
   assert(second.includes('aria-valuetext="50 秒"'))
+})
+
+test('the directory projects submission and failure state from the owning team only', () => {
+  const sessions = teams.slice(0, 2).map(team => ({
+    runtime: { sceneId: team.id, readActors: () => [], subscribe: () => () => {} },
+    getSnapshot: () => ({ dashboard: null }), subscribe: () => () => {},
+    decisions: { getSnapshot: () => ({ pending: [], submittingId: team.id === 'b' ? 'b-question' : undefined, error: team.id === 'b' ? 'B failed' : null }), subscribe: () => () => {} },
+  }))
+  let options
+  function Directory() { options = useOfficeTeamDirectory(teams.slice(0, 2), sessions); return null }
+  renderToStaticMarkup(createElement(Directory))
+  assert.equal(options[0].decisionSubmittingId, undefined)
+  assert.equal(options[0].decisionError, '')
+  assert.equal(options[1].decisionSubmittingId, 'b-question')
+  assert.equal(options[1].decisionError, 'B failed')
 })
 
 test('replayed questions get a fresh notice identity and notices have no separate six-second expiry', async () => {

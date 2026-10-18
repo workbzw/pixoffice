@@ -5,12 +5,13 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { createTestServer } from './helpers/vite.mjs'
 
-let server, ExampleOfficeDataSource, createDemoOfficeTeams, TeamSwitcher
+let server, ExampleOfficeDataSource, createDemoOfficeTeams, TeamSwitcher, TeamDecisionNotice
 before(async () => {
   server = await createTestServer()
   ;({ ExampleOfficeDataSource } = await server.ssrLoadModule('/example/office-web/src/dashboard/demoSource.ts'))
   ;({ createDemoOfficeTeams } = await server.ssrLoadModule('/example/office-web/src/dashboard/demoTeams.ts'))
   ;({ TeamSwitcher } = await server.ssrLoadModule('/example/office-web/src/ui/TeamSwitcher.tsx'))
+  ;({ TeamDecisionNotice } = await server.ssrLoadModule('/example/office-web/src/ui/team-switcher/TeamDecisionNotice.tsx'))
 })
 after(() => server?.close())
 
@@ -71,17 +72,50 @@ test('all team sessions are hosted independently of the active view', async () =
   assert(!app.includes('setActiveRuntime'))
 })
 
-test('background decisions show a badge and light notice, never a foreign action card', () => {
+test('background decisions expose a compact action card with explicit team ownership', () => {
   const createdAt = Date.now()
   const teams = createDemoOfficeTeams(new ExampleOfficeDataSource()).map((team, index) => ({ ...team, decisionCount: index === 0 ? 1 : index === 1 ? 2 : 0,
-    pendingDecision: { id: 'request-1', title: '确认方案', createdAt, expiresAt: createdAt + 30000 } }))
-  const html = renderToStaticMarkup(createElement(TeamSwitcher, { selection: { teams, activeId: teams[0].id, select() {}, openDecisions() {} } }))
+    pendingDecision: { teamId: team.id, id: 'request-1', kind: 'confirmation', requester: { name: '负责人', appearanceId: 'office-lead' },
+      title: '确认方案', description: '请核对后选择。', confirmLabel: '确认发布', rejectLabel: '暂不发布', createdAt, expiresAt: createdAt + 30000 } }))
+  const html = renderToStaticMarkup(createElement(TeamSwitcher, { selection: { teams, activeId: teams[0].id, select() {}, openDecisions() {}, resolveDecision() {} } }))
   assert(html.includes('3 项待确认'))
   assert(html.includes('team-decision-count'))
-  assert(html.includes('前往处理内容运营团队的确认请求'))
+  assert(html.includes('role="region" aria-label="内容运营团队待决定提示"'))
+  assert(html.includes('进入内容运营团队办公室'))
+  assert(html.includes('确认发布'))
+  assert(html.includes('暂不发布'))
+  assert(html.includes('data-actionable="true"'))
   assert(html.includes('2 项待你决定'))
   assert(html.includes('aria-label="问题剩余有效时间"'))
   assert(html.includes('aria-valuetext="30 秒"'))
   assert(!html.includes('office-decision-card'))
-  assert(!html.includes('前往处理登录模块开发的确认请求'))
+  assert(!html.includes('进入登录模块开发办公室'))
+})
+
+test('background choices show radio options, disabled initial submit and team-local errors', () => {
+  const team = { id: 'b', name: 'B', sceneLabel: '办公室', decisionCount: 1, pendingDecision: {
+    teamId: 'b', id: 'choice', kind: 'choice', title: '选择处理方式', description: '', requester: { name: '负责人', appearanceId: 'office-lead' },
+    options: [{ id: 'one', label: '方案一', description: '先开发' }, { id: 'two', label: '方案二', description: '先测试' }],
+  } }
+  const render = value => renderToStaticMarkup(createElement(TeamDecisionNotice, { team: value, otherCount: 0, onOpen() {}, onDismiss() {}, onResolve() {} }))
+  const initial = render(team)
+  assert.equal((initial.match(/type="radio"/g) ?? []).length, 2)
+  assert(initial.includes('方案一') && initial.includes('先开发') && initial.includes('方案二'))
+  assert.match(initial, /type="submit"[^>]*disabled=""/)
+  const submitting = render({ ...team, decisionSubmittingId: 'choice' })
+  assert(submitting.includes('aria-busy="true"'))
+  assert(submitting.includes('正在提交…'))
+  assert(submitting.includes('<fieldset aria-label="处理方案" disabled=""'))
+  const failed = render({ ...team, decisionError: '提交失败，请重试' })
+  assert(failed.includes('role="alert">提交失败，请重试'))
+  assert(!failed.includes('aria-busy="true"'))
+})
+
+test('entering a decision office prioritizes its own panel until its queue is empty', () => {
+  const teams = [{ id: 'a', name: 'A', sceneLabel: '办公室', decisionCount: 1 }, { id: 'b', name: 'B', sceneLabel: '办公室', decisionCount: 1 }]
+  const selection = { teams, activeId: 'a', focusedDecisionTeamId: 'a', select() {} }
+  const render = value => renderToStaticMarkup(createElement(TeamSwitcher, { selection: value }))
+  assert(!render(selection).includes('team-decision-notice'))
+  assert(render({ ...selection, teams: [{ ...teams[0], decisionCount: 0 }, teams[1]] }).includes('team-decision-notice'))
+  assert(render({ ...selection, focusedDecisionTeamId: '' }).includes('team-decision-notice'))
 })

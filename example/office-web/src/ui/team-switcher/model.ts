@@ -15,14 +15,18 @@ export type OfficeTeamOption = {
   workingCount?: number
   pendingCount?: number
   decisionCount?: number
-  pendingDecision?: Pick<DecisionRequest, 'id' | 'title' | 'createdAt' | 'expiresAt' | 'deadline'>
+  pendingDecision?: DecisionRequest
+  decisionSubmittingId?: string
+  decisionError?: string
   avatarIds?: readonly string[]
 }
 export type OfficeTeamSelection = {
   teams: readonly OfficeTeamOption[]
   activeId: string
+  focusedDecisionTeamId?: string
   select: (id: string) => void
   openDecisions?: (id: string) => void
+  resolveDecision?: (teamId: string, decisionId: string, choiceId: string) => void
   create?: (input: OfficeCreationInput) => Promise<void>
 }
 

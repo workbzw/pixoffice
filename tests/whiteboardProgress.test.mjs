@@ -25,6 +25,35 @@ test('whiteboard display starts fast, slows down and never completes merely from
   assert.equal(data.steps[0].progress, 0)
 })
 
+test('whiteboard activity follows the slower stage-level timing instead of reaching 90 percent in thirty seconds', () => {
+  let now = 0
+  const progress = new WhiteboardProgress({ now: () => now }), data = board()
+  progress.project('board', data)
+  for (const [elapsed, expected] of [[30000, 28], [60000, 48], [120000, 72], [180000, 85], [300000, 95], [600000, 98]]) {
+    now = elapsed
+    assert.equal(progress.project('board', data).steps[0].progress, expected, `progress after ${elapsed / 1000}s`)
+  }
+  assert.equal(data.steps[0].progress, 0)
+})
+
+test('reported progress sets the starting point and can move the display forward but never backward', () => {
+  let now = 0
+  const progress = new WhiteboardProgress({ now: () => now }), data = board()
+  data.steps[0].progress = 40
+  assert.equal(progress.project('board', data).steps[0].progress, 40)
+  now = 60000
+  assert.equal(progress.project('board', data).steps[0].progress, 68)
+  data.steps[0].progress = 10
+  assert.equal(progress.project('board', data).steps[0].progress, 68)
+  data.steps[0].progress = 85
+  assert.equal(progress.project('board', data).steps[0].progress, 85)
+  now += 60000
+  assert.equal(progress.project('board', data).steps[0].progress, 91)
+  data.status = 'completed'
+  assert.equal(progress.project('board', data).steps[0].progress, 100)
+  assert.equal(data.steps[0].progress, 85)
+})
+
 test('only completed status fills the board to 100 and completion remains until new work', () => {
   let now = 0
   const progress = new WhiteboardProgress({ now: () => now }), data = board()

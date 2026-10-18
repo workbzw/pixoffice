@@ -6,15 +6,15 @@
 
 [Full Office](https://pixoffice.online/office/) · [Minimal Example](https://pixoffice.online/minimal/) · [Classroom](./example/classroom/README.md) · [Farm](./example/farm/README.md)
 
-![PixOffice demo: characters walking and talking at workstations](./docs/office-demo.gif)
+![Current PixOffice: task whiteboard, walking characters and desk conversations](./docs/office-demo.gif)
 
-A demo of the current scene: multiple characters walking, visiting desks, and talking. [View the high-resolution screenshot](./docs/page-preview.jpeg).
+Recorded from the current office scene (2026-10-19, a 6-second loop at 25 fps): the wall-mounted task whiteboard, task bubbles beside monitors, walking characters and desk conversations. The recording uses local sample data. [View the full-page 3200×2000 screenshot](./docs/page-preview.jpeg).
 
 PixOffice is a standalone 2D office frontend built with Vite, React, and PixiJS. Replaceable business data sources provide metrics, tasks, and employee information. The scene runtime drives characters, objects, and activities through a versioned protocol and trusted built-in plugins. Without a connected business service, the interface uses clearly labeled sample data.
 
-It includes character frame animations, seated poses, and office assets, with support for desk visits, group meetings, sustained focus, whiteboard content, plugin controls, and grid-based drag-and-drop layouts.
+It includes six frame-animated characters, seated poses and office assets, with support for switching between offices, desk visits, group meetings, sustained focus, a structured task whiteboard, timed confirmations and choice menus, plugin controls, and grid-based drag-and-drop layouts.
 
-Maps and character movement use integer grid cells: characters occupy 1×1 cell, desk-and-chair sets 2×2 cells, and whiteboards 2×1 cells. Furniture interactions use entrance cells, use cells, and resource reservations. Smooth motion is interpolated only in the rendering layer. The current command protocol is `2.0`; see [Integer Grid and Furniture Interactions](./docs/integer-grid-and-interactions.md).
+Maps and character movement use integer grid cells. Each scene package defines furniture footprints, entrance cells, use cells and resource reservations. Smooth motion is interpolated only in the rendering layer. The current command protocol is `2.0`; see [Integer Grid and Furniture Interactions](./docs/integer-grid-and-interactions.md).
 
 [Office Business Integration](./docs/office-integration.md) · [Dashboard Data Integration](./docs/dashboard-integration.md) · [Plugins, Scene Protocol, and External Integration](./docs/plugin-runtime.md) · [Map Editor and AI Editing Protocol](./docs/map-editor.md) · [Message Relay and Deployment](./docs/message-relay.md)
 
@@ -44,7 +44,11 @@ A floating input sits at the bottom of the animated scene. Sending a message exp
 
 ## Map Editing
 
-The grid button in the top-left corner of the office opens the full-screen layout editor. Choose assets from the furniture catalog at the bottom, drag furniture onto the floor grid, and select it to duplicate, remove, or reassign a workstation. Invalid placements return to their previous positions. Undo and redo are supported; the advanced menu offers JSON import/export and route testing. External AI systems can modify the same shared draft through the `map.edit` protocol without simulating mouse input.
+The grid button in the top-right corner of the office opens the full-screen layout editor; the top-left button opens the team-space overview. Choose assets from the furniture catalog at the bottom, drag furniture onto the floor grid, and select it to duplicate, remove, or reassign a workstation. Invalid placements return to their previous positions. Undo and redo are supported; the advanced menu offers JSON import/export and route testing. External AI systems can modify the same shared draft through the `map.edit` protocol without simulating mouse input.
+
+## Updating Preview Media
+
+With Chrome and FFmpeg installed, run `npm run docs:capture` to build the current version and record the office, replacing the GIF and high-resolution screenshot above. To update only the GIF while preserving the existing screenshot, run `node scripts/capture-readme.mjs --gif-only` after building. Recording uses local sample data in an isolated browser, without connecting to a business backend or changing your regular saved state.
 
 ## Character Asset Packs
 
@@ -59,11 +63,11 @@ npm run characters:check  # Verify source assets match generated resources
 
 On first load, the page draws a white surface and the office background, then loads the initial character packs (seated and working poses) alongside the desks and chairs. Regular textures have a concurrency limit of four; the background loads independently with priority. Progress shows the actual number of completed resources. Sidebar avatars use separate small images instead of full animation atlases. Other poses required by a saved scene are loaded as needed. Manifests must declare `startup` / `deferred` atlas groups, and registry entries must include a separate `portrait`. Retired formats are rejected; missing actions are never silently replaced with other actions.
 
-Once the office is visible, current work animations continue while the remaining walking, talking, and expression assets load in the background. Interactions, demos, editing controls, and the scene gateway become available when preparation finishes. On failure, the visible scene is preserved and a retry is offered. The browser performance timeline exposes three marks: `pixoffice:background-visible`, `pixoffice:scene-ready` (initial scene visible), and `pixoffice:actions-ready` (full interaction ready). The scene simulation clock does not advance during background loading. Hosts using the headless runtime directly should wait for assets to be ready before advancing the visual simulation.
+Once the office is visible, current work animations continue while the remaining walking, talking, and expression assets load in the background. Scene interactions, demos and editing controls become available when preparation finishes. On failure, the visible scene is preserved and a retry is offered. The browser performance timeline exposes three marks: `pixoffice:background-visible`, `pixoffice:scene-ready` (initial scene visible), and `pixoffice:actions-ready` (full interaction ready). The scene simulation clock does not advance during background loading. Hosts using the headless runtime directly should wait for assets to be ready before advancing the visual simulation.
 
 [Character Configuration and Action Standards](./docs/character-packs.md) · [Character Admission, Visual Review, and Release](./docs/character-admission.md)
 
-New or modified characters must first pass through the staging workflow: `characters:draft → characters:audit → characters:preview → characters:review → characters:publish`. Work frames are checked for body stability, and walking cycles for continuity. Publication requires visual approval tied to that asset version. The six existing characters are preserved for compatibility; this does not mean their historical assets have passed the new standards. The standards migration did not modify their images.
+New or modified characters must first pass through the staging workflow: `characters:draft → characters:audit → characters:preview → characters:review → characters:publish`. Work frames are checked for body stability, and walking cycles for continuity. Publication requires visual approval tied to that asset version. Freeze markers for existing assets are documented in each character configuration.
 
 Check the rights and licenses for any assets you use.
 

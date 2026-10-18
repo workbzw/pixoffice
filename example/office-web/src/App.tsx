@@ -66,6 +66,7 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
   const sessions = useMemo(() => new Map(entries.map(entry => [entry.team.id, entry.session])), [entries])
   const [activeId, setActiveId] = useState(initialTeams[0]?.id ?? '')
   const [decisionOpenToken, setDecisionOpenToken] = useState(0)
+  const [focusedDecisionTeamId, setFocusedDecisionTeamId] = useState('')
   const hostedSessions = useMemo(() => [...sessions.values()], [sessions])
   useOfficeTeamHost(hostedSessions)
   const teamOptions = useOfficeTeamDirectory(teams, hostedSessions)
@@ -84,12 +85,13 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
   } : undefined
   const select = (id: string) => {
     if (!teams.some(team => team.id === id) || id === activeId) return
+    setFocusedDecisionTeamId('')
     void sessions.get(id)?.refresh()
     setActiveId(id)
   }
   const openDecisions = (id: string) => {
     if (!sessions.has(id)) return
-    select(id); setDecisionOpenToken(value => value + 1)
+    select(id); setFocusedDecisionTeamId(id); setDecisionOpenToken(value => value + 1)
   }
   if (!activeSession) {
     const scene = <OfficeEmptyState create={create} />
@@ -99,7 +101,8 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
       canRecoverLayout={false} recoverLayout={() => {}} exportCapabilities={() => {}} exportSnapshot={() => {}} renderScenePanel={() => null} />
   }
   return <OfficeApp dataSource={activeSession.source} session={activeSession} chatSource={chatSource} decisionOpenToken={decisionOpenToken}
-    teamSelection={{ teams: teamOptions, activeId, select, openDecisions, create }} layout={layout} />
+    teamSelection={{ teams: teamOptions, activeId, focusedDecisionTeamId, select, openDecisions, create,
+      resolveDecision: (teamId, decisionId, choiceId) => { void sessions.get(teamId)?.decisions.choose(teamId, decisionId, choiceId) } }} layout={layout} />
 }
 
 function DemoApp() {

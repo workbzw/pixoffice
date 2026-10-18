@@ -2,7 +2,7 @@ import type { WhiteboardTaskBoardData } from '@pixoffice/protocol/office-ui'
 
 type Entry = { key: string; status: WhiteboardTaskBoardData['status']; at: number; values: Map<string, number> }
 const LIMIT = 99
-const DURATION_MS = 12000
+const DURATION_MS = 90000
 const reported = (value?: number) => value !== undefined && Number.isFinite(value) && value >= 0 ? Math.min(LIMIT, value) : 0
 
 /** Display-only activity progress; the business payload is never changed. */

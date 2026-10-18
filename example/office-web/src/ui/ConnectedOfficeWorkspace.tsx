@@ -45,6 +45,8 @@ export function ConnectedOfficeWorkspace({ baseUrl, renderOffice }: { baseUrl: s
   const state = useSyncExternalStore(integration.subscribe, integration.getSnapshot)
   const [activeId, select] = useState('')
   const [decisionOpenToken, setDecisionOpenToken] = useState(0)
+  const [focusedDecisionTeamId, setFocusedDecisionTeamId] = useState('')
+  const selectTeam = (id: string) => { select(id); setFocusedDecisionTeamId('') }
   useEffect(() => { void integration.start(); return () => integration.stop() }, [integration])
   const [layout] = useState<LayoutMode>(() => new URLSearchParams(location.search).get('layout') === 'scene' ? 'scene' : 'full')
   const sessions = useMemo(() => state.offices.map(office => office.session), [state.offices])
@@ -59,5 +61,7 @@ export function ConnectedOfficeWorkspace({ baseUrl, renderOffice }: { baseUrl: s
       appearanceIds={{}} scene={scene} editing={false} canRecoverLayout={false} recoverLayout={() => {}} exportCapabilities={() => {}} exportSnapshot={() => {}} renderScenePanel={() => null} />
   }
   return renderOffice({ session: office.session, layout, decisionOpenToken, integrationError: state.error,
-    teamSelection: { teams: options, activeId: office.id, select, openDecisions: id => { select(id); setDecisionOpenToken(value => value + 1) } } })
+    teamSelection: { teams: options, activeId: office.id, focusedDecisionTeamId, select: selectTeam,
+      openDecisions: id => { select(id); setFocusedDecisionTeamId(id); setDecisionOpenToken(value => value + 1) },
+      resolveDecision: (teamId, decisionId, choiceId) => { void state.offices.find(item => item.id === teamId)?.session.decisions.choose(teamId, decisionId, choiceId) } } })
 }

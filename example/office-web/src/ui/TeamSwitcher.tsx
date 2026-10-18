@@ -19,6 +19,7 @@ export function TeamSwitcher({ selection, fallbackName = '办公室', onOpenChan
   const pendingCount = selection?.teams.reduce((sum, team) => sum + (team.decisionCount ?? 0), 0) ?? 0
   const backgroundTeams = pendingDecisionTeams(selection)
   const notice = backgroundTeams.find(team => !dismissed.includes(decisionNoticeKey(team)))
+  const focused = selection?.focusedDecisionTeamId === selection?.activeId && (current?.decisionCount ?? 0) > 0
   useEffect(() => {
     onOpenChange?.(open && canSwitch)
     return () => onOpenChange?.(false)
@@ -32,7 +33,8 @@ export function TeamSwitcher({ selection, fallbackName = '办公室', onOpenChan
       <LayoutGrid size={18} strokeWidth={1.7} />
       {pendingCount > 0 && <span className="team-decision-count" aria-hidden="true">{pendingCount > 99 ? '99+' : pendingCount}</span>}
     </button>
-    {!open && notice && <TeamDecisionNotice key={decisionNoticeKey(notice)} team={notice} otherCount={backgroundTeams.length - 1} onDismiss={dismiss}
+    {!open && !focused && notice && <TeamDecisionNotice key={decisionNoticeKey(notice)} team={notice} otherCount={backgroundTeams.length - 1} onDismiss={dismiss}
+      onResolve={selection?.resolveDecision ? (decisionId, choiceId) => selection.resolveDecision!(notice.id, decisionId, choiceId) : undefined}
       onOpen={() => { (selection?.openDecisions ?? selection?.select)?.(notice.id) }} />}
     {open && canSwitch && <TeamOverviewDialog id={listId} selection={selection!}
       onClose={() => { setOpen(false); trigger.current?.focus() }} />}

@@ -175,16 +175,28 @@ test('an expired menu closes without creating a default approval', async ({ back
   expect((await backend.read('team-a')).data.pendingDecisions).toEqual([])
 })
 
-test('a background-office menu remains assigned to its office during switching', async ({ backend, page, service }) => {
+for (const mobile of [false, true]) test(`background-office decisions submit without switching (${mobile ? 'mobile' : 'desktop'})`, async ({ backend, page, service }) => {
+  if (mobile) await page.setViewportSize({ width: 390, height: 844 })
   const a = office(), b = office('team-b')
   await backend.post({ type: 'offices.initialize', offices: [a, b] }); await openOffice(page, service.url)
-  const pending = backend.post<{ teamId: string }>({ type: 'decision.request', teamId: 'team-b', timeoutMs: 15000,
-    decision: { id: 'background', kind: 'confirmation', title: '产品团队的确认' } })
-  await expect(page.getByRole('button', { name: /^团队空间，当前团队.*1 项待确认/ })).toBeVisible()
-  await expect(page.getByRole('heading', { name: '产品团队的确认' })).toBeHidden()
-  await selectOffice(page, b.workspace.name)
-  await page.getByRole('complementary', { name: '待你决定' }).getByRole('button', { name: '确认', exact: true }).click()
-  expect((await pending).data.teamId).toBe('team-b')
+  const card = page.getByRole('region', { name: `${b.workspace.name}待决定提示` })
+  for (const choice of ['confirm', 'reject']) {
+    const pending = backend.post<{ teamId: string; choiceId: string }>({ type: 'decision.request', teamId: 'team-b', timeoutMs: 15000,
+      decision: { id: `background-${choice}`, kind: 'confirmation', title: '产品团队的确认', confirmLabel: '确认提交', rejectLabel: '暂不提交' } })
+    await expect(card.getByRole('heading', { name: '产品团队的确认' })).toBeVisible()
+    await card.getByRole('button', { name: choice === 'confirm' ? '确认提交' : '暂不提交', exact: true }).click()
+    expect((await pending).data).toMatchObject({ teamId: 'team-b', choiceId: choice })
+    await expect(page.getByRole('button', { name: new RegExp(`^团队空间，当前团队：${a.workspace.name}`) })).toBeVisible()
+  }
+  const pending = backend.post<{ teamId: string; choiceId: string }>({ type: 'decision.request', teamId: 'team-b', timeoutMs: 15000,
+    decision: { id: 'background-choice', kind: 'choice', title: '选择验收方式', options: [{ id: 'full', label: '完整验收' }, { id: 'smoke', label: '快速验收' }] } })
+  await expect(card.getByRole('button', { name: '提交选择', exact: true })).toBeDisabled()
+  await card.getByRole('radio', { name: '快速验收', exact: true }).check()
+  await card.getByRole('button', { name: '提交选择', exact: true }).click()
+  expect((await pending).data).toMatchObject({ teamId: 'team-b', choiceId: 'smoke' })
+  await expect(card).toBeHidden()
+  expect((await backend.read('team-a')).data.pendingDecisions).toEqual([])
+  await expect(page.getByRole('button', { name: new RegExp(`^团队空间，当前团队：${a.workspace.name}`) })).toBeVisible()
 })
 
 test('real animation changes both the visible canvas and public actor state', async ({ backend, page, service }, testInfo) => {
@@ -279,7 +291,7 @@ test.describe('static local demo', () => {
     await page.goto(`${service.url}/office/`)
     await expect(page.locator('canvas')).toBeVisible({ timeout: 30000 })
     await expect(page.getByText(/正在加载办公室/)).toHaveCount(0, { timeout: 30000 })
-    const notice = page.getByRole('status', { name: '内容运营团队待决定提示' })
+    const notice = page.getByRole('region', { name: '内容运营团队待决定提示' })
     const progress = notice.getByRole('progressbar', { name: '问题剩余有效时间' })
     await expect(progress).toBeVisible()
     const initial = Number(await progress.getAttribute('aria-valuenow'))
@@ -287,8 +299,8 @@ test.describe('static local demo', () => {
     await expect(notice).toBeVisible()
     await expect(progress).toBeInViewport()
     if (mobile) {
-      const noticeBounds = await notice.boundingBox(), menuBounds = await page.locator('.office-decision-card').boundingBox()
-      expect(noticeBounds!.y + noticeBounds!.height).toBeLessThanOrEqual(menuBounds!.y)
+      await expect(page.getByRole('complementary', { name: '待你决定' })).toBeHidden()
+      await expect(notice.getByRole('button', { name: '提交选择', exact: true })).toBeInViewport()
     }
     await expect.poll(async () => Number(await progress.getAttribute('aria-valuenow'))).toBeLessThan(initial - 10)
     await expect(progress.locator('i')).toHaveCSS('background-color', 'rgb(42, 186, 131)')
@@ -297,7 +309,7 @@ test.describe('static local demo', () => {
     await testInfo.attach('side-notice-countdown', { path: screenshot, contentType: 'image/png' })
     const sideSeconds = Number.parseInt((await progress.getAttribute('aria-valuetext'))!)
     const beforeSwitch = await page.evaluate(() => performance.now())
-    await notice.getByRole('button', { name: '前往处理内容运营团队的确认请求', exact: true }).click()
+    await notice.getByRole('button', { name: '进入内容运营团队办公室', exact: true }).click()
     const menuProgress = page.getByRole('complementary', { name: '待你决定' }).getByRole('progressbar', { name: '选择剩余时间' })
     await expect(menuProgress).toBeVisible()
     const menuSeconds = Number.parseInt((await menuProgress.getAttribute('aria-valuetext'))!)
@@ -305,6 +317,11 @@ test.describe('static local demo', () => {
     expect(menuSeconds).toBeLessThanOrEqual(sideSeconds)
     expect(Math.abs(menuSeconds - (sideSeconds - switchingSeconds))).toBeLessThanOrEqual(2)
     await selectOffice(page, '登录模块开发')
+    await expect(notice).toBeHidden()
+    const activePanel = page.getByRole('complementary', { name: '待你决定' })
+    await activePanel.getByRole('radio').first().check()
+    await activePanel.getByRole('button', { name: '提交选择', exact: true }).click()
+    await activePanel.getByRole('button', { name: '暂不提交', exact: true }).click()
     await expect(notice).toBeVisible()
     const returnedSeconds = Number.parseInt((await progress.getAttribute('aria-valuetext'))!)
     expect(returnedSeconds).toBeLessThanOrEqual(menuSeconds)
@@ -312,6 +329,28 @@ test.describe('static local demo', () => {
     await page.clock.fastForward(61000)
     await expect(page.locator('.team-decision-notice')).toHaveCount(0)
     await expect(page.getByRole('complementary', { name: '待你决定' })).toBeHidden()
+  })
+
+  for (const mobile of [false, true]) test(`background choices and confirmations resolve in place (${mobile ? 'mobile' : 'desktop'})`, async ({ page, service }) => {
+    if (mobile) await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto(`${service.url}/office/`)
+    await expect(page.getByText(/正在加载办公室/)).toHaveCount(0, { timeout: 30000 })
+    const notice = page.getByRole('region', { name: '内容运营团队待决定提示' })
+    await expect(notice.getByRole('heading', { name: '下一步优先推进哪一项？' })).toBeVisible()
+    await expect(notice.getByRole('button', { name: '提交选择', exact: true })).toBeDisabled()
+    await notice.getByRole('radio', { name: /先整理素材/ }).check()
+    await expect(notice.getByRole('button', { name: '提交选择', exact: true })).toHaveCSS('color', 'rgb(255, 255, 255)')
+    await notice.getByRole('button', { name: '提交选择', exact: true }).click()
+    await expect(notice.getByRole('heading', { name: '是否发布这份内容？' })).toBeVisible()
+    await expect(notice.getByRole('radio')).toHaveCount(0)
+    await notice.getByRole('button', { name: '暂不发布', exact: true }).click()
+    await expect(notice).toBeHidden()
+    await expect(page.getByRole('button', { name: /^团队空间，当前团队：登录模块开发/ })).toBeVisible()
+    await selectOffice(page, '内容运营团队')
+    await page.getByRole('button', { name: '展开对话', exact: true }).click()
+    const records = page.getByLabel('决策记录', { exact: true })
+    await expect(records).toHaveCount(2)
+    await expect(records).toContainText(['先整理素材', '暂不发布'])
   })
 
   test('the local preview shows a countdown, expires and restarts on replay', async ({ page, service }, testInfo) => {

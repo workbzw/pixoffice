@@ -39,9 +39,10 @@ export function useOfficeTeamDirectory(teams: readonly OfficeTeamOption[], sessi
     const state = states[sessions.findIndex(session => session.runtime.sceneId === team.id)]
     const decisionCount = state?.decisions?.pending.length ?? 0
     const pendingDecision = state?.decisions?.pending[0]
+    const decisionState = { decisionCount, pendingDecision, decisionSubmittingId: state?.decisions?.submittingId, decisionError: state?.decisions?.error ?? '' }
     const dashboard = state?.dashboard
-    if (!dashboard) return { ...team, decisionCount, pendingDecision }
-    return { ...team, decisionCount, pendingDecision, name: dashboard.workspace.name, memberCount: dashboard.employees.length,
+    if (!dashboard) return { ...team, ...decisionState }
+    return { ...team, ...decisionState, name: dashboard.workspace.name, memberCount: dashboard.employees.length,
       workingCount: new Set(dashboard.tasks.filter(task => task.status === 'running' && task.assigneeId).map(task => task.assigneeId)).size,
       pendingCount: dashboard.tasks.filter(task => ['queued', 'blocked', 'failed'].includes(task.status)).length,
       avatarIds: dashboard.employees.flatMap(employee => employee.sceneActorId && state.appearances[employee.sceneActorId] ? [state.appearances[employee.sceneActorId]] : []).slice(0, 4),
