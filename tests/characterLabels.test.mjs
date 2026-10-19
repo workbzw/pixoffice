@@ -4,6 +4,30 @@ import { createTestServer } from './helpers/vite.mjs'
 import { characterPackFixture } from './helpers/characterPack.mjs'
 import { frameVisualFixture } from './helpers/frameVisual.mjs'
 
+test('unchanged names, tasks and status dots do not rebuild their graphics every frame', async t => {
+  const server = await createTestServer(); t.after(() => server.close())
+  const { StatusLabel } = await server.ssrLoadModule('/packages/renderer-pixi/src/ui/StatusLabel.ts')
+  const paint = t.mock.method(StatusLabel.prototype, 'paintStateDot', () => {})
+  const label = new StatusLabel('王明'); t.after(() => label.destroy({ children: true }))
+  for (const text of [label.nameText, label.taskText]) Object.defineProperties(text, {
+    width: { get: () => text.text.length * 12 }, height: { get: () => 12 },
+  })
+  const nameClear = t.mock.method(label.nameBg, 'clear', label.nameBg.clear)
+  const taskClear = t.mock.method(label.taskBg, 'clear', label.taskBg.clear)
+  for (let i = 0; i < 60; i++) {
+    label.setName('王明'); label.setState('working'); label.setTask('登录接口'); label.layout(-100)
+  }
+  assert.equal(paint.mock.callCount(), 2, 'initial dot plus one actual state change')
+  assert.equal(nameClear.mock.callCount(), 0)
+  assert.equal(taskClear.mock.callCount(), 1)
+  for (let i = 0; i < 60; i++) label.layoutBeside(62, 29, 1.15, -100)
+  assert.equal(nameClear.mock.callCount(), 1)
+  label.setName('新的名字'); label.layoutBeside(62, 29, 1.15, -100)
+  assert.equal(nameClear.mock.callCount(), 2, 'nameplate dimensions still follow new names')
+  label.layout(-100); label.layout(-100)
+  assert.equal(nameClear.mock.callCount(), 3, 'returning above the head clears the plate only once')
+})
+
 test('task labels stay above the head independently of the beside-seat name label', async t => {
   const server = await createTestServer(); t.after(() => server.close())
   const { StatusLabel } = await server.ssrLoadModule('/packages/renderer-pixi/src/ui/StatusLabel.ts')

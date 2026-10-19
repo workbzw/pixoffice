@@ -23,4 +23,7 @@ export interface SceneRenderProfile {
   readonly roundPixels?: boolean
   readonly backgroundColor?: number
   readonly pixelArt?: boolean
+  /** Presentation cadence only; simulation keeps its normal cadence. */
+  readonly idleFPS?: number
+  readonly motionFPS?: number
 }

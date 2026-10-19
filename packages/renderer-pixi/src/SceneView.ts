@@ -1,7 +1,7 @@
 import { Application, Container, Graphics, Rectangle, Sprite } from 'pixi.js'
 import type { FederatedPointerEvent } from 'pixi.js'
 import type { SceneReadPort } from '@pixoffice/runtime'
-import type { Box, Point, Prop } from '@pixoffice/runtime/model'
+import type { Box, Point, Prop, Template } from '@pixoffice/runtime/model'
 import { SceneFault } from '@pixoffice/protocol'
 import type { CommandResult, SceneCommand } from '@pixoffice/protocol'
 import { convexAreaContains } from '@pixoffice/runtime/walkableArea'
@@ -47,13 +47,16 @@ export class SceneView {
   private agentEntities = new Map<string, ActorView>()
   private propViews = new Map<string, PropView>()
   private ambientViews: SceneAmbientView[] = []
-  private propViewTemplates = new Map<string, string>()
+  private propViewTemplates = new Map<string, Template>()
   private viewRegistry: PropViewRegistry
   private pack: ScenePresentationPack
   readonly projection: SceneProjection
   private abort = new AbortController()
   private destroyed = false
   private renderingSuspended = false
+  private renderElapsed = 0
+  private renderBudget = 0
+  private activeMotion = false
   private lastRevision = -1
   private unsubscribe?: () => void
   private unwatchPixelDensity?: () => void
@@ -270,9 +273,10 @@ export class SceneView {
   }
 
   private mountProp(prop: Prop) {
-    const view = this.viewRegistry.create(prop, this.runtime.template(prop.templateId))
+    const template = this.runtime.template(prop.templateId)
+    const view = this.viewRegistry.create(prop, template)
     this.propViews.set(prop.id, view)
-    this.propViewTemplates.set(prop.id, prop.templateId)
+    this.propViewTemplates.set(prop.id, template)
     this.layer!.addChild(...view.roots)
     view.hitTarget.eventMode = this.options.onPropClick ? 'static' : 'none'
     if (this.options.onPropClick) {
@@ -288,7 +292,7 @@ export class SceneView {
     const world = this.viewWorld()
     if (this.runtime.isEditing) this.beforeEditing()
     if (this.layer) {
-      for (const [id, view] of this.propViews) if (!world.props.some(p => p.id === id && p.templateId === this.propViewTemplates.get(id))) {
+      for (const [id, view] of this.propViews) if (!world.props.some(p => p.id === id && p.templateId === this.propViewTemplates.get(id)?.id)) {
         view.roots.forEach(root => root.destroy({ children: true })); this.propViews.delete(id); this.propViewTemplates.delete(id)
       }
       if (this.layer instanceof Container) for (const prop of world.props) if (!this.propViews.has(prop.id)) this.mountProp(prop)
@@ -323,8 +327,9 @@ export class SceneView {
   }
   private syncActors(dt: number) {
     const world = this.viewWorld()
-    const agents = this.pack.projectActors(this.runtime, this.runtime.isEditing ? world : undefined)
-    for (const prop of world.props) this.propViews.get(prop.id)?.update(prop, this.runtime.template(prop.templateId), agents)
+    const agents = this.pack.projectActors(this.runtime, world)
+    this.activeMotion = this.runtime.isEditing || agents.some(agent => agent.intent.actionId === 'core.walk' || agent.furniture?.transitioning)
+    for (const prop of world.props) this.propViews.get(prop.id)?.update(prop, this.propViewTemplates.get(prop.id) ?? this.runtime.template(prop.templateId), agents)
     for (const agent of agents) {
       const entity = this.agentEntities.get(agent.id)
       entity?.update(agent, dt)
@@ -349,10 +354,20 @@ export class SceneView {
     if (this.actionsReady) this.options.onStep?.(dt * 1000)
     if (this.destroyed) return
     if (!this.renderingSuspended) {
-      this.syncActors(dt)
-      for (const view of this.propViews.values()) view.updateFrame?.(dt)
-      this.app?.render()
-    }
+      this.renderElapsed += dt
+      this.renderBudget += dt
+      const targetFPS = this.runtime.isEditing ? 60 : this.activeMotion ? this.pack.rendering?.motionFPS ?? 60 : this.pack.rendering?.idleFPS ?? 60
+      const fps = Math.max(20, Math.min(60, targetFPS))
+      if (fps === 60 || this.renderBudget + 1e-6 >= 1 / fps) {
+        const elapsed = this.renderElapsed
+        this.renderElapsed = 0
+        // Carry scheduling overshoot without adding it to animation time again.
+        this.renderBudget = fps === 60 ? 0 : Math.max(0, this.renderBudget - Math.floor((this.renderBudget + 1e-6) * fps) / fps)
+        this.syncActors(elapsed)
+        for (const view of this.propViews.values()) view.updateFrame?.(elapsed)
+        this.app?.render()
+      }
+    } else { this.renderElapsed = 0; this.renderBudget = 0 }
     if (this.lastRevision !== this.runtime.getRevision()) {
       this.lastRevision = this.runtime.getRevision(); this.onRevision()
     }

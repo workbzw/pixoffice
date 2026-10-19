@@ -24,6 +24,7 @@ export interface ScenePresentationPack {
   loadObjects(report: (resource: string) => void): Promise<void>
   createPropViews(): PropViewRegistry
   createAmbientViews?(runtime: SceneReadPort): SceneAmbientView[]
-  projectActors(runtime: SceneReadPort, preview?: World): PresentedActor[]
+  /** Reuse the renderer's world snapshot, including draft state while editing. */
+  projectActors(runtime: SceneReadPort, world?: World): PresentedActor[]
   cellCenter(point: Point): Point
 }

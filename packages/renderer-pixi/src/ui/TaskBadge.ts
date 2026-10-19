@@ -1,4 +1,4 @@
-import { Container, Graphics, Rectangle, Text } from 'pixi.js'
+import { BitmapText, Container, Graphics, Rectangle, Text } from 'pixi.js'
 import type { ActorTaskPresentation } from '@pixoffice/contracts/presentation'
 
 const FONT = 'system-ui, -apple-system, sans-serif'
@@ -14,7 +14,7 @@ export class TaskBadge extends Container {
   private titleText = new Text({ text: '', style: { fontFamily: FONT, fontSize: 16, fontWeight: '700', fill: 0x263c36 } })
   private statusText = new Text({ text: '已完成', style: { fontFamily: FONT, fontSize: 10, fontWeight: '600', fill: COLORS.completed } })
   private detailText = new Text({ text: '', style: { fontFamily: FONT, fontSize: 12, fontWeight: '400', lineHeight: 16, fill: 0x727c77 } })
-  private percentText = new Text({ text: '', style: { fontFamily: FONT, fontSize: 10, fill: 0x727c77 } })
+  private percentText = new BitmapText({ text: '', style: { fontFamily: FONT, fontSize: 10, fill: 0x727c77 } })
   private data?: ActorTaskPresentation
   private key = ''
   private expanded = false

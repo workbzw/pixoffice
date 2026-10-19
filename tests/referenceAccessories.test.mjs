@@ -41,6 +41,13 @@ test('workstation accessories use separate cropped contact bases, not the transp
   const view = views.referenceWorkstationView(prop)
   try {
     view.update(prop, {}, [])
+    const indicator = view.roots[3]
+    const clear = t.mock.method(indicator, 'clear', indicator.clear)
+    const actors = [{ furniture: { propId: prop.id, seated: true, transitioning: false } }]
+    for (let i = 0; i < 60; i++) view.update(prop, {}, actors)
+    assert.equal(clear.mock.callCount(), 1, 'unchanged occupancy must reuse its indicator geometry')
+    view.update(prop, {}, [])
+    assert.equal(clear.mock.callCount(), 2)
     const group = view.roots.at(-1)
     assert.equal(group.children.length, 3)
     assert.deepEqual(group.children.map(sprite => [sprite.texture.frame.x, sprite.texture.frame.y]), [[45, 133], [1467, 374], [1728, 185]])

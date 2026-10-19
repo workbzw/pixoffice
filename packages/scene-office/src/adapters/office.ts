@@ -27,7 +27,7 @@ export function presentationCommand(runtime: SceneReadPort, id: string, state: A
 export function projectAgents(runtime: SceneReadPort, includeMissions = true, preview?: World): Agent[] {
   const snapshot = includeMissions ? runtime.snapshot() : undefined
   // Read active phases without copying the full command/event history on every render tick.
-  const focused = new Map((preview ? [] : runtime.readActivePhases())
+  const focused = new Map((runtime.isEditing ? [] : runtime.readActivePhases())
     .filter(phase => phase.capability === 'office.focus' && phase.ready && phase.phaseIndex === phase.phaseCount - 1)
     .flatMap(phase => phase.participants.map(id => [id, phase.title] as const)))
   return (preview?.actors ?? snapshot?.world.actors ?? runtime.readActors()).map(actor => {

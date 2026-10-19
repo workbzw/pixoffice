@@ -80,3 +80,12 @@ test('remote working status loops complete typing frames without a focus activit
   runtime.submit({ ...base('idle'), type: 'actor.presentation.set', actorId: 'office-lead', status: 'idle', title: 'Done', sourceRevision: 2 })
   assert.equal(model.present(presentation.projectActors(runtime)[0], 0).sprite.texture, model.texture('sit.back'))
 })
+
+test('reusing a render snapshot preserves active focus work instead of treating it as an editor preview', t => {
+  const runtime = createOfficeRuntime(); t.after(() => runtime.dispose())
+  runtime.submit(focus('office-lead')); runtime.tick(50)
+  const projected = presentation.projectActors(runtime, runtime.readWorld())[0]
+  assert.equal(projected.intent.actionId, 'office.type')
+  assert.equal(projected.title, 'Work: office-lead')
+  assert.equal(projected.status, 'working')
+})

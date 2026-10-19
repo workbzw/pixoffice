@@ -10,6 +10,9 @@ import { computeAgentDepthZ } from './depth.ts'
 import { loadReferenceOfficeBackground, loadReferenceOfficeObjects } from './assets/loadReferenceOfficeAssets.ts'
 import { createReferenceOfficePropViews, referenceMonitorAnchor } from './views/referenceOffice.ts'
 import type { WhiteboardProgress } from '../whiteboard.ts'
+import { createOfficeWorkEffects } from './effects/OfficeWorkEffect.ts'
+import { loadOfficeTexture } from './assets/loadOfficeTexture.ts'
+import type { Texture } from 'pixi.js'
 export { configureOfficeAssets } from './assets/loadOfficeTexture.ts'
 
 export function createOfficePresentation(trialEnabled: () => boolean = () => true): ScenePresentationPack {
@@ -47,24 +50,36 @@ export function createOfficePresentation(trialEnabled: () => boolean = () => tru
   }
 }
 
-export function createReferenceOfficePresentation(options: { taskForActor?: (id: string) => ActorTaskPresentation | undefined; whiteboardProgress?: WhiteboardProgress } = {}): ScenePresentationPack {
+export function createReferenceOfficePresentation(options: { taskForActor?: (id: string) => ActorTaskPresentation | undefined; whiteboardProgress?: WhiteboardProgress; workEffects?: boolean } = {}): ScenePresentationPack {
   const base = createOfficePresentation()
-  return { ...base, id: 'pixoffice.office.reference', resourceCount: 8,
+  const workEffects = options.workEffects ?? false
+  let workEffectTexture: Texture | undefined
+  const pack: ScenePresentationPack = { ...base, id: 'pixoffice.office.reference', resourceCount: workEffects ? 9 : 8,
+    rendering: { idleFPS: 20, motionFPS: 30 },
     contentBounds: () => ({ left: 0, top: 0, right: 1100, bottom: 850 }),
     loadBackground: loadReferenceOfficeBackground,
-    async loadObjects(report) { await base.loadObjects?.(report); await loadReferenceOfficeObjects(part => report(`reference:${part}`)) },
+    async loadObjects(report) {
+      await Promise.all([base.loadObjects(report), loadReferenceOfficeObjects(part => report(`reference:${part}`)),
+        workEffects ? loadOfficeTexture('office-work-crafting-lite-v1', 'effects/work-crafting-lite-v1').then(texture => { workEffectTexture = texture; report('office-work-crafting-lite-v1') }) : undefined])
+    },
     createPropViews: () => createReferenceOfficePropViews(options.whiteboardProgress),
     projectActors(runtime, preview) {
-      const props = (preview ?? runtime.readWorld()).props
-      return base.projectActors(runtime, preview).map(actor => {
+      const world = preview ?? runtime.readWorld(), props = world.props
+      return base.projectActors(runtime, world).map(actor => {
         const supplied = options.taskForActor?.(actor.id)
         const task: ActorTaskPresentation = supplied && (!actor.title || supplied.title === actor.title) ? supplied
           : actor.title ? { title: actor.title, status: actor.status === 'thinking' ? 'blocked' : 'running', progressMode: 'activity' }
           : { title: '待命', status: 'idle' }
         const workstation = props.find(prop => prop.id === actor.furniture?.propId && prop.templateId === 'office.reference-workstation')
-        return { ...actor, displayHeight: 126, label: { placement: 'above' as const, scale: 1.25 }, task,
+        const presented = { ...actor, displayHeight: 126, label: { placement: 'above' as const, scale: 1.25 }, task,
           taskAnchor: workstation ? { ...referenceMonitorAnchor(workstation.position, 'right'), placement: 'right' as const } : undefined }
+        return presented
       })
     },
   }
+  if (workEffects) pack.createAmbientViews = runtime => {
+    if (!workEffectTexture) throw new Error('Load the office crafting atlas before mounting the work effect')
+    return [createOfficeWorkEffects(workEffectTexture, runtime, runtime.readActors().map(actor => actor.id), world => pack.projectActors(runtime, world))]
+  }
+  return pack
 }

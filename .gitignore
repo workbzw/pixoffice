@@ -9,6 +9,7 @@ dist/
 .cache/
 .eslintcache
 *.tsbuildinfo
+.vercel/
 
 # Generated character atlases (keep sources in art/characters/)
 /public/characters/
@@ -19,11 +20,29 @@ dist/
 /public/farm-assets/
 /example/farm/public/
 /example/dimetric/public/
-/public/assets/office/**/*.webp
 /.character-staging/
 /.character-backups/
 /.character-preview/
 /public/.character-publish-*/
+
+# Generated office WebP copies (scripts/build-office-assets.mjs)
+/public/assets/office/office.webp
+/public/assets/office/desk.webp
+/public/assets/office/chair.webp
+/public/assets/office/workstation-trial-v1/desk.webp
+/public/assets/office/workstation-trial-v1/chair.webp
+/public/assets/office/workstation-trial-v1/computer.webp
+/public/assets/office/reference-v1/room-whiteboard-v3.webp
+/public/assets/office/reference-v1/conference-table.webp
+/public/assets/office/reference-v1/desk-accessories.webp
+/public/assets/office/effects/work-crafting-lite-v1.webp
+/public/assets/office/effects/work-crafting-lite-v1.png
+
+# Interrupted asset builds and character publications
+/public/assets/office/**/*.webp.tmp-*
+/public/assets/office/effects/work-crafting-lite-v1.png.tmp-*
+/art/characters/packs/.publish.lock
+/art/characters/packs/.*-candidate-*/
 
 # Local environment files (keep shareable templates)
 .env

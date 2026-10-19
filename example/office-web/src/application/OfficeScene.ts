@@ -47,14 +47,15 @@ export class OfficeScene extends SceneView {
         : supportsOfficePose(id, posture, facing)
     } })
     const simulation = options.simulation ?? new OfficeSimulation(runtime, new OfficeDemoSource(runtime))
+    const referenceOffice = runtime.readWorld().props.some(prop => prop.templateId === 'office.wall-whiteboard')
     super({
       ...options, runtime,
       onStep: options.simulation ? undefined : elapsedMs => { simulation.tick(elapsedMs); simulation.demoSource?.tick(elapsedMs) },
       dispatchCommand: command => runtime.submit(command),
-      pack: runtime.readWorld().props.some(prop => prop.templateId === 'office.wall-whiteboard') ? createReferenceOfficePresentation({ taskForActor: options.taskForActor, whiteboardProgress: options.whiteboardProgress }) : createOfficePresentation(() => artwork.enabled),
+      pack: referenceOffice ? createReferenceOfficePresentation({ taskForActor: options.taskForActor, whiteboardProgress: options.whiteboardProgress, workEffects: true }) : createOfficePresentation(() => artwork.enabled),
       animations: options.animations ?? new AnimationRegistry<Container>().register(new FrameAdapter(manifest => characterAssets.acquire(manifest.asset.id, manifest.source.uri))),
       resolveAppearance: async id => {
-        const manifest = await (options.resolveAppearance ?? resolveOfficeAppearance)(id)
+        const manifest = await (options.resolveAppearance ? options.resolveAppearance(id) : resolveOfficeAppearance(id, { energeticWork: referenceOffice }))
         manifests.set(id, manifest)
         return manifest
       },

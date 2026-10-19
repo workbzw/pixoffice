@@ -46,6 +46,7 @@ export class DeskEntity {
   private deskTextures: Texture[] = []
   private artwork: WorkstationArtwork = 'classic'
   private mountedArtwork: WorkstationArtwork | 'fallback' = 'fallback'
+  private occupied = false
 
   constructor(desk: Desk) {
     this.deskId = desk.id
@@ -94,6 +95,8 @@ export class DeskEntity {
   }
 
   setOccupied(occupied: boolean) {
+    if (occupied === this.occupied) return
+    this.occupied = occupied
     this.occupiedIndicator.clear()
     if (occupied) {
       this.occupiedIndicator.circle(0, SEAT_OFFSET_Y - 4, 5.5)

@@ -23,6 +23,7 @@ test('reference layout has six aligned workstations and a solid conference footp
     assert.equal(runtime.navigation.segmentClear(world, { x: 6, y: 15 }, { x: 16, y: 15 }), false)
     assert.equal(runtime.template('office.conference-table').footprint.right, 8)
     const presentation = createReferenceOfficePresentation(), actors = presentation.projectActors(runtime)
+    assert.deepEqual(presentation.rendering, { idleFPS: 20, motionFPS: 30 })
     assert(actors.every(actor => actor.displayHeight === 126 && actor.label.placement === 'above' && actor.task.status === 'idle'))
     assert.deepEqual(presentation.contentBounds(world), { left: 0, top: 0, right: 1100, bottom: 850 })
   } finally { runtime.dispose() }
@@ -58,6 +59,23 @@ test('reference office separates visual activity progress from reported task pro
     runtime.submit({ ...base('new-head-task'), type: 'actor.presentation.set', actorId: actor.id,
       status: 'working', title: '新的任务', sourceRevision: runtime.readActors()[0].presentation.sourceRevision + 1 })
     assert.equal(real.projectActors(runtime)[0].task.progress, undefined, 'old task progress never leaks into a new task')
+  } finally { runtime.dispose() }
+})
+
+test('office work effects preserve all actor intents and require the shared atlas before mounting', () => {
+  const runtime = create()
+  try {
+    const actorId = 'app-agent'
+    for (const actor of runtime.readActors()) runtime.submit({ ...base(`work-${actor.id}`), type: 'actor.presentation.set', actorId: actor.id,
+      status: 'working', title: 'Development', sourceRevision: actor.presentation.sourceRevision + 1 })
+    const original = createReferenceOfficePresentation().projectActors(runtime)
+    const pack = createReferenceOfficePresentation({ workEffects: true })
+    const actors = pack.projectActors(runtime)
+    assert.equal(original.find(actor => actor.id === actorId).intent.actionId, 'office.type')
+    assert.deepEqual(actors, original)
+    assert.equal(pack.resourceCount, 9)
+    assert.throws(() => pack.createAmbientViews(runtime), /Load the office crafting atlas/)
+    assert.equal(runtime.readActors().find(actor => actor.id === actorId).presentation.status, 'working')
   } finally { runtime.dispose() }
 })
 
