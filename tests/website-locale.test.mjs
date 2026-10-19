@@ -71,14 +71,38 @@ test('READMEs link to each other, preserve website language, and use existing lo
     assert.ok(text.includes(`](./${other})`))
     assert.ok(text.includes(`https://pixoffice.online/?lang=${language}`))
     assert.ok(text.includes('./docs/office-demo.gif'))
+    assert.ok(text.includes('./docs/page-preview.jpeg'))
     assert.ok(text.includes('./docs/wechat-qr.png'))
+    assert.ok(text.includes('./docs/donate-qr.jpg'))
+    assert.ok(text.includes('](./docs/development.md)'))
+    assert(text.split('\n').length <= 90, 'keep detailed instructions in linked guides instead of expanding the README')
+    for (const anchor of ['demo', 'quick-start', 'docs', 'support']) {
+      assert.ok(text.includes(`<a id="${anchor}"></a>`))
+      assert(text.indexOf(`](#${anchor})`) >= 0 && text.indexOf(`](#${anchor})`) < text.indexOf('./docs/office-demo.gif'), 'navigation must appear before preview media')
+    }
     for (const match of text.matchAll(/\]\((\.\/[^\s)]+)\)/g)) {
       await access(new URL(match[1], url))
     }
-    const examples = [...text.matchAll(/```json\n([\s\S]*?)\n```/g)].map(match => JSON.parse(match[1]))
-    assert.deepEqual(examples.map(example => example.type), ['activity.start', 'activity.start', 'actor.presentation.set'])
-    assert(examples.every(example => example.protocolVersion === '2.0' && example.sceneId === 'office-1' && example.commandId))
+    const images = [...text.matchAll(/<img\s+[^>]*src="(\.\/[^\"]+)"[^>]*>/g)]
+    assert.equal(images.length, 2, 'contact and donation QR codes must be paired')
+    for (const match of images) {
+      assert(match[0].includes('width="200"'), 'QR codes must have matching display widths')
+      await access(new URL(match[1], url))
+    }
     assert(!text.includes('/actions'))
+  }
+})
+
+test('the maintenance guide preserves moved development instructions and valid links', async () => {
+  const url = new URL('../docs/development.md', import.meta.url)
+  const text = await readFile(url, 'utf8')
+  for (const instruction of ['npm run packages:watch', 'npm run characters:check', 'npm run docs:capture', '--gif-only', 'pixoffice:actions-ready']) {
+    assert(text.includes(instruction), instruction)
+  }
+  for (const match of text.matchAll(/\]\((\.{1,2}\/[^\s)]+)\)/g)) {
+    const target = new URL(match[1], url)
+    target.hash = ''; target.search = ''
+    await access(target)
   }
 })
 
