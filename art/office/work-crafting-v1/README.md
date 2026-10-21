@@ -32,6 +32,8 @@ It replaces the procedural floating-icon prototype.
 - Render opacity: 80% for the combined smoke/tool sprite, multiplied by its
   existing fade-in, interruption and completion envelope. No filter, extra layer
   or bitmap change is required; frame count and playback timing are unchanged.
+- Office render cadence: 20 FPS while idle or working seated, 60 FPS while
+  walking or transitioning into/out of a seat. Simulation speed is unchanged.
 - Characters: each appearance's existing `work.typing-back` whole-image frames, with
   their original identity, seat anchor and durations. No new character pixels
   were generated, registered, or published.
@@ -57,7 +59,7 @@ remain tracked. The browser never requests the original high-resolution sheet.
 - Airborne tools are shifted toward the outer shoulders so the smaller objects
   remain visible behind the character instead of disappearing behind the head.
 - Smoke keeps its original scene scale. Playback, frame count, runtime atlas
-  dimensions, layering and the office's 20/30 FPS rendering profile are unchanged.
+  dimensions and layering are unchanged. Current render cadence is listed above.
 - The original `spritesheet.png` remains untouched as the source reference.
 
 Edit prompt:
@@ -77,9 +79,9 @@ Use case: precise-object-edit. Edit target: this transparent 1448 x 1086 sprites
 - Final gutter repair output ID: `exec-845f281c-944a-427e-8e7d-f4ad2ce736c5`.
 - Smoke puffs, outlines and motion curls use neutral white and light gray.
   Small colored tools and golden sparkles retain their original palettes.
-- The half-size tools, runtime atlas dimensions, six-frame timing, layering,
-  fade behavior and 20/30 FPS rendering profile are unchanged. Current render
-  opacity and vertical offset are listed under Source And Registration.
+- The half-size tools, runtime atlas dimensions, six-frame timing, layering and
+  fade behavior are unchanged. Current render cadence, opacity and vertical
+  offset are listed under Source And Registration.
 - Earlier source variants are retained for authoring history, not loaded by the
   browser or included in the runtime asset catalog.
 

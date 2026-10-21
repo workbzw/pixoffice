@@ -132,10 +132,10 @@ test('unconfigured scenes keep their normal frame rate and projection reuses the
   assert(snapshots.every(world => world === data))
 })
 
-test('30 FPS office motion preserves elapsed time and simulation speed while editing stays at 60 FPS', t => {
+test('60 FPS office motion preserves elapsed time and simulation speed while seated work stays at 20 FPS', t => {
   let moving = true
   const { scene, data, frames, ticks } = fixture(t, {
-    rendering: { idleFPS: 20, motionFPS: 30 },
+    rendering: { idleFPS: 20, motionFPS: 60 },
     projectActors: () => [{ id: 'one', intent: { actionId: moving ? 'core.walk' : 'core.idle' } }],
   })
   scene.runtime.getRevision = () => 0
@@ -143,17 +143,17 @@ test('30 FPS office motion preserves elapsed time and simulation speed while edi
   scene.propViews.set('board', { roots: [], updateFrame: dt => elapsed.push(dt) })
   scene.syncActors(0)
   for (let i = 0; i < 60; i++) scene.onTick({ deltaTime: 1 })
-  assert.equal(frames.length, 30)
+  assert.equal(frames.length, 60)
   assert.equal(ticks(), 60)
-  assert(elapsed.every(dt => Math.abs(dt - 1 / 30) < 1e-8))
+  assert(elapsed.every(dt => Math.abs(dt - 1 / 60) < 1e-8))
   assert(Math.abs(elapsed.reduce((a, b) => a + b, 0) - 1) < 1e-8)
 
   moving = false; scene.syncActors(0)
   for (let i = 0; i < 60; i++) scene.onTick({ deltaTime: 1 })
-  assert.equal(frames.length, 50, 'seated work still uses 20 FPS')
+  assert.equal(frames.length, 80, 'seated work still uses 20 FPS')
   scene.runtime.isEditing = true; scene.runtime.readEditorWorld = () => data
   for (let i = 0; i < 60; i++) scene.onTick({ deltaTime: 1 })
-  assert.equal(frames.length, 110, 'layout editing remains responsive at 60 FPS')
+  assert.equal(frames.length, 140, 'layout editing remains responsive at 60 FPS')
   assert.equal(ticks(), 180)
 })
 

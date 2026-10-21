@@ -55,7 +55,7 @@ export function createReferenceOfficePresentation(options: { taskForActor?: (id:
   const workEffects = options.workEffects ?? false
   let workEffectTexture: Texture | undefined
   const pack: ScenePresentationPack = { ...base, id: 'pixoffice.office.reference', resourceCount: workEffects ? 9 : 8,
-    rendering: { idleFPS: 20, motionFPS: 30 },
+    rendering: { idleFPS: 20, motionFPS: 60 },
     contentBounds: () => ({ left: 0, top: 0, right: 1100, bottom: 850 }),
     loadBackground: loadReferenceOfficeBackground,
     async loadObjects(report) {
