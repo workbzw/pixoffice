@@ -4,6 +4,7 @@ import type { ChatSession } from '../chat/ChatSession.ts'
 import { CharacterAvatar } from './CharacterArtwork.tsx'
 import type { DecisionSession } from '../application/decisions/DecisionSession.ts'
 import { OfficeDecisionPanel } from '../ui/decisions/OfficeDecisionPanel.tsx'
+import { ChatMarkdown } from './ChatMarkdown.tsx'
 import './OfficeChat.css'
 
 export const OfficeChat = memo(function OfficeChat({ session, expanded, onExpandedChange, hidden, leaderAppearanceId, leaderName, decisionSession, decisionPreview = false, decisionOpenToken = 0 }: {
@@ -81,7 +82,7 @@ export const OfficeChat = memo(function OfficeChat({ session, expanded, onExpand
         {!chat.messages.length && !decisions.records.length && <div className="office-chat-empty"><CharacterAvatar appearanceId={leaderAppearanceId} /><h2>今天一起做点什么？</h2></div>}
         {chat.messages.map(message => <article key={message.id} className={`office-chat-message is-${message.role}`} aria-label={message.role === 'user' ? '你' : leaderName}>
           <div className="office-chat-message-meta"><span>{message.role === 'user' ? '你' : leaderName}</span>{message.role === 'assistant' && message.content && message.state !== 'pending' && <button type="button" title={copied === message.id ? '已复制' : '复制回复'} aria-label={copied === message.id ? '已复制' : '复制回复'} onClick={() => { void copy(message.id, message.content) }}>{copied === message.id ? <Check size={14} /> : <Copy size={14} />}</button>}</div>
-          {message.content ? <p>{message.content}{message.state === 'pending' && <span className="office-chat-caret" aria-hidden="true" />}</p> : message.state === 'pending' ? <div className="office-chat-pending"><span /><span /><span /><small>{source.kind === 'preview' ? '预览回复准备中' : '正在思考'}</small></div> : null}
+          {message.content ? message.role === 'assistant' ? <ChatMarkdown content={message.content} pending={message.state === 'pending'} /> : <p className="office-chat-user-text">{message.content}</p> : message.state === 'pending' ? <div className="office-chat-pending"><span /><span /><span /><small>{source.kind === 'preview' ? '预览回复准备中' : '正在思考'}</small></div> : null}
           {message.state === 'stopped' && <small className="office-chat-interrupted">已停止生成</small>}
         </article>)}
         {decisions.records.map(record => <article key={record.id} className="office-decision-record" aria-label="决策记录">

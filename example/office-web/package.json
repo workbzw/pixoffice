@@ -22,6 +22,8 @@
     "pixi.js": "^8.18.1",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
     "zod": "^4.6.5",
     "@pixoffice/assets-office": "0.1.0"
   }
