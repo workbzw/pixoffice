@@ -54,7 +54,7 @@ test('every value position in all request, response and event variants rejects a
   const fixtures = [], add = (schema, ...values) => values.forEach(value => fixtures.push([schema, value]))
   const state = snapshot()
   add(officeRequestSchema,
-    { type: 'offices.initialize', offices: [state] }, { type: 'office.snapshot', teamId: 'audit', snapshot: state },
+    { type: 'offices.initialize', offices: [state], chat: { url: 'https://backend.example/chat' } }, { type: 'office.snapshot', teamId: 'audit', snapshot: state },
     { type: 'office.read', teamId: 'audit' }, { type: 'office.capabilities' }, { type: 'ui.next', timeoutMs: 1000 },
     { type: 'ui.respond', interactionId: 'interaction', presentation: dialog },
     { type: 'ui.respond', interactionId: 'interaction', presentation: { target: 'whiteboard', snapshot: state } },

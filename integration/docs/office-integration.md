@@ -38,7 +38,7 @@ sequenceDiagram
     Note over E,B: 二、初始化办公室
     E->>S: office.capabilities：查询人物、行为和展示规范
     S-->>E: 返回能力及字段定义
-    E->>S: offices.initialize：提交办公室、成员、任务和白板
+    E->>S: offices.initialize：提交办公室数据及可选聊天地址
     S-->>B: SSE发送初始化数据
     B->>B: 创建各办公室运行时并展示
     B->>S: POST /api/pixoffice/reply，报告初始化结果
@@ -94,11 +94,13 @@ sequenceDiagram
     B->>B: 本地排队、寻路和播放动画
 
     Note over B,C: 可选聊天功能
-    B->>C: POST到配置的聊天地址，发送会话和消息
-    C-->>B: NDJSON流返回增量文本及完成或失败事件
+    B->>S: POST /api/pixoffice/chat，发送办公室、会话和消息
+    S->>C: POST到初始化时注册的聊天地址
+    C-->>S: NDJSON流返回增量文本及完成或失败事件
+    S-->>B: 持续转发校验后的NDJSON事件
 ```
 
-动画请求的成功响应表示已转发，业务完成状态由外部业务后端决定。聊天服务可以由外部项目提供，接口格式见[聊天流式接口](./chat-integration.md)。
+动画请求的成功响应表示已转发，业务完成状态由外部业务后端决定。聊天服务由外部项目提供，通过初始化请求的 `chat.url` 注册；浏览器通过 PixOffice 服务端转发聊天，无需单独配置地址或重新构建前端。接口格式见[聊天流式接口](./chat-integration.md)。
 
 初始化和状态更新返回 `202` 时，表示最新状态已缓存，但该请求没有取得浏览器的应用确认。它可能发生于页面离线，也可能发生于等待浏览器确认的请求容量已满；后一种情况下，在线页面仍可通过 SSE 收到状态。浏览器上线或 SSE 重连时接收最新快照。服务端重启后，外部业务后端需要重新发送初始化。详细版本规则见下文“恢复与顺序”。
 
@@ -185,7 +187,7 @@ Content-Type: application/json
 - 办公室 ID、任务名称、版本、时间等必填字段必须提供有效值。具体必填项见各操作及[业务快照字段说明](./dashboard-integration.md)。
 - 办公室、场景人物、命令和交互 ID 使用 1–100 个字符，允许英文字母、数字、`_`、`.`、`:`、`-`。业务成员和任务 ID 为 1–100 个字符的非空字符串。
 - 时间使用包含时区的 ISO 8601 格式，例如 `2026-10-18T10:00:00Z`。
-- JSON 对象嵌套最多 64 层，禁止 `__proto__` 属性。单次请求体最大 64 KiB。
+- JSON 对象嵌套最多 64 层，禁止 `__proto__` 属性。办公室业务和场景指令的单次请求体最大 64 KiB；聊天请求使用独立接口，上限为 512 KiB。
 - 业务请求只接受对应 JSON Schema 声明的字段；校验失败返回 `400`。
 
 ## 操作与返回时机
@@ -210,6 +212,7 @@ Content-Type: application/json
 ```json
 {
   "type": "offices.initialize",
+  "chat": { "url": "https://your-host.example/chat" },
   "offices": [{
     "schemaVersion": "1.0",
     "seq": 1,
@@ -229,6 +232,7 @@ Content-Type: application/json
 ```
 
 - `workspace.id` 是办公室的稳定 ID，其他操作的 `teamId` 引用该值。
+- `chat` 可选，为本 PixOffice 服务实例注册聊天接口；`url` 为服务端可访问的完整 HTTP(S) 地址。省略 `chat` 保留已有配置，`chat: { "url": "" }` 停用服务。可使用 `offices: []` 单独更换聊天地址，后续聊天立即生效；配置独立于快照 `seq`，服务端重启后须重新注册。地址只保存在 PixOffice 服务端，不广播给浏览器。详见[聊天接入文档](./chat-integration.md)。
 - `employees` 是业务成员列表，可代表员工、功能或智能体。`id` 在该办公室内唯一；`sceneActorId` 指定负责展示该成员的场景人物。多个成员可以绑定同一人物。
 - 每个办公室提供固定六个人物及对应工位、外观。可绑定人物通过 `office.capabilities` 的 `data.scene.actors`，或初始化结果的 `data.actors` 查询。
 - 初始化按 `workspace.id` 新增或更新办公室。请求未列出的办公室保留；此操作不提供删除办公室功能。一个服务实例最多管理 100 个办公室。

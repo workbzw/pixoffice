@@ -1,5 +1,5 @@
-import { chatEventSchema, chatRequestSchema } from '@pixoffice/protocol/chat'
-import { parseProtocolObject, stringifyProtocolObject } from '@pixoffice/protocol/schema'
+import { chatRequestSchema, readChatEvents } from '@pixoffice/protocol/chat'
+import { responseEnvelopeSchema, stringifyProtocolObject } from '@pixoffice/protocol/schema'
 import type { ChatEvent, ChatRequest, OfficeChatSource } from '@pixoffice/protocol/chat'
 
 function delay(ms: number, signal: AbortSignal) {
@@ -42,40 +42,12 @@ export class HttpChatSource implements OfficeChatSource {
       method: 'POST', signal, headers: { 'Content-Type': 'application/json', Accept: 'application/x-ndjson' },
       body: stringifyProtocolObject(chatRequestSchema.parse(request)),
     })
-    if (!response.ok) throw new Error(`聊天服务请求失败（${response.status}）`)
+    if (!response.ok) {
+      const result = responseEnvelopeSchema.safeParse(await response.json().catch(() => undefined))
+      throw new Error(result.success ? `${result.data.msg}（${result.data.data.reasonCode ?? response.status}）` : `聊天服务请求失败（${response.status}）`)
+    }
     if (!response.headers.get('content-type')?.includes('application/x-ndjson')) throw new Error('聊天服务未返回 NDJSON 数据流')
     if (!response.body) throw new Error('聊天服务没有返回内容')
-    const reader = response.body.getReader()
-    const decoder = new TextDecoder()
-    let buffer = ''
-    try {
-      while (true) {
-        signal.throwIfAborted()
-        const { value, done } = await reader.read()
-        buffer += decoder.decode(value, { stream: !done })
-        let newline = buffer.indexOf('\n')
-        while (newline >= 0 || (done && buffer.length)) {
-          const line = newline < 0 ? buffer : buffer.slice(0, newline)
-          buffer = newline < 0 ? '' : buffer.slice(newline + 1)
-          if (line.length > 32000) throw new Error('聊天服务的单条消息过大')
-          if (line.trim()) {
-            const event = chatEventSchema.parse(parseProtocolObject(line))
-            yield event
-            if (event.type === 'done' || event.type === 'error') return
-          }
-          newline = buffer.indexOf('\n')
-        }
-        if (buffer.length > 32000) throw new Error('聊天服务的单条消息过大')
-        if (done) throw new Error('连接提前结束，请重试')
-      }
-    } finally {
-      await reader.cancel().catch(() => {})
-      reader.releaseLock()
-    }
+    yield* readChatEvents(response.body, signal)
   }
-}
-
-export function createOfficeChatSource(): OfficeChatSource {
-  const url = import.meta.env.VITE_PIXOFFICE_CHAT_URL?.trim()
-  return url ? new HttpChatSource(url) : new PreviewChatSource()
 }

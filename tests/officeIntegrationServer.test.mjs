@@ -34,13 +34,15 @@ const respond = (app, delivery, result = workspace(), code = 200) => app.inject(
 test('a backend initializes an empty browser and the same POST returns only after runtime initialization', async t => {
   const { app, base } = await setup(t), browser = await subscribe(t, base, 'workspace=1')
   let settled = false
-  const request = post(app, message({ type: 'offices.initialize', offices: [] })).then(value => { settled = true; return value })
+  const request = post(app, message({ type: 'offices.initialize', offices: [], chat: { url: 'http://private-backend.example/chat' } })).then(value => { settled = true; return value })
   const delivery = await browser.next()
   assert.equal(delivery.type, 'office.request')
+  assert.equal(Object.hasOwn(delivery.request, 'chat'), false, 'chat destinations stay on the server and are not sent over SSE')
   assert.equal(settled, false)
   assert.equal((await respond(app, delivery, workspace())).statusCode, 200)
   const result = await request
   assert.equal(result.statusCode, 200); assert.deepEqual(result.json().data.offices, [])
+  assert.doesNotMatch(result.body, /private-backend/)
   assert.deepEqual(Object.keys(result.json()).sort(), ['code', 'data', 'msg'])
   assert.equal((await respond(app, delivery)).statusCode, 410, 'reply tokens cannot be reused')
 })

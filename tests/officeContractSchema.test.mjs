@@ -22,6 +22,8 @@ test('published request schemas accept omitted defaults and explicit empty refer
   for (const request of [
     { type: 'office.read' }, { type: 'office.read', teamId: '' }, { type: 'ui.next' }, { type: 'office.capabilities' },
     { type: 'offices.initialize', offices: [sparse] },
+    { type: 'offices.initialize', offices: [], chat: { url: 'https://backend.example/chat' } },
+    { type: 'offices.initialize', offices: [], chat: { url: '' } },
     { type: 'office.snapshot', teamId: 'schema-office', snapshot: officeSnapshotSchema.parse(sparse) },
     { type: 'decision.request', teamId: 'schema-office', decision: { id: 'menu', kind: 'confirmation', title: '是否继续？' } },
     { type: 'ui.respond', interactionId: 'inspect', presentation: { target: 'dialog', content: { template: 'detail-v1', title: '详情' } } },
@@ -32,6 +34,8 @@ test('published request schemas accept omitted defaults and explicit empty refer
   }
   for (const request of [
     { type: 'office.read', teamId: null },
+    { type: 'offices.initialize', offices: [], chat: null },
+    { type: 'offices.initialize', offices: [], chat: { url: null } },
     { type: 'offices.initialize', offices: [{ ...minimal(), workspace: { id: '', name: '无效' } }] },
     { type: 'offices.initialize', offices: [{ ...minimal(), employees: [{ id: '', name: '无效' }] }] },
     { type: 'offices.initialize', offices: [{ ...sparse, tasks: [{ ...sparse.tasks[0], id: '' }] }] },

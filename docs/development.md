@@ -34,7 +34,7 @@ npm run dev:vite
 
 纯前端本地演示点击“开始演示”后，约 15 秒显示当前办公室的一条确认，约 30 秒显示另一个办公室的一条侧边选择卡。每轮仅这两条问题，回答后不追加；有效期从问题出现时计算，停止演示取消尚未出现的问题。真实连接模式的菜单由后端请求触发。
 
-动画区域底部提供聊天输入框，支持展开、停止、收起和新建对话。默认不调用模型或执行业务；真实服务通过 `VITE_PIXOFFICE_CHAT_URL` 或 `OfficeApp.chatSource` 接入，格式见[聊天接口](../integration/docs/chat-integration.md)。
+动画区域底部提供聊天输入框，支持展开、停止、收起和新建对话。纯前端演示默认不调用模型或执行业务；服务器模式由外部后端在 `offices.initialize` 的 `chat.url` 注册聊天服务，浏览器通过 PixOffice 服务端转发请求和流式回复。源码装配可注入 `OfficeApp.chatSource`，格式见[聊天接口](../integration/docs/chat-integration.md)。
 
 办公室右上角网格按钮进入布局编辑，左上角按钮打开团队空间总览。布局编辑支持家具拖放、工位归属、撤销与重做、JSON 导入导出和路线预检；完整边界见[地图编辑](./map-editor.md)。
 

@@ -15,10 +15,12 @@ import { OFFICE_ROSTER } from '@pixoffice/scene-office/core/roster'
 import { OfficeRequests } from './officeRequests.ts'
 import { OfficeState, OfficeStateFault } from './officeState.ts'
 import { OfficeUi } from './officeUi.ts'
+import { registerOfficeChat } from './officeChat.ts'
+import { chatPath } from '@pixoffice/protocol/chat'
 
 export const DEMO_API_KEY = 'pixoffice-demo-key'
 export const defaultStaticRoot = fileURLToPath(new URL('../../dist/', import.meta.url))
-export type ServerOptions = { apiKey?: string; staticRoot?: string; publicOrigin?: string; logger?: boolean; maxConnections?: number; maxBufferedBytes?: number; heartbeatMs?: number; maxOfficeRequests?: number; officeRequestMs?: number }
+export type ServerOptions = { apiKey?: string; staticRoot?: string; publicOrigin?: string; logger?: boolean; maxConnections?: number; maxBufferedBytes?: number; heartbeatMs?: number; maxOfficeRequests?: number; officeRequestMs?: number; chatTimeoutMs?: number }
 const errorReasons: Record<number, string> = { 401: 'AUTH_FAILED', 403: 'FORBIDDEN', 404: 'NOT_FOUND', 408: 'REQUEST_TIMEOUT',
   410: 'REQUEST_CLOSED', 413: 'MESSAGE_TOO_LARGE', 422: 'BUSINESS_ERROR', 499: 'CALLER_DISCONNECTED', 500: 'INTERNAL_ERROR', 503: 'RECEIVER_UNAVAILABLE' }
 const envelope = (code: number, msg: string, data?: unknown) => responseEnvelopeSchema.parse({ code, msg,
@@ -42,6 +44,7 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
   })
   app.addHook('onSend', async (request, reply, payload) => {
     if (!protocolRoute(request.url)) return payload
+    if (request.url.split('?')[0] === chatPath && reply.statusCode === 200 && String(reply.getHeader('content-type')).startsWith('application/x-ndjson')) return payload
     try {
       const source = typeof payload === 'string' ? payload : Buffer.isBuffer(payload) ? payload.toString('utf8') : ''
       const response = responseEnvelopeSchema.parse(parseProtocolObject(source))
@@ -66,6 +69,7 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
     const expectedOrigin = publicOrigin ?? `${request.protocol}://${request.headers.host}`
     return request.headers['sec-fetch-site'] !== 'cross-site' && (!request.headers.origin || request.headers.origin === expectedOrigin)
   }
+  const chat = registerOfficeChat(app, { sameOrigin, hasOffice: teamId => Boolean(state.get(teamId)), timeoutMs: options.chatTimeoutMs })
   const maxBufferedBytes = options.maxBufferedBytes ?? maxRelayEventBytes
   if (apiKey === DEMO_API_KEY && options.logger) app.log.warn('Using the public demo API key. Set PIXOFFICE_API_KEY before public deployment.')
 
@@ -124,6 +128,10 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
       }
       if (data.type === 'offices.initialize' || data.type === 'office.snapshot') {
         const update = state.apply(data.type === 'offices.initialize' ? data.offices : [data.snapshot], data.type === 'office.snapshot')
+        if (data.type === 'offices.initialize') {
+          if (data.chat) chat.configure(data.chat)
+          data = { type: 'offices.initialize', offices: data.offices }
+        }
         if (data.type === 'office.snapshot' && update.results[0].reasonCode === 'STALE_SEQ') return envelope(200, 'Snapshot ignored', update.results[0])
         // Cached state may not have reached the browser; identical retries must be delivered again.
         if (data.type === 'offices.initialize') data = { ...data, offices: data.offices.filter(snapshot => snapshot.seq === state.get(snapshot.workspace.id)!.seq) }
@@ -231,7 +239,7 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
     return reply
   })
 
-  app.addHook('preClose', async () => { ui.close(); officeRequests.close(); relay.close() })
+  app.addHook('preClose', async () => { chat.close(); ui.close(); officeRequests.close(); relay.close() })
   if (options.staticRoot) await app.register(serveStatic, { root: path.resolve(options.staticRoot), index: ['index.html'], redirect: true })
   return app
 }

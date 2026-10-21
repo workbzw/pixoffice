@@ -8,7 +8,7 @@ import { createOfficeDataSource } from './dashboard/createSource.ts'
 import type { OfficeDataSource } from '@pixoffice/protocol/dashboard'
 import type { SceneRuntime } from '@pixoffice/runtime/SceneRuntime'
 import type { OfficeChatSource } from '@pixoffice/protocol/chat'
-import { createOfficeChatSource } from './chat/sources.ts'
+import { PreviewChatSource } from './chat/sources.ts'
 import { browserChatPersistence } from './chat/persistence.ts'
 import type { ComponentType } from 'react'
 import type { LayoutMode } from '../../shared/scene/layout.tsx'
@@ -35,7 +35,7 @@ function createTeamRuntime(sceneId: string) {
 }
 
 export function OfficeApp({ dataSource, runtime: suppliedRuntime, simulation, session: suppliedSession, chatSource: suppliedChatSource, layout, shell, teamSelection, decisionOpenToken, integrationError }: { layout?: LayoutMode; shell?: ComponentType<OfficeShellProps>; dataSource: OfficeDataSource; runtime?: SceneRuntime; simulation?: OfficeSimulation; session?: OfficeTeamSession; chatSource?: OfficeChatSource; teamSelection?: OfficeTeamSelection; decisionOpenToken?: number; integrationError?: string | null }) {
-  const [defaultChatSource] = useState(createOfficeChatSource)
+  const [defaultChatSource] = useState<OfficeChatSource>(() => new PreviewChatSource())
   const chatSource = suppliedSession?.chat.source ?? suppliedChatSource ?? defaultChatSource
   const decisionPreview = dataSource.kind === 'example' && chatSource.kind === 'preview'
   const session = useMemo(() => {
@@ -111,7 +111,7 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
 
 function DemoApp() {
   const [dataSource] = useState(createOfficeDataSource)
-  const [chatSource] = useState(createOfficeChatSource)
+  const [chatSource] = useState(() => new PreviewChatSource())
   const [directory] = useState(() => dataSource.kind === 'example' ? new DemoOfficeDirectory(dataSource, localStorage) : undefined)
   const [initialTeams] = useState(() => {
     const teams = directory?.list() ?? []

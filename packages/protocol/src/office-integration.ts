@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { idSchema, jsonObjectSchema } from './schema.ts'
 import { dashboardSnapshotSchema, validateDashboardSnapshot } from './dashboard.ts'
 import { whiteboardTaskBoardSchema, officeUiManifest, emptyWhiteboard } from './office-ui.ts'
+import { officeChatConfigSchema } from './chat.ts'
 
 export const officeIntegrationPaths = { reply: '/api/pixoffice/reply', ui: '/api/pixoffice/ui' } as const
 // Internal SSE subscription topic for the complete office workspace.
@@ -30,7 +31,8 @@ export const officeReasonSchema = z.enum(['INVALID_MESSAGE', 'INVALID_REPLY', 'O
   'OFFICE_LIMIT', 'CACHE_FULL', 'STALE_SEQ', 'DUPLICATE_SEQ', 'SEQ_CONFLICT', 'REQUEST_TIMEOUT', 'NO_RECEIVER', 'RECEIVER_UNAVAILABLE',
   'BUSINESS_QUEUE_FULL', 'DECISION_DUPLICATE', 'DECISION_EXPIRED', 'DECISION_QUEUE_FULL', 'SERVER_CLOSING', 'CALLER_DISCONNECTED',
   'SCENE_SYNC_FAILED', 'BUSINESS_ERROR', 'UI_REQUEST_EXPIRED', 'UI_QUEUE_FULL', 'UI_WAIT_BUSY', 'UNSUPPORTED_UI_ACTION', 'SNAPSHOT_REQUIRED',
-  'AUTH_FAILED', 'FORBIDDEN', 'NOT_FOUND', 'MESSAGE_TOO_LARGE', 'INTERNAL_ERROR', 'REQUEST_CLOSED'])
+  'AUTH_FAILED', 'FORBIDDEN', 'NOT_FOUND', 'MESSAGE_TOO_LARGE', 'INTERNAL_ERROR', 'REQUEST_CLOSED',
+  'CHAT_NOT_CONFIGURED', 'CHAT_UPSTREAM_ERROR', 'CHAT_TIMEOUT'])
 export const officeErrorResultSchema = z.strictObject({ reasonCode: officeReasonSchema, details: jsonObjectSchema.default({}),
   issues: z.array(jsonObjectSchema).default([]) })
 
@@ -95,7 +97,7 @@ export const officeDecisionSchema = z.discriminatedUnion('kind', [
 })
 
 export const officeRequestSchema = z.discriminatedUnion('type', [
-  z.strictObject({ type: z.literal('offices.initialize'), offices: z.array(officeSnapshotSchema).max(100) }).superRefine((request, context) => {
+  z.strictObject({ type: z.literal('offices.initialize'), offices: z.array(officeSnapshotSchema).max(100), chat: officeChatConfigSchema.optional() }).superRefine((request, context) => {
     if (request.offices.some(office => !idSchema.safeParse(office.workspace.id).success)) context.addIssue({ code: 'custom', path: ['offices'], message: '办公室 ID 无效' })
     if (new Set(request.offices.map(office => office.workspace.id)).size !== request.offices.length) {
       context.addIssue({ code: 'custom', path: ['offices'], message: '办公室 ID 不得重复' })

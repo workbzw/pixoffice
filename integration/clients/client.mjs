@@ -35,7 +35,8 @@ try {
   const directory = await post({ type: 'office.read' })
   development.seq = (directory.data.offices.find(office => office.id === development.workspace.id)?.seq ?? 0) + 1
   research.seq = (directory.data.offices.find(office => office.id === research.workspace.id)?.seq ?? 0) + 1
-  const initialized = await post({ type: 'offices.initialize', offices: [development, research] })
+  const chatUrl = process.env.CHAT_SERVICE_URL?.trim()
+  const initialized = await post({ type: 'offices.initialize', offices: [development, research], ...(chatUrl ? { chat: { url: chatUrl } } : {}) })
   if (initialized.code === 202) { console.log('快照已缓存，本次未取得浏览器初始化确认。请检查服务器模式的 /office/ 页面及连接状态，再运行示例继续菜单联调。'); process.exit(0) }
   console.log('办公室已初始化：', initialized.data.offices)
   console.log('可绑定人物：', initialized.data.actors)

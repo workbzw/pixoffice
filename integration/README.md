@@ -51,6 +51,14 @@ npm run integration-ui-example
 PIXOFFICE_URL=http://127.0.0.1:3000 PIXOFFICE_API_KEY=your-private-key npm run integration-example
 ```
 
+示例客户端可在初始化请求中一并注册已有的聊天服务：
+
+```sh
+CHAT_SERVICE_URL=http://your-backend:8000/chat npm run integration-example
+```
+
+该变量由示例客户端读取并写入 `offices.initialize.chat.url`，无需设置前端构建参数。聊天地址必须能从 PixOffice 服务端访问，接口格式见[聊天接入文档](./docs/chat-integration.md)。
+
 纯静态演示 `npm run dev:vite` 不接收外部业务请求。公网部署应配置私有密钥及页面访问控制。
 
 ## 实现与验收
