@@ -37,11 +37,11 @@ export class OfficeRequests {
     if (!(response.code === 200 ? officeResultSchema(request.type, request.type === 'office.read' && Boolean(request.teamId)) : officeErrorResultSchema).safeParse(response.data).success) return 'invalid'
     if (response.code === 200 && request.type === 'decision.request') {
       const result = officeDecisionResultSchema.parse(response.data)
-      if (result.teamId !== request.teamId || result.decisionId !== request.decision.id) return 'invalid'
+      if (result.teamId !== request.teamId || result.conversationId !== request.conversationId || result.decisionId !== request.decision.id) return 'invalid'
       const label = request.decision.kind === 'choice' ? request.decision.options.find(option => option.id === result.choiceId)?.label
         : result.choiceId === 'confirm' ? request.decision.confirmLabel : result.choiceId === 'reject' ? request.decision.rejectLabel : undefined
       if (!label) return 'invalid'
-      entry.finish({ code: 200, msg: 'User selected', data: { teamId: request.teamId, decisionId: request.decision.id, choiceId: result.choiceId, label } })
+      entry.finish({ code: 200, msg: 'User selected', data: { teamId: request.teamId, conversationId: request.conversationId, decisionId: request.decision.id, choiceId: result.choiceId, label } })
     } else {
       const result = response
       // A fresh empty tab must not reject a request another initialized tab can handle.

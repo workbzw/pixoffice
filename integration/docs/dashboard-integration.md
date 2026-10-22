@@ -2,7 +2,7 @@
 
 本文定义办公室业务快照 `schemaVersion: "1.0"` 的字段与展示规则。外部业务后端通过[办公室 HTTP 接入协议](./office-integration.md)提交快照，PixOffice 服务端转发给浏览器页面。
 
-业务快照决定办公室名称、成员、任务列表、动态、资源指标和白板内容。浏览器场景运行时管理人物位置、家具、寻路和动画。纯前端演示使用本地示例数据，服务器模式使用外部业务后端提交的数据。
+业务快照决定办公室名称、会话目录、各会话成员、任务、动态和白板，以及办公室资源指标。办公室对应工作区，会话对应工作区内的一次长期对话。浏览器场景运行时管理人物位置、家具、寻路和动画。纯前端演示使用本地示例数据，服务器模式使用外部业务后端提交的数据。
 
 ## 快速联调
 
@@ -24,19 +24,73 @@ npm run integration-example
 {
   "schemaVersion": "1.0",
   "seq": 1,
-  "whiteboard": { "template": "task-board-v1", "title": "", "status": "queued", "steps": [] },
-  "workspace": { "id": "team-a", "name": "市场情报空间" },
-  "employees": [
-    { "id": "leader", "sceneActorId": "office-lead", "name": "王明", "role": "负责人", "online": true },
-    { "id": "researcher", "sceneActorId": "code-agent", "name": "信息检索", "role": "检索功能", "online": true },
-    { "id": "reviewer", "sceneActorId": "code-agent", "name": "资料核验", "role": "核验功能", "online": true }
-  ],
-  "tasks": [
-    { "id": "task-1", "title": "跟踪竞品新品", "assigneeId": "researcher", "status": "running", "progress": 45, "updatedAt": "2026-09-30T10:00:00.000Z", "summary": "整理今日上新信息" },
-    { "id": "task-2", "title": "核验资料来源", "assigneeId": "reviewer", "status": "blocked", "updatedAt": "2026-09-30T10:01:00.000Z" }
-  ],
-  "events": [
-    { "id": "event-1", "kind": "task.assigned", "taskId": "task-1", "employeeId": "researcher", "fromEmployeeId": "leader", "summary": "王明分配了任务", "occurredAt": "2026-09-30T10:00:00.000Z" }
+  "workspace": {
+    "id": "team-a",
+    "name": "市场情报空间"
+  },
+  "conversations": [
+    {
+      "id": "main",
+      "title": "登录模块开发",
+      "employees": [
+        {
+          "id": "leader",
+          "sceneActorId": "office-lead",
+          "name": "王明",
+          "role": "负责人",
+          "online": true
+        },
+        {
+          "id": "researcher",
+          "sceneActorId": "code-agent",
+          "name": "信息检索",
+          "role": "检索功能",
+          "online": true
+        },
+        {
+          "id": "reviewer",
+          "sceneActorId": "code-agent",
+          "name": "资料核验",
+          "role": "核验功能",
+          "online": true
+        }
+      ],
+      "tasks": [
+        {
+          "id": "task-1",
+          "title": "跟踪竞品新品",
+          "assigneeId": "researcher",
+          "status": "running",
+          "progress": 45,
+          "updatedAt": "2026-09-30T10:00:00.000Z",
+          "summary": "整理今日上新信息"
+        },
+        {
+          "id": "task-2",
+          "title": "核验资料来源",
+          "assigneeId": "reviewer",
+          "status": "blocked",
+          "updatedAt": "2026-09-30T10:01:00.000Z"
+        }
+      ],
+      "events": [
+        {
+          "id": "event-1",
+          "kind": "task.assigned",
+          "taskId": "task-1",
+          "employeeId": "researcher",
+          "fromEmployeeId": "leader",
+          "summary": "王明分配了任务",
+          "occurredAt": "2026-09-30T10:00:00.000Z"
+        }
+      ],
+      "whiteboard": {
+        "template": "task-board-v1",
+        "title": "",
+        "status": "queued",
+        "steps": []
+      }
+    }
   ]
 }
 ```
@@ -49,7 +103,7 @@ npm run integration-example
 - 任务状态可用 `queued`、`running`、`blocked`、`completed`、`failed`。`progress` 为 0–100 的业务进度，`-1` 表示未知，省略时默认为 `-1`。
 - `updatedAt`、`occurredAt` 使用带时区的 ISO 8601 时间。`events` 应按新到旧排序，事件 `id` 在工作空间内保持稳定。`task.assigned` 事件可触发负责人走到员工身旁；页面首次加载时不会重放历史交接。
 - `system` 可选，格式为 `{ "cpuPercent": 39, "memoryPercent": 65, "networkKbps": 15 }`。不提供时页面显示“未提供”，不生成假监控值。
-- 员工、任务 ID 分别在办公室内唯一。非空 `assigneeId` 必须引用快照中的员工；空串表示未分配。PixOffice 校验完整快照，字段或引用无效时返回错误。
+- 会话 ID 在办公室内唯一；员工、任务、事件 ID 分别在所属会话内唯一。非空 `assigneeId` 必须引用同一会话中的员工；空串表示未分配。不同会话可以复用任务或员工 ID，不共享状态。PixOffice 校验完整快照，字段或引用无效时返回错误。
 
 `seq` 是每个办公室独立递增的完整快照版本，必须提供正整数；外部业务后端重启后应继续使用递增版本。较小版本被忽略，同版本不同内容返回 `409 SEQ_CONFLICT`。`whiteboard` 为固定模板数据对象，空标题表示空白板，省略时补齐默认结构。具体内容字段见[办公室 HTTP 接入协议](./office-integration.md)。
 
@@ -57,14 +111,19 @@ npm run integration-example
 
 | 位置 | 必填字段 | 可选字段及默认值 |
 | --- | --- | --- |
-| 快照 | `schemaVersion`、`seq`、`workspace` | `employees: []`、`tasks: []`、`events: []`、默认资源指标与白板对象 |
+| 快照 | `schemaVersion`、`seq`、`workspace` | `conversations: []`、默认资源指标 |
 | `workspace` | `id`、`name` | 无 |
+| 每个会话 | `id`、`title` | `employees: []`、`tasks: []`、`events: []`、默认白板对象 |
 | 每个成员 | `id`、`name` | `sceneActorId: ""`、`role: ""`、`online: false` |
 | 每个任务 | `id`、`title`、`status`、`updatedAt` | `assigneeId: ""`、`progress: -1`、`summary: ""` |
 | 每个事件 | `id`、`kind`、`summary`、`occurredAt` | `taskId: ""`、`employeeId: ""`、`fromEmployeeId: ""` |
 | `system` | 无 | `cpuPercent: -1`、`memoryPercent: -1`、`networkKbps: -1` |
 
-`employees` 最多 200 项，`tasks` 最多 1000 项，`events` 最多 500 项。一次请求的整体大小限制为 64 KiB，实际可提交条目数还受文字长度影响。
+每个办公室最多 100 个后端会话；每个会话的 `employees` 最多 200 项、`tasks` 最多 1000 项、`events` 最多 500 项。一次请求的整体大小限制为 64 KiB，实际可提交条目数还受文字长度影响。
+
+`employees`、`tasks`、`events` 和 `whiteboard` 必须位于 `conversations[]` 内，不能放在快照顶层。一个会话最多一块当前目标白板，空标题表示无当前目标。前端按所选会话投影白板、人物任务、侧栏与任务列表；其他会话的业务数据仍接收并保存。切换不重建办公室，也不取消外部引擎的工作。办公室目录中的 `taskCount` 汇总所有会话任务数。
+
+更新仍使用办公室级完整快照和 `seq`，必须包含需要保留的全部会话。省略的会话从业务目录移除，其旧聊天记录仍可在当前浏览器查看，但不再展示旧任务或白板。会话标题由后端提供；浏览器新增但尚未被后端接纳的会话为本地草稿，见[聊天接口](./chat-integration.md)。
 
 所有字段禁止 `null`。每次更新表示该办公室的完整业务状态；空列表清空相应列表，省略的可选字段按上表补齐。需要保留的成员、任务、事件和白板内容应包含在新快照中。
 

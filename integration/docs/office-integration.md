@@ -94,13 +94,25 @@ sequenceDiagram
     B->>B: 本地排队、寻路和播放动画
 
     Note over B,C: 可选聊天功能
-    B->>S: POST /api/pixoffice/chat，发送办公室、会话和消息
+    B->>S: POST /api/pixoffice/chat，type为history
+    S->>C: 读取指定办公室、会话的最近记录
+    C-->>S: JSON历史页和当前生成轮次
+    S-->>B: 转发校验后的历史页
+    B->>S: 同一POST，type为send或resume
     S->>C: POST到初始化时注册的聊天地址
-    C-->>S: NDJSON流返回增量文本及完成或失败事件
+    C-->>S: NDJSON返回完整恢复快照或增量文本及终态
     S-->>B: 持续转发校验后的NDJSON事件
+    opt 用户明确停止生成
+        B->>S: 同一POST，type为cancel
+        S->>C: 停止指定轮次并保存终态
+        C-->>S: JSON停止结果
+        S-->>B: 转发停止结果
+    end
 ```
 
 动画请求的成功响应表示已转发，业务完成状态由外部业务后端决定。聊天服务由外部项目提供，通过初始化请求的 `chat.url` 注册；浏览器通过 PixOffice 服务端转发聊天，无需单独配置地址或重新构建前端。接口格式见[聊天流式接口](./chat-integration.md)。
+
+聊天历史和生成状态由外部聊天服务保存。浏览器进入会话时按页同步历史，刷新后恢复同一轮回复；断开接收连接不等于停止生成。`send`、`history`、`resume`、`cancel` 共用已注册的聊天地址，不增加接口地址。
 
 初始化和状态更新返回 `202` 时，表示最新状态已缓存，但该请求没有取得浏览器的应用确认。它可能发生于页面离线，也可能发生于等待浏览器确认的请求容量已满；后一种情况下，在线页面仍可通过 SSE 收到状态。浏览器上线或 SSE 重连时接收最新快照。服务端重启后，外部业务后端需要重新发送初始化。详细版本规则见下文“恢复与顺序”。
 
@@ -209,31 +221,68 @@ Content-Type: application/json
 
 `offices` 为办公室快照数组，每项包含办公室身份及完整业务状态：
 
+一个办公室对应一个工作区，`conversations` 列出工作区中的会话。每个会话独立提供成员绑定、任务、动态和当前目标白板。浏览器首次选择目录中的第一个会话；之后保留用户选择，不因后端更新而自动跳转。
+
 ```json
 {
   "type": "offices.initialize",
-  "chat": { "url": "https://your-host.example/chat" },
-  "offices": [{
-    "schemaVersion": "1.0",
-    "seq": 1,
-    "whiteboard": { "template": "task-board-v1", "title": "", "status": "queued", "steps": [] },
-    "workspace": { "id": "team-a", "name": "研发办公室" },
-    "employees": [
-      { "id": "coding", "sceneActorId": "office-lead", "name": "代码开发", "online": true },
-      { "id": "testing", "sceneActorId": "office-lead", "name": "自动化测试", "online": true }
-    ],
-    "tasks": [{
-      "id": "task-1", "title": "登录模块开发", "assigneeId": "coding",
-      "status": "running", "summary": "实现登录与权限校验。", "updatedAt": "2026-10-18T10:00:00Z"
-    }],
-    "events": []
-  }]
+  "chat": {
+    "url": "https://your-host.example/chat"
+  },
+  "offices": [
+    {
+      "schemaVersion": "1.0",
+      "seq": 1,
+      "workspace": {
+        "id": "team-a",
+        "name": "研发办公室"
+      },
+      "conversations": [
+        {
+          "id": "main",
+          "title": "登录模块开发",
+          "employees": [
+            {
+              "id": "coding",
+              "sceneActorId": "office-lead",
+              "name": "代码开发",
+              "online": true
+            },
+            {
+              "id": "testing",
+              "sceneActorId": "office-lead",
+              "name": "自动化测试",
+              "online": true
+            }
+          ],
+          "tasks": [
+            {
+              "id": "task-1",
+              "title": "登录模块开发",
+              "assigneeId": "coding",
+              "status": "running",
+              "summary": "实现登录与权限校验。",
+              "updatedAt": "2026-10-18T10:00:00Z"
+            }
+          ],
+          "events": [],
+          "whiteboard": {
+            "template": "task-board-v1",
+            "title": "",
+            "status": "queued",
+            "steps": []
+          }
+        }
+      ]
+    }
+  ]
 }
 ```
 
 - `workspace.id` 是办公室的稳定 ID，其他操作的 `teamId` 引用该值。
 - `chat` 可选，为本 PixOffice 服务实例注册聊天接口；`url` 为服务端可访问的完整 HTTP(S) 地址。省略 `chat` 保留已有配置，`chat: { "url": "" }` 停用服务。可使用 `offices: []` 单独更换聊天地址，后续聊天立即生效；配置独立于快照 `seq`，服务端重启后须重新注册。地址只保存在 PixOffice 服务端，不广播给浏览器。详见[聊天接入文档](./chat-integration.md)。
-- `employees` 是业务成员列表，可代表员工、功能或智能体。`id` 在该办公室内唯一；`sceneActorId` 指定负责展示该成员的场景人物。多个成员可以绑定同一人物。
+- `conversations[].id` 是办公室内唯一的会话 ID，`title` 是标签显示名称。聊天请求、审批请求及用户操作使用 `conversationId` 引用该 ID。
+- `conversations[].employees` 是会话的业务成员列表，可代表员工、功能或智能体。成员 `id` 在该会话内唯一；`sceneActorId` 指定负责展示该成员的场景人物。多个成员可以绑定同一人物，不同会话可有不同的绑定关系。
 - 每个办公室提供固定六个人物及对应工位、外观。可绑定人物通过 `office.capabilities` 的 `data.scene.actors`，或初始化结果的 `data.actors` 查询。
 - 初始化按 `workspace.id` 新增或更新办公室。请求未列出的办公室保留；此操作不提供删除办公室功能。一个服务实例最多管理 100 个办公室。
 - 新增办公室时，其他办公室继续执行各自活动。更新已有办公室使用完整快照和 `seq` 规则，见下文“恢复与顺序”。
@@ -249,21 +298,64 @@ Content-Type: application/json
   "snapshot": {
     "schemaVersion": "1.0",
     "seq": 2,
-    "whiteboard": { "template": "task-board-v1", "title": "", "status": "queued", "steps": [] },
-    "workspace": { "id": "team-a", "name": "研发办公室" },
-    "employees": [{ "id": "coding", "sceneActorId": "office-lead", "name": "代码开发" }],
-    "tasks": [{
-      "id": "task-1", "title": "登录模块开发", "assigneeId": "coding",
-      "status": "completed", "progress": 100, "summary": "实现登录与权限校验。", "updatedAt": "2026-10-18T10:05:00Z"
-    }],
-    "events": []
+    "workspace": {
+      "id": "team-a",
+      "name": "研发办公室"
+    },
+    "conversations": [
+      {
+        "id": "main",
+        "title": "登录模块开发",
+        "employees": [
+          {
+            "id": "coding",
+            "sceneActorId": "office-lead",
+            "name": "代码开发"
+          }
+        ],
+        "tasks": [
+          {
+            "id": "task-1",
+            "title": "登录模块开发",
+            "assigneeId": "coding",
+            "status": "completed",
+            "progress": 100,
+            "summary": "实现登录与权限校验。",
+            "updatedAt": "2026-10-18T10:05:00Z"
+          }
+        ],
+        "events": [],
+        "whiteboard": {
+          "template": "task-board-v1",
+          "title": "",
+          "status": "queued",
+          "steps": []
+        }
+      }
+    ]
   }
 }
 ```
 
-`snapshot` 表示该办公室在此版本下的完整业务状态；数组内容替换该办公室对应列表，省略的可选字段使用默认值。`teamId` 必须等于 `snapshot.workspace.id`，办公室必须已初始化。完整字段、数量限制和状态见[业务快照规范](./dashboard-integration.md)。
+`snapshot` 表示该办公室在此版本下的完整业务状态，包含全部需要保留的会话；数组内容替换对应列表，省略的可选字段使用默认值。`teamId` 必须等于 `snapshot.workspace.id`，办公室必须已初始化。任务和白板放在 `conversations[]` 内，不接受顶层同名字段。完整字段、数量限制和状态见[业务快照规范](./dashboard-integration.md)。
 
 外部业务后端负责汇总该办公室的完整数据，并为每次更新生成更大的 `seq`。PixOffice 根据 `seq` 选择最新状态，因此 HTTP 请求可以乱序到达。
+
+浏览器只将当前会话投影到墙上白板、人物任务和任务列表，其他会话的数据继续接收。切换会话不重新初始化办公室，不停止其他会话的聊天或外部业务执行。流程如下：
+
+```mermaid
+sequenceDiagram
+    participant E as 外部业务后端
+    participant S as PixOffice 服务端
+    participant B as PixOffice 浏览器
+    E->>S: offices.initialize：办公室 + conversations
+    S->>B: SSE 同步全部会话业务数据
+    B->>B: 选择会话 A，展示 A 的聊天、白板和任务
+    E->>S: office.snapshot：更新完整会话集合及 seq
+    S->>B: SSE 更新 A、B 各自状态
+    B->>B: 用户切换到 B，展示 B 的数据
+    Note over B,E: A 的回复及业务执行不因切换而停止
+```
 
 成功响应的 `data` 包含 `teamId`、`seq`、`status`。`status` 为 `applied`、`cached` 或 `ignored`，分别表示浏览器已确认应用、服务端已缓存但未取得浏览器确认、版本未更新；忽略原因由 `reasonCode` 给出。`cached` 和 `ignored` 均不证明页面已经应用该版本。
 
@@ -275,12 +367,19 @@ Content-Type: application/json
 
 ```json
 {
-  "type": "decision.request", "teamId": "team-a", "timeoutMs": 60000,
+  "type": "decision.request",
+  "teamId": "team-a",
+  "timeoutMs": 60000,
   "decision": {
-    "id": "decision-1", "actorId": "office-lead", "kind": "confirmation",
-    "title": "是否提交登录模块？", "description": "请检查实现结果后决定。",
-    "confirmLabel": "确认提交", "rejectLabel": "暂不提交"
-  }
+    "id": "decision-1",
+    "actorId": "office-lead",
+    "kind": "confirmation",
+    "title": "是否提交登录模块？",
+    "description": "请检查实现结果后决定。",
+    "confirmLabel": "确认提交",
+    "rejectLabel": "暂不提交"
+  },
+  "conversationId": "main"
 }
 ```
 
@@ -288,32 +387,53 @@ Content-Type: application/json
 
 ```json
 {
-  "type": "decision.request", "teamId": "team-a", "timeoutMs": 60000,
+  "type": "decision.request",
+  "teamId": "team-a",
+  "timeoutMs": 60000,
   "decision": {
-    "id": "decision-2", "actorId": "office-lead", "kind": "choice",
-    "title": "下一步如何处理？", "description": "请选择处理方式。",
+    "id": "decision-2",
+    "actorId": "office-lead",
+    "kind": "choice",
+    "title": "下一步如何处理？",
+    "description": "请选择处理方式。",
     "options": [
-      { "id": "submit", "label": "提交", "description": "进入下一阶段" },
-      { "id": "revise", "label": "继续修改", "description": "补齐问题后再提交" }
+      {
+        "id": "submit",
+        "label": "提交",
+        "description": "进入下一阶段"
+      },
+      {
+        "id": "revise",
+        "label": "继续修改",
+        "description": "补齐问题后再提交"
+      }
     ]
-  }
+  },
+  "conversationId": "main"
 }
 ```
 
-`decision.id` 为本次菜单的唯一标识，每次发起新菜单应使用不同值。选项 ID 在该菜单内唯一。`actorId` 可省略，默认使用第一个场景人物；人物姓名和头像由 PixOffice 根据人物 ID 确定。
+`conversationId` 必填，必须是该办公室已登记的会话，否则返回 `404 CONVERSATION_NOT_FOUND`。`decision.id` 为该办公室内本次菜单的唯一标识，每次发起新菜单应使用不同值，即使分属不同会话也不能重复。选项 ID 在该菜单内唯一。`actorId` 可省略，默认使用第一个场景人物；人物姓名和头像由 PixOffice 根据人物 ID 确定。
 
 用户选择后，发起菜单的 HTTP 请求返回：
 
 ```json
 {
-  "code": 200, "msg": "User selected",
-  "data": { "teamId": "team-a", "decisionId": "decision-1", "choiceId": "confirm", "label": "确认提交" }
+  "code": 200,
+  "msg": "User selected",
+  "data": {
+    "teamId": "team-a",
+    "decisionId": "decision-1",
+    "choiceId": "confirm",
+    "label": "确认提交",
+    "conversationId": "main"
+  }
 }
 ```
 
 确认菜单返回 `choiceId: "confirm"` 或 `"reject"`；多选项菜单返回所选选项的 ID。`label` 为对应按钮标签。收到结果后，由外部业务后端执行业务操作并发送更新后的快照。
 
-菜单按所属办公室排队，切换办公室时保留。非当前办公室的菜单会在场景左侧显示所属团队、问题、选项或确认按钮，可直接提交而不切换办公室；也可通过“进入办公室”查看上下文。提交仍返回该菜单原请求对应的 `teamId` 和 `decisionId`，不增加后端接口。空间总览显示各办公室的待选择数量。页面显示倒计时，到期关闭菜单并返回 `408`，不产生默认选择。当前接口不提供菜单请求重试去重或历史结果查询；网络中断后，调用方应根据业务状态决定是否发起新菜单。
+菜单在每个会话内排队，会话之间独立，切换后保留原有效期限。当前会话的菜单显示在办公室底部；展开聊天后，顶部会话标签显示各会话的待处理数量。非当前办公室的菜单会在场景左侧显示，可直接提交，也可进入对应办公室和会话查看上下文。结果携带原请求的 `teamId`、`conversationId` 和 `decisionId`。空间总览显示各办公室的待选择数量。页面显示倒计时，到期关闭菜单并返回 `408`，不产生默认选择。当前接口不提供菜单请求重试去重或历史结果查询；网络中断后，调用方应根据业务状态决定是否发起新菜单。
 
 ## 4. 查询初始化和当前任务
 
@@ -352,7 +472,7 @@ Content-Type: application/json
 
 ## 5. 固定格式白板
 
-通过 `offices.initialize` 或 `office.snapshot` 的快照字段 `whiteboard` 设置白板。白板内容示例：
+通过 `offices.initialize` 或 `office.snapshot` 的 `conversations[].whiteboard` 设置各会话白板，场景显示当前所选会话的白板。白板内容示例：
 
 ```json
 {
@@ -400,9 +520,18 @@ Content-Type: application/json
 
 ```json
 {
-  "code": 200, "msg": "OK",
+  "code": 200,
+  "msg": "OK",
   "data": {
-    "actions": [{ "id": "action-1", "teamId": "team-a", "action": "actor.inspect", "actorId": "office-lead" }]
+    "actions": [
+      {
+        "id": "action-1",
+        "teamId": "team-a",
+        "action": "actor.inspect",
+        "actorId": "office-lead",
+        "conversationId": "main"
+      }
+    ]
   }
 }
 ```
@@ -418,8 +547,9 @@ Content-Type: application/json
 | `task.start`、`task.block`、`task.complete` | `taskId`：任务 ID |
 | `task.assign` | `taskId`、`assigneeId`：任务及新负责人 ID |
 | `dialog.action` | `interactionId`：原详情请求 ID；`optionId`：详情按钮 ID |
+| `conversation.delete` | 使用操作中的 `teamId`、`conversationId` 指定待删除会话，无额外业务字段 |
 
-每项操作还包含 `id` 和 `teamId`。将操作的 `id` 作为 `ui.respond.interactionId`，返回展示结果：
+每项操作还包含 `id`、`teamId` 和 `conversationId`，后端按办公室及会话定位成员和任务。将操作的 `id` 作为 `ui.respond.interactionId`，返回展示结果：
 
 ```json
 {
@@ -431,16 +561,45 @@ Content-Type: application/json
 }
 ```
 
-`presentation.target` 支持以下展示位置：
+`presentation.target` 支持以下处理方式：
 
 | `target` | 参数 | 展示方式 |
 | --- | --- | --- |
 | `dialog` | `content` | 在详情对话框中展示 `detail-v1` 内容，包含标题、描述、字段列表和最多 8 个按钮 |
 | `whiteboard` | `snapshot` | 应用所属办公室的新版本完整快照，更新其中的白板和其他业务状态 |
+| `result` | `success`、`message` | 返回操作是否成功及原因，不打开详情对话框 |
 
 `ui.respond` 成功返回 `data: {interactionId, delivered: true}`。用户点击详情按钮会产生新的 `dialog.action` 操作，使用该新操作的 `id` 提交对应展示结果。
 
+详情对话框仅在请求所属会话仍被选中时显示，迟到结果不会覆盖另一个会话。白板展示结果必须携带包含请求所属会话的完整办公室快照；服务端缓存全部会话，浏览器只显示所选会话的数据。
+
 用户操作最多保留并等待处理 60 秒，超时后页面提示失败，后续 `ui.respond` 返回 `410 UI_REQUEST_EXPIRED`。领取后的操作不会再次返回给其他 `ui.next` 请求。任务按钮的实际业务处理由外部业务后端执行，处理后通过 `office.snapshot` 同步结果。
+
+### 删除会话
+
+用户确认删除后，外部后端通过 `ui.next` 取得 `conversation.delete` 操作。后端决定关联执行、任务和审批如何收尾。允许删除时，先发送更高 `seq` 的完整 `office.snapshot`，从 `conversations` 中移除目标会话，再提交成功结果：
+
+```json
+{
+  "type": "ui.respond",
+  "interactionId": "delete-action-1",
+  "presentation": { "target": "result", "success": true, "message": "会话已删除" }
+}
+```
+
+成功确认前，PixOffice 服务端检查最新快照中已无该会话；仍存在时返回 `409 SNAPSHOT_REQUIRED`，删除请求继续等待处理。外部后端无需新增接口。会话 ID 不应复用。
+
+拒绝删除时，不移除快照中的会话，返回原因：
+
+```json
+{
+  "type": "ui.respond",
+  "interactionId": "delete-action-1",
+  "presentation": { "target": "result", "success": false, "message": "会话仍有受保护操作，暂时不能删除" }
+}
+```
+
+外部后端处理删除时应一并停止该会话的回复生成并删除已保存的聊天历史。浏览器仅在成功确认后清除聊天记录、草稿及该会话的本地决策记录，断开接收连接。拒绝或超时会保留本地记录并显示原因。本地演示会话无需后端确认。
 
 ## 7. 发送场景指令
 
@@ -459,6 +618,8 @@ Content-Type: application/json
 ```
 
 `teamId` 与命令的 `sceneId` 必须一致。每条新指令使用唯一 `commandId`；人物 ID、行为名称、角色及参数通过能力查询获取。指令也可按顺序或并行组成最多 32 条的批次，详见[场景协议](../../docs/plugin-runtime.md)。
+
+可在请求顶层增加 `conversationId`，将临时动画限定到该会话；浏览器当前未选择该会话时跳过，不缓存补播。省略时表示办公室级动画。切换会话不撤销已经接收的办公室动画；持续的工作状态应通过会话任务快照表达，无需逐帧控制或动画回执。
 
 HTTP `200` 表示指令已发送到至少一个在线页面连接。浏览器负责排队、寻路、资源占用和动画播放；本接口不返回动画开始或完成通知，业务流程应以外部业务后端的状态为准。无在线页面返回 `409`。
 

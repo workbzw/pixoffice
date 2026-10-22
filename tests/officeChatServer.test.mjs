@@ -3,9 +3,10 @@ import { createServer } from 'node:http'
 import { test } from 'node:test'
 import { createPixOfficeServer, DEMO_API_KEY } from '../server/dist/app.js'
 import { chatPath } from '@pixoffice/protocol/chat'
+import { createExampleChatServer } from '../integration/clients/chat-server.mjs'
 
 const office = { schemaVersion: '1.0', seq: 1, workspace: { id: 'chat-office', name: 'Chat office' } }
-const payload = { version: '1.0', teamId: 'chat-office', conversationId: 'conversation-a', messages: [{ role: 'user', content: 'Hello' }] }
+const payload = { version: '1.0', type: 'send', turnId: 'turn-a', teamId: 'chat-office', conversationId: 'conversation-a', messages: [{ role: 'user', content: 'Hello' }] }
 const post = (app, body, headers = { authorization: `Bearer ${DEMO_API_KEY}` }) => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers, payload: body })
 const initialize = (app, url) => post(app, { type: 'offices.initialize', offices: [office], ...(url === undefined ? {} : { chat: { url } }) })
 const events = text => text.trim().split('\n').map(line => JSON.parse(line))
@@ -68,7 +69,7 @@ test('chat configuration changes take effect immediately, omitted config is reta
   await initialize(app)
   await (await chat(base)).text()
   assert.deepEqual(paths, ['/chat', '/chat/new', '/chat/new'])
-  const invalid = await post(app, { type: 'offices.initialize', offices: [{ ...office, seq: 2, employees: [{ id: 'bad', name: 'Bad', sceneActorId: 'missing' }] }], chat: { url: '' } })
+  const invalid = await post(app, { type: 'offices.initialize', offices: [{ ...office, seq: 2, conversations: [{ id: 'main', title: 'Main', employees: [{ id: 'bad', name: 'Bad', sceneActorId: 'missing' }] }] }], chat: { url: '' } })
   assert.equal(invalid.statusCode, 422)
   assert.equal((await chat(base)).status, 200, 'rejected initialization cannot change registered configuration')
   await post(app, { type: 'offices.initialize', offices: [], chat: { url: '' } })
@@ -153,4 +154,46 @@ test('stopping browser chat closes the upstream request and does not block the n
   await reader.read(); controller.abort(); await reader.cancel().catch(() => {})
   await Promise.race([upstreamClosed, new Promise((_, reject) => { const timer = setTimeout(() => reject(new Error('Upstream was not cancelled')), 2000); timer.unref() })])
   assert.deepEqual(events(await (await chat(base)).text()), [{ type: 'delta', text: 'second' }, { type: 'done' }])
+})
+
+test('history pages and refreshed receivers use the same continuing backend turn; cancel is explicit', async t => {
+  const engine = createExampleChatServer({ seedTurns: 60, chunkDelayMs: 20, replyText: '长回复内容。'.repeat(15) })
+  const upstream = await engine.listen({ host: '127.0.0.1', port: 0 })
+  const app = await createPixOfficeServer(), base = await app.listen({ host: '127.0.0.1', port: 0 })
+  t.after(async () => { await app.close(); await engine.close() })
+  await initialize(app, `${upstream}/chat`)
+  const operation = (data, options = {}) => chat(base, { body: JSON.stringify({ version: '1.0', teamId: 'chat-office', conversationId: 'conversation-a', ...data }), ...options })
+  const history = async cursor => (await (await operation({ type: 'history', cursor, limit: 20 })).json()).data
+  const recent = await history(''), older = await history(recent.nextCursor)
+  assert.equal(recent.turns[0].id, 'seed-40'); assert.equal(older.turns[0].id, 'seed-20')
+  const controller = new AbortController()
+  const started = await operation({ type: 'send', turnId: 'long-turn', messages: [{ role: 'user', content: '继续生成' }] }, { signal: controller.signal })
+  const first = started.body.getReader(); await first.read(); controller.abort(); await first.cancel().catch(() => {})
+  await new Promise(resolve => setTimeout(resolve, 70))
+  const checkpoint = await history('')
+  assert.equal(checkpoint.activeTurnId, 'long-turn'); assert(checkpoint.turns.at(-1).assistant.length > 0)
+  const resumed = await operation({ type: 'resume', turnId: 'long-turn' }), reader = resumed.body.getReader()
+  const initial = new TextDecoder().decode((await reader.read()).value)
+  assert.match(initial, /"type":"snapshot"/)
+  const stopped = await operation({ type: 'cancel', turnId: 'long-turn' })
+  assert.deepEqual((await stopped.json()).data, { stopped: true })
+  let rest = ''; for (;;) { const chunk = await reader.read(); if (chunk.done) break; rest += new TextDecoder().decode(chunk.value) }
+  assert.match(rest, /"state":"stopped"/)
+  const saved = await history('')
+  assert.equal(saved.activeTurnId, ''); assert.equal(saved.turns.at(-1).state, 'stopped')
+  assert.equal(saved.turns.filter(turn => turn.id === 'long-turn').length, 1)
+})
+
+test('chat control responses reject null history and resume streams require a complete first snapshot', async t => {
+  const { app, base, upstreamUrl } = await setup(t, async (request, response) => {
+    let text = ''; for await (const chunk of request) text += chunk
+    const input = JSON.parse(text)
+    response.writeHead(200, { 'Content-Type': input.type === 'resume' ? 'application/x-ndjson' : 'application/json' })
+    response.end(input.type === 'resume' ? '{"type":"delta","text":"missing snapshot"}\n{"type":"done"}\n' : JSON.stringify({ code: 200, msg: 'OK', data: { turns: null, nextCursor: '', hasMore: false, activeTurnId: '' } }))
+  })
+  await initialize(app, upstreamUrl)
+  const json = await chat(base, { body: JSON.stringify({ version: '1.0', type: 'history', teamId: 'chat-office', conversationId: 'conversation-a', cursor: '', limit: 20 }) })
+  assert.equal(json.status, 502)
+  const stream = await chat(base, { body: JSON.stringify({ version: '1.0', type: 'resume', teamId: 'chat-office', conversationId: 'conversation-a', turnId: 'turn' }) })
+  assert.equal(events(await stream.text())[0].type, 'error')
 })

@@ -95,6 +95,8 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
   const openDecisions = (id: string) => {
     const session = sessions.get(id)
     if (!session) return
+    const conversationId = session.decisions.getSnapshot().pending[0]?.conversationId
+    if (conversationId) session.chat.select(conversationId)
     select(id); setDecisionFocus({ teamId: id, requests: session.decisions.getSnapshot().pending }); setDecisionOpenToken(value => value + 1)
   }
   if (!activeSession) {

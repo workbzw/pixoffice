@@ -21,5 +21,5 @@ export const officeUiManifest = {
     { id: 'computer.task', content: 'task', persistent: true, update: 'office.snapshot' },
     { id: 'decision', content: 'confirmation-or-choice', persistent: false, update: 'decision.request' },
   ],
-  actions: ['actor.inspect', 'employee.inspect', 'task.start', 'task.block', 'task.complete', 'task.assign', 'dialog.action'],
+  actions: ['actor.inspect', 'employee.inspect', 'task.start', 'task.block', 'task.complete', 'task.assign', 'dialog.action', 'conversation.delete'],
 } as const

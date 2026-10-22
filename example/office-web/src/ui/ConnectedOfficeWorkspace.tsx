@@ -63,6 +63,11 @@ export function ConnectedOfficeWorkspace({ baseUrl, renderOffice }: { baseUrl: s
   }
   return renderOffice({ session: office.session, layout, decisionOpenToken, integrationError: state.error,
     teamSelection: { teams: options, activeId: office.id, focusedDecisionTeamId, select: selectTeam,
-      openDecisions: id => { select(id); setFocusedDecisionTeamId(id); setDecisionOpenToken(value => value + 1) },
+      openDecisions: id => {
+        const session = state.offices.find(item => item.id === id)?.session
+        const conversationId = session?.decisions.getSnapshot().pending[0]?.conversationId
+        if (conversationId) session?.chat.select(conversationId)
+        select(id); setFocusedDecisionTeamId(id); setDecisionOpenToken(value => value + 1)
+      },
       resolveDecision: (teamId, decisionId, choiceId) => { void state.offices.find(item => item.id === teamId)?.session.decisions.choose(teamId, decisionId, choiceId) } } })
 }

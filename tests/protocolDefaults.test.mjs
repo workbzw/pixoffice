@@ -27,14 +27,14 @@ test('requests contain only the operation and parameters, never a response envel
 })
 
 test('omitted snapshot fields receive fixed, null-free defaults without inventing required identities or versions', () => {
-  const snapshot = officeSnapshotSchema.parse({ ...minimal(), employees: [{ id: 'dev', name: '开发' }], tasks: [
+  const snapshot = officeSnapshotSchema.parse({ ...minimal(), conversations: [{ id: 'main', title: '主会话', employees: [{ id: 'dev', name: '开发' }], tasks: [
     { id: 'one', title: '登录', status: 'queued', updatedAt: '2026-10-18T10:00:00Z' },
-  ] })
-  assert.deepEqual(snapshot.employees[0], { id: 'dev', name: '开发', sceneActorId: '', role: '', online: false })
-  assert.equal(snapshot.tasks[0].assigneeId, ''); assert.equal(snapshot.tasks[0].progress, -1); assert.equal(snapshot.tasks[0].summary, '')
+  ] }] })
+  assert.deepEqual(snapshot.conversations[0].employees[0], { id: 'dev', name: '开发', sceneActorId: '', role: '', online: false })
+  assert.equal(snapshot.conversations[0].tasks[0].assigneeId, ''); assert.equal(snapshot.conversations[0].tasks[0].progress, -1); assert.equal(snapshot.conversations[0].tasks[0].summary, '')
   assert.deepEqual(snapshot.system, { cpuPercent: -1, memoryPercent: -1, networkKbps: -1 })
-  assert.deepEqual(snapshot.whiteboard, emptyWhiteboard()); assert.deepEqual(snapshot.events, [])
-  assert.deepEqual(officeSnapshotSchema.parse({ ...minimal(), whiteboard: {} }).whiteboard, emptyWhiteboard())
+  assert.deepEqual(snapshot.conversations[0].whiteboard, emptyWhiteboard()); assert.deepEqual(snapshot.conversations[0].events, [])
+  assert.deepEqual(officeSnapshotSchema.parse({ ...minimal(), conversations: [{ id: 'main', title: '主会话', whiteboard: {} }] }).conversations[0].whiteboard, emptyWhiteboard())
   assertNoNull(snapshot)
   assert.throws(() => officeSnapshotSchema.parse({ ...minimal(), seq: 0 }))
   assert.throws(() => officeSnapshotSchema.parse({ ...minimal(), workspace: { id: '', name: '无效' } }))
@@ -50,7 +50,7 @@ test('all nested JSON values and map bindings reject null instead of silently co
   assert(mapOperationSchema.safeParse({ op: 'binding.set', actorId: 'one', homeId: '' }).success)
   assert.equal(mapOperationSchema.safeParse({ op: 'binding.set', actorId: 'one', homeId: null }).success, false)
   assert.equal(chatEventSchema.safeParse({ type: 'delta', text: '答复', extra: null }).success, false)
-  assert.equal(chatRequestSchema.safeParse({ version: '1.0', teamId: 'defaults', conversationId: 'one', messages: [{ role: 'user', content: null }] }).success, false)
+  assert.equal(chatRequestSchema.safeParse({ version: '1.0', type: 'send', turnId: 'turn', teamId: 'defaults', conversationId: 'one', messages: [{ role: 'user', content: null }] }).success, false)
 })
 
 test('response data is always an object and every nested null is invalid', () => {
@@ -67,8 +67,8 @@ test('actual success and validation responses are object-only and null-free, inc
   assert.equal(initialized.statusCode, 202)
   const cases = [
     { type: 'office.capabilities' },
-    { type: 'offices.initialize', offices: [{ ...minimal(), whiteboard: null }] },
-    { type: 'offices.initialize', offices: [{ ...minimal(), tasks: null }] },
+    { type: 'offices.initialize', offices: [{ ...minimal(), conversations: [{ id: 'main', title: '主会话', whiteboard: null }] }] },
+    { type: 'offices.initialize', offices: [{ ...minimal(), conversations: [{ id: 'main', title: '主会话', tasks: null }] }] },
     { teamId: 'defaults', command: { ...command(), params: { nested: [{ value: null }] } } },
     { code: 200, msg: '', data: { type: 'office.read' } },
   ]
@@ -89,9 +89,9 @@ test('an empty user-operation wait returns a fixed empty actions array', async t
 test('SSE recovery emits direct typed events with normalized null-free snapshot objects', async t => {
   const app = await createPixOfficeServer(), base = await app.listen({ host: '127.0.0.1', port: 0 })
   t.after(() => app.close())
-  const snapshot = { ...minimal(), tasks: Array.from({ length: 600 }, (_, index) => ({
+  const snapshot = { ...minimal(), conversations: [{ id: 'main', title: '主会话', tasks: Array.from({ length: 600 }, (_, index) => ({
     id: `task-${index}`, title: '任务', status: 'queued', updatedAt: '2026-10-18T10:00:00Z',
-  })) }
+  })) }] }
   const request = { type: 'offices.initialize', offices: [snapshot] }
   assert(Buffer.byteLength(JSON.stringify(request)) < 65536)
   assert.equal((await post(app, request)).statusCode, 202)
@@ -109,7 +109,7 @@ test('SSE recovery emits direct typed events with normalized null-free snapshot 
     if (!line) continue
     const event = JSON.parse(line.slice(6)); assertNoNull(event)
     if (event.type === 'office.sync.start') continue
-    assert.equal(event.type, 'office.sync'); assert.equal(event.snapshot.whiteboard.title, '')
+    assert.equal(event.type, 'office.sync'); assert.equal(event.snapshot.conversations[0].whiteboard.title, '')
     assert.equal(event.snapshot.system.cpuPercent, -1)
     assert.equal('code' in event, false); assert.equal('data' in event, false)
     assert(Buffer.byteLength(line.slice(6)) > 65536, 'normalized snapshots may grow beyond the incoming request limit')
@@ -117,7 +117,7 @@ test('SSE recovery emits direct typed events with normalized null-free snapshot 
     const disconnect = new SseMessageTransport('', () => source).connect({ teamIds: [], workspace: true,
       onStatus() {}, onMessage: value => received.push(value) })
     source.onmessage({ data: line.slice(6) }); disconnect()
-    assert.equal(received.length, 1); assert.equal(received[0].snapshot.tasks.length, 600)
+    assert.equal(received.length, 1); assert.equal(received[0].snapshot.conversations[0].tasks.length, 600)
     break
   }
 })

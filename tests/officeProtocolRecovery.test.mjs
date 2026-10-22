@@ -3,15 +3,34 @@ import { test } from 'node:test'
 import { createPixOfficeServer, DEMO_API_KEY } from '../server/dist/app.js'
 import { officeErrorResultSchema } from '@pixoffice/protocol/office-integration'
 
-const snapshot = (seq = 1) => ({ schemaVersion: '1.0', seq, workspace: { id: 'team-a', name: '研发办公室' }, employees: [{ id: 'dev', name: '开发', sceneActorId: 'office-lead' }],
-  tasks: [{ id: 'task', title: '登录开发', assigneeId: 'dev', status: seq > 1 ? 'completed' : 'running', summary: '开发登录模块', updatedAt: '2026-10-18T10:00:00Z' }], events: [],
-  whiteboard: { template: 'task-board-v1', title: `项目 ${seq}`, status: seq > 1 ? 'completed' : 'running', steps: [{ id: 'develop', title: '开发', progress: seq > 1 ? 100 : 20 }] } })
+const snapshot = (seq = 1) => ({ schemaVersion: '1.0', seq, workspace: { id: 'team-a', name: '研发办公室' }, conversations: [{ id: 'main', title: '主会话', employees: [{ id: 'dev', name: '开发', sceneActorId: 'office-lead' }], tasks: [{ id: 'task', title: '登录开发', assigneeId: 'dev', status: seq > 1 ? 'completed' : 'running', summary: '开发登录模块', updatedAt: '2026-10-18T10:00:00Z' }], events: [], whiteboard: { template: 'task-board-v1', title: `项目 ${seq}`, status: seq > 1 ? 'completed' : 'running', steps: [{ id: 'develop', title: '开发', progress: seq > 1 ? 100 : 20 }] } }] })
 const post = (app, data) => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers: { authorization: `Bearer ${DEMO_API_KEY}` }, payload: data })
 async function setup(t, options = {}) {
   const app = await createPixOfficeServer(options), base = await app.listen({ host: '127.0.0.1', port: 0 })
   t.after(() => app.close())
   return { app, base }
 }
+
+test('conversation deletion requires an updated directory and forwards explicit success or rejection', async t => {
+  const { app, base } = await setup(t)
+  await post(app, { type: 'offices.initialize', offices: [snapshot()] })
+  const request = id => app.inject({ method: 'POST', url: '/api/pixoffice/ui', payload: { id, teamId: 'team-a', conversationId: 'main', action: 'conversation.delete' } }).then(value => value)
+  const rejected = request('delete-rejected')
+  assert.equal((await post(app, { type: 'ui.next', timeoutMs: 1000 })).json().data.actions[0].action, 'conversation.delete')
+  assert.equal((await post(app, { type: 'ui.respond', interactionId: 'delete-rejected', presentation: { target: 'result', success: false, message: '仍有执行中的审批' } })).statusCode, 200)
+  assert.equal((await rejected).json().data.success, false)
+  const accepted = request('delete-accepted')
+  await post(app, { type: 'ui.next', timeoutMs: 1000 })
+  const presentation = { target: 'result', success: true, message: '会话已删除' }
+  const early = await post(app, { type: 'ui.respond', interactionId: 'delete-accepted', presentation })
+  assert.equal(early.statusCode, 409); assert.equal(early.json().data.reasonCode, 'SNAPSHOT_REQUIRED')
+  const updated = snapshot(2); updated.conversations = []
+  assert.equal((await post(app, { type: 'office.snapshot', teamId: 'team-a', snapshot: updated })).statusCode, 202)
+  assert.equal((await post(app, { type: 'ui.respond', interactionId: 'delete-accepted', presentation })).statusCode, 200)
+  assert.deepEqual((await accepted).json().data, presentation)
+  const connected = await stream(t, base)
+  assert.deepEqual((await connected.next()).snapshot.conversations, [])
+})
 async function stream(t, base, query = 'workspace=1') {
   const controller = new AbortController(), response = await fetch(`${base}/api/pixoffice/events?${query}`, { signal: controller.signal })
   const reader = response.body.getReader(), decoder = new TextDecoder(); let buffer = ''
@@ -32,11 +51,11 @@ test('offline state is cached, stale snapshots ignored and new browsers receive 
   assert.equal((await post(app, { type: 'office.snapshot', teamId: 'team-a', snapshot: snapshot(2) })).statusCode, 202)
   const stale = await post(app, { type: 'office.snapshot', teamId: 'team-a', snapshot: snapshot() })
   assert.equal(stale.statusCode, 200); assert.equal(stale.json().data.reasonCode, 'STALE_SEQ')
-  const conflicting = snapshot(2); conflicting.tasks[0].title = '冲突内容'
+  const conflicting = snapshot(2); conflicting.conversations[0].tasks[0].title = '冲突内容'
   assert.equal((await post(app, { type: 'office.snapshot', teamId: 'team-a', snapshot: conflicting })).statusCode, 409)
   const first = await stream(t, base), frame = await first.next()
   assert.equal(frame.type, 'office.sync'); assert.equal(frame.snapshot.seq, 2)
-  assert.equal(frame.snapshot.tasks[0].status, 'completed'); assert.equal(frame.snapshot.whiteboard.title, '项目 2')
+  assert.equal(frame.snapshot.conversations[0].tasks[0].status, 'completed'); assert.equal(frame.snapshot.conversations[0].whiteboard.title, '项目 2')
   first.close()
   const another = await stream(t, base)
   assert.equal((await another.next()).snapshot.seq, 2)
@@ -84,7 +103,7 @@ test('animation-only subscribers do not make office business pages appear online
   assert.equal(updated.statusCode, 202); assert.equal(updated.json().data.status, 'cached')
   assert.equal((await post(app, { type: 'offices.initialize', offices: [snapshot(2)] })).statusCode, 202)
   for (const request of [{ type: 'office.read', teamId: 'team-a' },
-    { type: 'decision.request', teamId: 'team-a', timeoutMs: 1000, decision: { id: 'no-workspace', kind: 'confirmation', title: '继续吗？' } }]) {
+    { conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 1000, decision: { id: 'no-workspace', kind: 'confirmation', title: '继续吗？' } }]) {
     const result = await post(app, request)
     assert.equal(result.statusCode, 409); assert.equal(result.json().data.reasonCode, 'NO_RECEIVER')
   }
@@ -104,11 +123,11 @@ test('mixed subscriptions send business requests and menu closure only to office
   await app.inject({ method: 'POST', url: '/api/pixoffice/reply', payload: { responseToken: update.responseToken,
     result: { code: 200, msg: 'Applied', data: { teamId: 'team-a', seq: 2, status: 'applied' } } } })
   assert.equal((await changed).statusCode, 200)
-  const pending = post(app, { type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
+  const pending = post(app, { conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
     decision: { id: 'workspace-only', kind: 'confirmation', title: '继续吗？' } }).then(value => value)
   const menu = await workspace.next()
   await app.inject({ method: 'POST', url: '/api/pixoffice/reply', payload: { responseToken: menu.responseToken,
-    result: { code: 200, msg: 'Selected', data: { teamId: 'team-a', decisionId: 'workspace-only', choiceId: 'confirm', label: '确认' } } } })
+    result: { code: 200, msg: 'Selected', data: { conversationId: 'main', teamId: 'team-a', decisionId: 'workspace-only', choiceId: 'confirm', label: '确认' } } } })
   assert.equal((await pending).statusCode, 200)
   assert.equal((await workspace.next()).type, 'office.request.closed')
   assert.equal((await post(app, speech('both-animation'))).json().data.forwarded, 2)
@@ -164,7 +183,7 @@ test('backend receives user operations and returns fixed dialog content through 
   const { app } = await setup(t)
   await post(app, { type: 'offices.initialize', offices: [snapshot()] })
   const waiting = post(app, { type: 'ui.next', timeoutMs: 1000 }).then(value => value)
-  const browser = app.inject({ method: 'POST', url: '/api/pixoffice/ui', payload: { id: 'inspect-one', teamId: 'team-a', action: 'actor.inspect', actorId: 'office-lead' } }).then(value => value)
+  const browser = app.inject({ method: 'POST', url: '/api/pixoffice/ui', payload: { conversationId: 'main', id: 'inspect-one', teamId: 'team-a', action: 'actor.inspect', actorId: 'office-lead' } }).then(value => value)
   const action = (await waiting).json().data.actions[0]
   assert.equal(action.id, 'inspect-one'); assert.equal(action.actorId, 'office-lead')
   const presentation = { target: 'dialog', content: { template: 'detail-v1', title: '王明的任务', fields: [{ label: '任务', value: '登录开发' }], actions: [{ id: 'review', label: '提交审核' }] } }
@@ -181,19 +200,19 @@ test('a user action can update the whiteboard with a versioned full snapshot, wi
   await post(app, { type: 'offices.initialize', offices: [snapshot()] })
   const browserStream = await stream(t, base); await browserStream.next()
   const animation = await stream(t, base, 'teams=team-a')
-  const browser = app.inject({ method: 'POST', url: '/api/pixoffice/ui', payload: { id: 'inspect-board', teamId: 'team-a', action: 'actor.inspect', actorId: 'office-lead' } }).then(value => value)
+  const browser = app.inject({ method: 'POST', url: '/api/pixoffice/ui', payload: { conversationId: 'main', id: 'inspect-board', teamId: 'team-a', action: 'actor.inspect', actorId: 'office-lead' } }).then(value => value)
   const next = await post(app, { type: 'ui.next', timeoutMs: 1000 })
   assert.equal(next.json().data.actions[0].id, 'inspect-board')
   const result = await post(app, { type: 'ui.respond', interactionId: 'inspect-board', presentation: { target: 'whiteboard', snapshot: snapshot(2) } })
   assert.equal(result.statusCode, 200); assert.equal((await browser).statusCode, 200)
-  assert.equal((await browserStream.next()).snapshot.whiteboard.title, '项目 2')
+  assert.equal((await browserStream.next()).snapshot.conversations[0].whiteboard.title, '项目 2')
   await post(app, speech('after-ui-whiteboard'))
   assert.equal((await animation.next()).command.commandId, 'after-ui-whiteboard')
 })
 
 test('invalid bindings do not contaminate cached state and snapshots require an explicit seq', async t => {
   const { app } = await setup(t)
-  const invalid = snapshot(); invalid.employees[0].sceneActorId = 'missing'
+  const invalid = snapshot(); invalid.conversations[0].employees[0].sceneActorId = 'missing'
   assert.equal((await post(app, { type: 'offices.initialize', offices: [invalid] })).statusCode, 422)
   const valid = snapshot(); delete valid.seq
   assert.equal((await post(app, { type: 'offices.initialize', offices: [valid] })).statusCode, 400)
@@ -205,7 +224,7 @@ test('long-running menus cannot prevent latest business snapshots from reaching 
   await post(app, { type: 'offices.initialize', offices: [snapshot()] })
   const browser = await stream(t, base); await browser.next()
   const animation = await stream(t, base, 'teams=team-a')
-  const waiting = post(app, { type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
+  const waiting = post(app, { conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
     decision: { id: 'pending-menu', kind: 'confirmation', title: '确认吗？' } }).then(value => value)
   const menu = await browser.next()
   const changed = await post(app, { type: 'office.snapshot', teamId: 'team-a', snapshot: snapshot(2) })
@@ -216,7 +235,7 @@ test('long-running menus cannot prevent latest business snapshots from reaching 
   assert.equal(repeated.json().data.status, 'cached')
   assert.equal((await browser.next()).snapshot.seq, 2)
   await app.inject({ method: 'POST', url: '/api/pixoffice/reply', payload: { responseToken: menu.responseToken, result: { code: 200, msg: '',
-    data: { teamId: 'team-a', decisionId: 'pending-menu', choiceId: 'reject', label: '拒绝' } } } })
+    data: { conversationId: 'main', teamId: 'team-a', decisionId: 'pending-menu', choiceId: 'reject', label: '拒绝' } } } })
   assert.equal((await waiting).statusCode, 200)
   await post(app, speech('after-capacity-fallback'))
   assert.equal((await animation.next()).command.commandId, 'after-capacity-fallback')

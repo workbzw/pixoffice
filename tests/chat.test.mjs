@@ -89,7 +89,7 @@ test('HTTP chat handles split UTF-8 and final NDJSON line without a newline', as
       } }), { headers: { 'content-type': 'application/x-ndjson' } })
     }
     const events = []
-    for await (const event of new HttpChatSource('http://localhost/chat').stream({ version: '1.0', teamId: 'team-a', conversationId: 'test', messages: [] }, new AbortController().signal)) events.push(event)
+    for await (const event of new HttpChatSource('http://localhost/chat').stream({ version: '1.0', type: 'send', turnId: 'turn', teamId: 'team-a', conversationId: 'test', messages: [] }, new AbortController().signal)) events.push(event)
     assert.deepEqual(events, [{ type: 'delta', text: '中文' }, { type: 'done' }])
   } finally { globalThis.fetch = oldFetch }
 })
@@ -101,7 +101,7 @@ test('HTTP chat cancels the reader after done instead of waiting for the connect
     globalThis.fetch = async () => new Response(new ReadableStream({ start(controller) {
       controller.enqueue(new TextEncoder().encode('{"type":"done"}\n'))
     }, cancel() { cancelled = true } }), { headers: { 'content-type': 'application/x-ndjson' } })
-    for await (const event of new HttpChatSource('http://localhost/chat').stream({ version: '1.0', teamId: 'team-a', conversationId: 'test', messages: [] }, new AbortController().signal)) assert.equal(event.type, 'done')
+    for await (const event of new HttpChatSource('http://localhost/chat').stream({ version: '1.0', type: 'send', turnId: 'turn', teamId: 'team-a', conversationId: 'test', messages: [] }, new AbortController().signal)) assert.equal(event.type, 'done')
     assert.equal(cancelled, true)
   } finally { globalThis.fetch = oldFetch }
 })
@@ -298,9 +298,9 @@ test('reading a conversation does not schedule writes from abandoned render inst
 test('HTTP chat rejects wrong content, malformed events, oversized lines and interrupted streams', async () => {
   const oldFetch = globalThis.fetch
   try {
-    for (const [body, type] of [['<html>error</html>', 'text/html'], ['{"type":"unknown"}\n', 'application/x-ndjson'], ['x'.repeat(32001), 'application/x-ndjson'], ['{"type":"delta","text":"half"}\n', 'application/x-ndjson']]) {
+    for (const [body, type] of [['<html>error</html>', 'text/html'], ['{"type":"unknown"}\n', 'application/x-ndjson'], ['x'.repeat(350001), 'application/x-ndjson'], ['{"type":"delta","text":"half"}\n', 'application/x-ndjson']]) {
       globalThis.fetch = async () => new Response(body, { headers: { 'content-type': type } })
-      await assert.rejects(async () => { for await (const event of new HttpChatSource('http://localhost/chat').stream({ version: '1.0', teamId: 'team-a', conversationId: 'test', messages: [] }, new AbortController().signal)) void event })
+      await assert.rejects(async () => { for await (const event of new HttpChatSource('http://localhost/chat').stream({ version: '1.0', type: 'send', turnId: 'turn', teamId: 'team-a', conversationId: 'test', messages: [] }, new AbortController().signal)) void event })
     }
   } finally { globalThis.fetch = oldFetch }
 })

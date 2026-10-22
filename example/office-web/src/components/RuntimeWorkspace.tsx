@@ -5,7 +5,7 @@ import type { ComponentType } from 'react'
 import type { DashboardAction, DashboardSnapshot, OfficeDataSource } from '@pixoffice/protocol/dashboard'
 import { stringifyDocumentObject } from '@pixoffice/protocol/schema'
 import type { SceneRuntime } from '@pixoffice/runtime/SceneRuntime'
-import type { ChatSession } from '../chat/ChatSession.ts'
+import type { ChatWorkspace } from '../chat/ChatWorkspace.ts'
 import type { DecisionSession } from '../application/decisions/DecisionSession.ts'
 import type { OfficeSimulation } from '../application/OfficeSimulation.ts'
 import { OfficeCanvas } from './OfficeCanvas.tsx'
@@ -41,7 +41,7 @@ export function RuntimeWorkspace({ runtime, simulation, whiteboardProgress, conn
   executeAction: (action: DashboardAction) => Promise<void>
   pendingTaskIds: readonly string[]
   actionError: string | null
-  chatSession: ChatSession
+  chatSession: ChatWorkspace
   decisionSession: DecisionSession
   uiSession?: OfficeUiSession
   decisionOpenToken?: number

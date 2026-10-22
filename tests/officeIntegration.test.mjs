@@ -14,9 +14,9 @@ before(async () => {
 })
 after(() => server?.close())
 const flush = async () => { for (let i = 0; i < 80; i++) await Promise.resolve() }
-const snapshot = (id = 'team-a') => ({ schemaVersion: '1.0', seq: 1, whiteboard: { template: 'task-board-v1', title: '', status: 'queued', steps: [] }, workspace: { id, name: id }, employees: [
+const snapshot = (id = 'team-a') => ({ schemaVersion: '1.0', seq: 1, workspace: { id, name: id }, conversations: [{ id: 'main', title: '主会话', whiteboard: { template: 'task-board-v1', title: '', status: 'queued', steps: [] }, employees: [
   { id: 'coding', sceneActorId: 'office-lead', name: '开发功能' }, { id: 'testing', sceneActorId: 'office-lead', name: '测试功能' },
-], tasks: [{ id: 'task-one', title: '登录开发', assigneeId: 'coding', status: 'running', progress: 25, summary: '实现接口', updatedAt: '2026-10-18T10:00:00Z' }], events: [] })
+], tasks: [{ id: 'task-one', title: '登录开发', assigneeId: 'coding', status: 'running', progress: 25, summary: '实现接口', updatedAt: '2026-10-18T10:00:00Z' }], events: [] }] })
 const delivery = (id, request, remainingMs = 10000) => ({ type: 'office.request', responseToken: `reply-${id}`, remainingMs, request })
 
 async function setup(t, overrides = {}) {
@@ -72,7 +72,7 @@ test('parallel office pages apply state without treating a closed duplicate repl
   const fast = await connectedBrowser(t, app, base), slow = await connectedBrowser(t, app, base, { replyDelay: 30 })
   const post = payload => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers: { authorization: `Bearer ${DEMO_API_KEY}` }, payload })
   assert.equal((await post({ type: 'offices.initialize', offices: [snapshot()] })).statusCode, 200)
-  const next = snapshot(); next.seq = 2; next.tasks[0].status = 'completed'
+  const next = snapshot(); next.seq = 2; next.conversations[0].tasks[0].status = 'completed'
   assert.equal((await post({ type: 'office.snapshot', teamId: 'team-a', snapshot: next })).statusCode, 200)
   for (let i = 0; i < 100 && slow.receipts.length < 2; i++) await delay(5)
   assert.deepEqual(slow.receipts, [410, 410])
@@ -97,12 +97,12 @@ test('server restart replaces cached office ownership and accepts a fresh sequen
   assert.equal(current.integration.getSnapshot().offices.length, 0)
   assert.deepEqual((await post(app, { type: 'office.read' })).json().data.offices, [])
   assert.equal((await post(app, { type: 'office.read', teamId: 'team-a' })).statusCode, 404)
-  const fresh = snapshot(); fresh.tasks[0].title = '服务重启后的任务'
+  const fresh = snapshot(); fresh.conversations[0].tasks[0].title = '服务重启后的任务'
   const initialized = await post(app, { type: 'offices.initialize', offices: [fresh] })
   assert.equal(initialized.statusCode, 200)
   assert.deepEqual(initialized.json().data.offices.map(office => office.id), ['team-a'])
   assert.equal(current.integration.getSnapshot().offices[0].source.readSnapshot().seq, 1)
-  assert.equal(current.integration.getSnapshot().offices[0].source.readSnapshot().tasks[0].title, '服务重启后的任务')
+  assert.equal(current.integration.getSnapshot().offices[0].source.readSnapshot().conversations[0].tasks[0].title, '服务重启后的任务')
   const cached = JSON.parse([...values.values()][0])
   assert.equal(cached.offices.length, 1); assert.equal(cached.offices[0].seq, 1)
 })
@@ -128,7 +128,7 @@ for (const offset of [-120000, 120000]) test(`business requests and menu expiry 
   const { integration, send } = await setup(t), now = Date.now
   t.mock.method(Date, 'now', () => now() + offset)
   assert.equal((await send('init', { type: 'offices.initialize', offices: [snapshot()] })).result.code, 200)
-  await send('menu', { type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
+  await send('menu', { conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
     decision: { id: 'clock-safe', kind: 'confirmation', title: '确认吗？' } }, 1000)
   const decisions = integration.getSnapshot().offices[0].session.decisions, request = decisions.getSnapshot().pending[0]
   assert(request.deadline - performance.now() > 500)
@@ -142,7 +142,7 @@ test('monotonic request expiry still closes menus and rejects business work afte
   await send('expired', { type: 'offices.initialize', offices: [snapshot('expired')] }, 0)
   assert.equal(integration.getSnapshot().offices.length, 0); assert.equal(replies.length, 0)
   await send('init', { type: 'offices.initialize', offices: [snapshot()] })
-  await send('menu', { type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
+  await send('menu', { conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
     decision: { id: 'short', kind: 'confirmation', title: '确认吗？' } }, 1000)
   const decisions = integration.getSnapshot().offices[0].session.decisions, deadline = decisions.getSnapshot().pending[0].deadline
   t.mock.method(performance, 'now', () => deadline + 1)
@@ -183,18 +183,18 @@ test('an empty workspace listens before office IDs exist and initializes fixed a
 })
 
 for (const [name, change] of [
-  ['unbound member', value => { delete value.employees[0].sceneActorId }],
-  ['unassigned task', value => { delete value.tasks[0].assigneeId }],
-  ['plain note', value => { value.events = [{ id: 'note', kind: 'note', summary: '项目动态', occurredAt: '2026-10-18T10:00:00Z' }] }],
+  ['unbound member', value => { delete value.conversations[0].employees[0].sceneActorId }],
+  ['unassigned task', value => { delete value.conversations[0].tasks[0].assigneeId }],
+  ['plain note', value => { value.conversations[0].events = [{ id: 'note', kind: 'note', summary: '项目动态', occurredAt: '2026-10-18T10:00:00Z' }] }],
   ['explicit empty references', value => {
-    value.employees[0].sceneActorId = ''; value.tasks[0].assigneeId = ''
-    value.events = [{ id: 'note', kind: 'note', taskId: '', employeeId: '', fromEmployeeId: '', summary: '项目动态', occurredAt: '2026-10-18T10:00:00Z' }]
+    value.conversations[0].employees[0].sceneActorId = ''; value.conversations[0].tasks[0].assigneeId = ''
+    value.conversations[0].events = [{ id: 'note', kind: 'note', taskId: '', employeeId: '', fromEmployeeId: '', summary: '项目动态', occurredAt: '2026-10-18T10:00:00Z' }]
   }],
 ]) test(`normalized ${name} survives initialization, updates and browser-cache recovery`, async t => {
   const values = new Map(), storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) }
   const first = await setup(t, { storage }), value = snapshot(); change(value)
   assert.equal((await first.send('init', { type: 'offices.initialize', offices: [value] })).result.code, 200)
-  value.seq = 2; value.whiteboard.title = '最新白板'
+  value.seq = 2; value.conversations[0].whiteboard.title = '最新白板'
   const changed = await first.send('update', { type: 'office.snapshot', teamId: 'team-a', snapshot: value })
   assert.equal(changed.result.code, 200); assert.equal(changed.result.data.status, 'applied')
   const expected = first.integration.getSnapshot().offices[0].source.readSnapshot()
@@ -232,17 +232,17 @@ test('external HTTP snapshots with omitted references complete through SSE, the 
   t.after(async () => { controller.abort(); await reader.cancel().catch(() => {}); await pump })
   const post = value => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers: { authorization: `Bearer ${DEMO_API_KEY}` }, payload: value })
   const value = snapshot()
-  delete value.employees[0].sceneActorId; delete value.tasks[0].assigneeId
-  value.events = [{ id: 'note', kind: 'note', summary: '普通动态', occurredAt: '2026-10-18T10:00:00Z' }]
+  delete value.conversations[0].employees[0].sceneActorId; delete value.conversations[0].tasks[0].assigneeId
+  value.conversations[0].events = [{ id: 'note', kind: 'note', summary: '普通动态', occurredAt: '2026-10-18T10:00:00Z' }]
   assert.equal((await post({ type: 'offices.initialize', offices: [value] })).statusCode, 200)
-  value.seq = 2; value.whiteboard.title = '联调白板'
+  value.seq = 2; value.conversations[0].whiteboard.title = '联调白板'
   const changed = await post({ type: 'office.snapshot', teamId: 'team-a', snapshot: value })
   assert.equal(changed.statusCode, 200); assert.equal(changed.json().data.status, 'applied')
   const read = await post({ type: 'office.read', teamId: 'team-a' })
   assert.equal(read.statusCode, 200)
-  assert.equal(read.json().data.snapshot.employees[0].sceneActorId, '')
-  assert.equal(read.json().data.snapshot.tasks[0].assigneeId, '')
-  assert.equal(read.json().data.snapshot.events[0].fromEmployeeId, '')
+  assert.equal(read.json().data.snapshot.conversations[0].employees[0].sceneActorId, '')
+  assert.equal(read.json().data.snapshot.conversations[0].tasks[0].assigneeId, '')
+  assert.equal(read.json().data.snapshot.conversations[0].events[0].fromEmployeeId, '')
   assert.equal(integration.getSnapshot().offices[0].session.runtime.readWorld().props.find(prop => prop.id === 'whiteboard-1').state.taskBoard.title, '联调白板')
   assert.equal(streamError, undefined)
 })
@@ -266,12 +266,12 @@ test('adding or reinitializing offices preserves existing runtime, running actio
 test('task snapshots drive completed state without removing the actor and read returns authoritative tasks', async t => {
   const { integration, send } = await setup(t)
   await send('init', { type: 'offices.initialize', offices: [snapshot()] })
-  const next = snapshot(); next.seq = 2; next.tasks[0].status = 'completed'; next.tasks[0].progress = 100
+  const next = snapshot(); next.seq = 2; next.conversations[0].tasks[0].status = 'completed'; next.conversations[0].tasks[0].progress = 100
   assert.equal((await send('done', { type: 'office.snapshot', teamId: 'team-a', snapshot: next })).result.code, 200)
   const office = integration.getSnapshot().offices[0]
   assert.equal(office.session.runtime.readActors()[0].presentation.status, 'idle')
   const result = await send('read', { type: 'office.read', teamId: 'team-a' })
-  assert.equal(result.result.data.snapshot.tasks[0].status, 'completed')
+  assert.equal(result.result.data.snapshot.conversations[0].tasks[0].status, 'completed')
   assert.equal(office.session.runtime.readActors().length, 6)
   assert.equal((await send('missing', { type: 'office.read', teamId: 'missing' })).result.code, 404)
 })
@@ -280,8 +280,8 @@ test('invalid initialization is atomic and cannot overwrite a healthy office bef
   const { integration, send } = await setup(t)
   await send('init', { type: 'offices.initialize', offices: [snapshot()] })
   const before = integration.getSnapshot().offices[0].source.readSnapshot()
-  const changed = snapshot(); changed.seq = 2; changed.tasks[0].title = '不应写入'
-  const bad = snapshot('bad'); bad.employees[0].sceneActorId = 'missing'
+  const changed = snapshot(); changed.seq = 2; changed.conversations[0].tasks[0].title = '不应写入'
+  const bad = snapshot('bad'); bad.conversations[0].employees[0].sceneActorId = 'missing'
   assert.equal((await send('invalid', { type: 'offices.initialize', offices: [changed, bad] })).result.code, 422)
   assert.deepEqual(integration.getSnapshot().offices[0].source.readSnapshot(), before)
   assert.equal(integration.getSnapshot().offices.length, 1)
@@ -291,7 +291,7 @@ test('user choices are returned once and are not locally recorded until delivery
   const { integration, send, replies } = await setup(t)
   await send('init', { type: 'offices.initialize', offices: [snapshot()] })
   const decision = { id: 'approval', actorId: 'office-lead', kind: 'confirmation', title: '是否提交？', description: '核验结果', confirmLabel: '提交', rejectLabel: '拒绝' }
-  assert.equal(await send('decision', { type: 'decision.request', teamId: 'team-a', decision, timeoutMs: 60000 }), undefined)
+  assert.equal(await send('decision', { conversationId: 'main', type: 'decision.request', teamId: 'team-a', decision, timeoutMs: 60000 }), undefined)
   const session = integration.getSnapshot().offices[0].session.decisions
   assert.equal(session.resolve('team-a', decision.id, 'confirm'), null, 'remote requests must not bypass result submission')
   const first = session.choose('team-a', decision.id, 'reject'), duplicate = session.choose('team-a', decision.id, 'reject')
@@ -299,7 +299,7 @@ test('user choices are returned once and are not locally recorded until delivery
   await first
   const results = replies.filter(reply => reply.responseToken === 'reply-decision')
   assert.equal(results.length, 1)
-  assert.deepEqual(results[0].result.data, { teamId: 'team-a', decisionId: 'approval', choiceId: 'reject', label: '拒绝' })
+  assert.deepEqual(results[0].result.data, { conversationId: 'main', teamId: 'team-a', decisionId: 'approval', choiceId: 'reject', label: '拒绝' })
   assert.equal(session.getSnapshot().records[0].choiceId, 'reject')
 })
 
@@ -307,7 +307,7 @@ test('expired decisions disappear in background teams without recording a defaul
   t.mock.timers.enable({ apis: ['setTimeout', 'Date'], now: Date.now() })
   const { integration, send, replies } = await setup(t)
   await send('init', { type: 'offices.initialize', offices: [snapshot()] })
-  await send('expire', { type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
+  await send('expire', { conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 1000,
     decision: { id: 'short', kind: 'confirmation', title: '需要决定' } }, 1000)
   const decisions = integration.getSnapshot().offices[0].session.decisions
   assert.equal(decisions.getSnapshot().pending.length, 1)
@@ -321,7 +321,7 @@ test('a failed result submission keeps the menu retryable and does not record a 
   let fail = false
   const { integration, send } = await setup(t, { reply: async () => { if (fail) throw new Error('network unavailable') } })
   await send('init', { type: 'offices.initialize', offices: [snapshot()] })
-  await send('retry', { type: 'decision.request', teamId: 'team-a', decision: { id: 'retry-menu', kind: 'confirmation', title: '提交？' } })
+  await send('retry', { conversationId: 'main', type: 'decision.request', teamId: 'team-a', decision: { id: 'retry-menu', kind: 'confirmation', title: '提交？' } })
   const decisions = integration.getSnapshot().offices[0].session.decisions
   fail = true
   assert.equal(await decisions.choose('team-a', 'retry-menu', 'confirm'), null)
@@ -336,7 +336,7 @@ test('a request already answered in another page closes without a misleading loc
   let closed = false
   const { integration, send } = await setup(t, { reply: async () => { if (closed) throw Object.assign(new Error('closed'), { status: 410 }) } })
   await send('init', { type: 'offices.initialize', offices: [snapshot()] })
-  await send('closed', { type: 'decision.request', teamId: 'team-a', decision: { id: 'closed-menu', kind: 'confirmation', title: '提交？' } })
+  await send('closed', { conversationId: 'main', type: 'decision.request', teamId: 'team-a', decision: { id: 'closed-menu', kind: 'confirmation', title: '提交？' } })
   closed = true
   const decisions = integration.getSnapshot().offices[0].session.decisions
   await decisions.choose('team-a', 'closed-menu', 'confirm')
@@ -351,7 +351,7 @@ test('browser cache restores offices and business snapshots without polling, whi
   await first.send('init', { type: 'offices.initialize', offices: [snapshot()] })
   first.integration.stop()
   const second = await setup(t, { storage })
-  assert.equal(second.integration.getSnapshot().offices[0].source.readSnapshot().tasks[0].title, '登录开发')
+  assert.equal(second.integration.getSnapshot().offices[0].source.readSnapshot().conversations[0].tasks[0].title, '登录开发')
   assert.deepEqual(second.connections[0].teamIds, [])
   const key = [...values.keys()][0]; values.set(key, '{broken')
   const bad = await setup(t, { storage })
@@ -374,19 +374,19 @@ test('stopping invalidates queued business work and ignores callbacks from a clo
 test('versioned whiteboards update repeatedly, reject stale/conflicting snapshots and restore with their seq', async t => {
   const values = new Map(), storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) }
   const first = await setup(t, { storage })
-  const one = snapshot(); one.whiteboard = { template: 'task-board-v1', title: '第一版', status: 'running', steps: [] }
+  const one = snapshot(); one.conversations[0].whiteboard = { template: 'task-board-v1', title: '第一版', status: 'running', steps: [] }
   await first.send('board-init', { type: 'offices.initialize', offices: [one] })
-  const two = structuredClone(one); two.seq = 2; two.whiteboard.title = '第二版'; two.tasks[0].status = 'completed'
+  const two = structuredClone(one); two.seq = 2; two.conversations[0].whiteboard.title = '第二版'; two.conversations[0].tasks[0].status = 'completed'
   assert.equal((await first.send('board-new', { type: 'office.snapshot', teamId: 'team-a', snapshot: two })).result.code, 200)
   const stale = await first.send('board-old', { type: 'office.snapshot', teamId: 'team-a', snapshot: one })
   assert.equal(stale.result.data.reasonCode, 'STALE_SEQ')
-  const conflict = structuredClone(two); conflict.whiteboard.title = '冲突'
+  const conflict = structuredClone(two); conflict.conversations[0].whiteboard.title = '冲突'
   assert.equal((await first.send('board-conflict', { type: 'office.snapshot', teamId: 'team-a', snapshot: conflict })).result.code, 409)
   first.integration.stop()
   const second = await setup(t, { storage }), office = second.integration.getSnapshot().offices[0]
   assert.equal(office.source.readSnapshot().seq, 2)
   assert.equal(office.session.runtime.readWorld().props.find(prop => prop.id === 'whiteboard-1').state.taskBoard.title, '第二版')
-  assert.equal(office.source.readSnapshot().tasks[0].status, 'completed')
+  assert.equal(office.source.readSnapshot().conversations[0].tasks[0].status, 'completed')
   const board = office.session.runtime.readWorld().props.find(prop => prop.id === 'whiteboard-1')
   await office.session.refresh()
   assert.equal(office.session.runtime.readWorld().props.find(prop => prop.id === 'whiteboard-1').stateRevision, board.stateRevision, 'an unchanged whiteboard must not create a new internal revision')
@@ -406,20 +406,20 @@ for (const type of ['office.snapshot', 'offices.initialize']) test(`${type} retr
     return submit(...args)
   })
   const next = snapshot(); next.seq = 2
-  next.whiteboard = { template: 'task-board-v1', title: '需要恢复的白板', status: 'running', steps: [] }
-  next.employees[1].sceneActorId = 'code-agent'; next.tasks[0].assigneeId = 'testing'
-  next.events = [{ id: 'assignment-once', kind: 'task.assigned', employeeId: 'testing', fromEmployeeId: 'coding', taskId: 'task-one', summary: '任务交接', occurredAt: '2026-10-18T10:00:00Z' }]
+  next.conversations[0].whiteboard = { template: 'task-board-v1', title: '需要恢复的白板', status: 'running', steps: [] }
+  next.conversations[0].employees[1].sceneActorId = 'code-agent'; next.conversations[0].tasks[0].assigneeId = 'testing'
+  next.conversations[0].events = [{ id: 'assignment-once', kind: 'task.assigned', employeeId: 'testing', fromEmployeeId: 'coding', taskId: 'task-one', summary: '任务交接', occurredAt: '2026-10-18T10:00:00Z' }]
   const request = type === 'office.snapshot' ? { type, teamId: 'team-a', snapshot: next } : { type, offices: [next] }
   const failed = await send('failed', request)
   assert.equal(failed.result.code, 422); assert.equal(failed.result.data.reasonCode, 'SCENE_SYNC_FAILED')
   const board = () => runtime.readWorld().props.find(prop => prop.id === 'whiteboard-1')
-  assert.notEqual(board().state.taskBoard?.title, next.whiteboard.title)
+  assert.notEqual(board().state.taskBoard?.title, next.conversations[0].whiteboard.title)
   const previousVisits = visits
   unavailable = false
   const retry = await send('retry', request)
   assert.equal(retry.result.code, 200)
   if (type === 'office.snapshot') assert.equal(retry.result.data.status, 'applied')
-  assert.equal(board().state.taskBoard.title, next.whiteboard.title)
+  assert.equal(board().state.taskBoard.title, next.conversations[0].whiteboard.title)
   assert.equal(integration.getSnapshot().offices[0].session.runtime, runtime)
   assert.equal(runtime.getRecord('keep-speech').status, 'running')
   assert.equal(visits, previousVisits, 'state retries must not replay task handoffs')
@@ -433,8 +433,8 @@ test('SSE state recovery preserves the existing runtime and does not replay hist
   const { integration, send } = await setup(t)
   await send('init', { type: 'offices.initialize', offices: [snapshot()] })
   const runtime = integration.getSnapshot().offices[0].session.runtime
-  const next = snapshot(); next.seq = 2; next.employees[1].sceneActorId = 'code-agent'; next.tasks[0].assigneeId = 'testing'
-  next.events = [{ id: 'missed-assignment', kind: 'task.assigned', employeeId: 'testing', fromEmployeeId: 'coding', taskId: 'task-one', summary: '历史交接', occurredAt: '2026-10-18T10:00:00Z' }]
+  const next = snapshot(); next.seq = 2; next.conversations[0].employees[1].sceneActorId = 'code-agent'; next.conversations[0].tasks[0].assigneeId = 'testing'
+  next.conversations[0].events = [{ id: 'missed-assignment', kind: 'task.assigned', employeeId: 'testing', fromEmployeeId: 'coding', taskId: 'task-one', summary: '历史交接', occurredAt: '2026-10-18T10:00:00Z' }]
   integration.receive({ type: 'office.sync', snapshot: next }); await flush()
   assert.equal(integration.getSnapshot().offices[0].session.runtime, runtime)
   assert.equal(integration.getSnapshot().offices[0].source.readSnapshot().seq, 2)
@@ -454,7 +454,7 @@ test('UI requests retain team identity, validate dialog options and never change
   t.after(() => runtime.dispose())
   const session = new OfficeTeamSession(runtime, source, { requestUi: async action => { actions.push(action); return { target: 'dialog', content: { template: 'detail-v1', title: '已提交', fields: [], actions: [] } } } })
   await session.execute({ type: 'task.complete', taskId: 'task-one' })
-  assert.equal(actions.at(-1).action, 'task.complete'); assert.equal(source.readSnapshot().tasks[0].status, 'running')
+  assert.equal(actions.at(-1).action, 'task.complete'); assert.equal(source.readSnapshot().conversations[0].tasks[0].status, 'running')
 })
 
 test('connection readiness follows state synchronization and decision enqueue failures have distinct reason codes', async t => {

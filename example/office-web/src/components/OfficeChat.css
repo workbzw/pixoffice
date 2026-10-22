@@ -1,27 +1,30 @@
-@property --chat-border-angle { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
 .office-stage { position: absolute; inset: 0; }
 .office-main-reference .office-stage { bottom: 78px; }
-.office-chat { position: absolute; inset: 0; z-index: 25; overflow: clip; border-radius: inherit; pointer-events: none; --chat-gutter: 26px; }
+.office-chat { position: absolute; inset: 0; z-index: 25; overflow: clip; border-radius: inherit; pointer-events: none; --chat-gutter: 24px; --chat-green: #507863; --chat-line: #e4ece6; color: #394b40; letter-spacing: 0; }
 .office-chat[hidden] { display: none; }
 .office-chat-panel { position: absolute; inset: 0; display: flex; flex-direction: column; background: #fff; border-radius: inherit; opacity: 0; transform: translateY(24px); clip-path: inset(100% 0 0 0 round 16px); visibility: hidden; transition: clip-path .42s cubic-bezier(.22, 1, .36, 1), transform .42s cubic-bezier(.22, 1, .36, 1), opacity .22s, visibility .42s; }
 .office-chat[data-expanded=true] .office-chat-panel { opacity: 1; transform: translateY(0); clip-path: inset(0 round 16px); visibility: visible; pointer-events: auto; }
-.office-chat-header { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; gap: 12px; padding: 22px var(--chat-gutter) 14px; }
-.office-chat-identity { display: flex; min-width: 0; align-items: center; gap: 10px; }
-.office-chat-identity > div { display: flex; flex-direction: column; min-width: 0; }
-.office-chat-identity strong { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.office-chat-identity div > span { color: #8b928d; font-size: 11px; }
-.office-chat-identity > small { color: #959b96; font-size: 10px; white-space: nowrap; }
-.office-chat-tools { display: flex; gap: 4px; flex: 0 0 auto; }
-.office-chat-tools button, .office-chat-message-meta button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #7a827c; }
-.office-chat-tools button:hover, .office-chat-message-meta button:hover { background: #f1f3f1; }
-.office-chat-transcript { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 18px var(--chat-gutter) calc(var(--chat-composer-height, 48px) + 50px); }
+.office-chat-message-meta button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #7a827c; }
+.office-chat-message-meta button:hover { background: #f1f3f1; }
+.office-chat-body { display: flex; flex: 1; min-height: 0; padding-bottom: calc(var(--chat-composer-height, 48px) + 40px); }
+.office-chat-transcript-wrap { position: relative; flex: 1; min-width: 0; min-height: 0; }
+.office-chat-transcript { position: absolute; inset: 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-anchor: none; overscroll-behavior: contain; scrollbar-gutter: stable; padding: 0 var(--chat-gutter); }
+.office-chat-virtual-list { position: relative; width: 100%; }
+.office-chat-row { position: absolute; top: 0; left: 0; width: 100%; padding-bottom: 22px; display: flow-root; }
+.office-chat-row > :is(.office-chat-message, .office-decision-record, .office-chat-error) { margin-bottom: 0; }
+.office-chat-history-page { position: absolute; z-index: 1; top: 5px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 6px; color: #8a968e; font-size: 12px; }
+.office-chat-history-page button { display: flex; align-items: center; gap: 6px; border: 1px solid #e4ece6; border-radius: 7px; background: #fff; color: #668470; padding: 7px 10px; font-size: 12px; }
 .office-chat-empty { display: flex; min-height: 160px; height: 70%; flex-direction: column; align-items: center; justify-content: center; gap: 16px; }
 .office-chat-empty h2 { font-size: 19px; font-weight: 500; margin: 0; }
-.office-chat-message { width: min(100%, 760px); margin: 0 auto 30px; overflow-wrap: anywhere; }
-.office-chat-message-meta { display: flex; align-items: center; gap: 8px; min-height: 26px; margin-bottom: 7px; color: #949b95; font-size: 11px; }
+.office-chat-message { display: flex; align-items: flex-start; gap: 10px; width: min(100%, 760px); margin: 0 auto 22px; overflow-wrap: anywhere; }
+.office-chat-message-avatar { display: grid; place-items: center; flex: 0 0 30px; height: 30px; background: #eaf4ed; color: #649177; border-radius: 10px; font-size: 11px; font-weight: 700; margin-top: 2px; }
+.office-chat-message-content { min-width: 0; max-width: calc(100% - 40px); }
+.office-chat-message-meta { display: flex; align-items: center; gap: 8px; min-height: 22px; margin-bottom: 4px; color: #92a198; font-size: 11px; }
+.office-chat-bubble { padding: 13px 15px; background: #f6f9f7; border: 1px solid #eaf0ec; border-radius: 3px 13px 13px 13px; }
+.office-chat-message.is-user .office-chat-bubble { background: #edf5ef; border-color: #e3eee6; }
 .office-chat-message-meta button { width: 26px; height: 26px; }
-.office-chat-user-text, .office-chat-markdown { margin: 0; color: #364039; font-size: 15px; font-weight: 500; line-height: 1.85; }
-.office-chat-user-text { display: inline-block; max-width: 100%; padding: 11px 17px; border: 1px solid #e8ebe8; border-radius: 18px; white-space: pre-wrap; }
+.office-chat-user-text, .office-chat-markdown { margin: 0; color: #4a5c50; font-size: 13px; font-weight: 400; line-height: 1.85; }
+.office-chat-user-text { max-width: 100%; white-space: pre-wrap; }
 .office-chat-markdown > :first-child { margin-top: 0; }
 .office-chat-markdown > :last-child { margin-bottom: 0; }
 .office-chat-markdown p, .office-chat-markdown ul, .office-chat-markdown ol, .office-chat-markdown blockquote, .office-chat-markdown pre, .office-chat-markdown .office-chat-table { margin: 0 0 14px; }
@@ -58,22 +61,27 @@
 .office-chat-pending > span:nth-child(3) { animation-delay: .36s; }
 .office-chat-pending small { margin-left: 7px; font-size: 11px; }
 .office-chat-error { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; width: min(100%, 760px); margin: 0 auto 20px; padding: 14px; border: 1px solid #e2e6e2; border-radius: 12px; font-size: 12px; color: #706966; }
-.office-chat-error button { border: 0; background: transparent; color: #56705e; }
+.office-chat-error button { display: flex; align-items: center; gap: 5px; border: 0; background: transparent; color: #56705e; }
 .office-chat-latest { position: absolute; right: var(--chat-gutter); bottom: calc(var(--chat-composer-height, 48px) + 34px); display: grid; place-items: center; width: 34px; height: 34px; background: #fff; border: 1px solid #e0e5e1; border-radius: 50%; }
 .office-chat-composer { position: absolute; left: var(--chat-gutter); right: var(--chat-gutter); bottom: 22px; display: flex; gap: 10px; align-items: flex-end; min-height: 48px; padding: 5px 8px; border: 1px solid #e0e5e0; border-radius: 26px; background: #fffffff7; box-shadow: 0 5px 24px #24302a0c; pointer-events: auto; isolation: isolate; }
-.office-chat-composer::before { content: ''; position: absolute; inset: -1px; z-index: -1; border-radius: inherit; padding: 2px; background: conic-gradient(from var(--chat-border-angle), #fa896c, #f2be62, #6dc9a2, #65b1ea, #a897ef, #ed93ba, #fa896c); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; opacity: 0; pointer-events: none; }
-.office-chat-composer[data-busy=true]::before { opacity: 1; animation: office-chat-border 2.6s linear infinite; }
+.office-chat[data-expanded=true] .office-chat-composer { border-color: #c9dfd0; box-shadow: 0 0 0 3px #f2f7f3; bottom: 18px; }
+.office-chat-composer[data-busy=true] { border-color: #80a98f; }
 .office-chat .office-chat-composer textarea { display: block; flex: 1; min-width: 0; height: 24px; max-height: 96px; margin: 6px 0; padding: 0; resize: none; overflow-y: auto; border: 0; background: transparent; outline: 0 !important; color: #354039; font-size: 14px; line-height: 24px; }
 .office-chat-composer textarea::placeholder { color: #a0a7a1; }
 .office-chat-composer:focus-within { border-color: #aab9ad; }
 .office-chat-history, .office-chat-send { flex: 0 0 36px; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; }
 .office-chat-history { background: transparent; color: #8a968d !important; }
 .office-chat-history:hover { background: #eff2ef; }
-.office-chat-send { background: #456753; color: #fff !important; }
-.office-chat-send:hover { background: #365640; }
+.office-chat-history.is-session { display: flex; align-items: center; gap: 6px; width: auto; flex: 0 1 auto; max-width: 190px; height: 32px; padding: 0 9px; margin: 2px 0; border-radius: 18px; color: #5b866a !important; background: #edf5ef; font-size: 11px; font-weight: 600; }
+.office-chat-history.is-session span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.office-chat-history.is-session svg { flex-shrink: 0; }
+.office-chat-send { background: var(--chat-green); color: #fff !important; }
+.office-chat-send:hover { background: #3e624e; }
+.office-chat-new { display: grid; place-items: center; width: 26px; flex: 0 0 26px; height: 36px; padding: 0; border: 0; background: transparent; color: #7c9e89; }
+.office-chat-initial > button { display: flex; align-items: center; gap: 14px; border: 0; background: transparent; color: #8a968d; min-height: 36px; width: 100%; padding: 0 8px; font-size: 14px; }
+.office-chat-initial > button > span { flex: 1; text-align: left; }
 .office-chat-send:disabled { background: #e9eeea; color: #a8b3aa !important; opacity: 1 !important; }
-@keyframes office-chat-border { to { --chat-border-angle: 360deg; } }
 @keyframes office-chat-blink { to { opacity: .25; } }
 @media (max-width: 1130px) { .office-chat { --chat-gutter: 18px; } }
-@media (max-width: 620px) { .office-chat { --chat-gutter: 14px; } .office-chat-header { padding-top: 14px; } .office-chat-composer { bottom: 14px; gap: 6px; } .office-chat .office-chat-composer textarea { font-size: 16px; } .office-chat-transcript { padding-top: 8px; } .office-chat-user-text, .office-chat-markdown { font-size: 14px; } .office-chat-identity { gap: 7px; } }
-@media (prefers-reduced-motion: reduce) { .office-chat-panel { transition: none; } .office-chat-composer[data-busy=true]::before, .office-chat-pending > span, .office-chat-caret { animation: none; } }
+@media (max-width: 620px) { .office-chat { --chat-gutter: 14px; } .office-chat-composer { bottom: 14px; gap: 6px; } .office-chat .office-chat-composer textarea { font-size: 16px; } .office-chat-body { flex-direction: column; } .office-chat-history.is-session { max-width: 108px; } .office-chat-new { display: none; } }
+@media (prefers-reduced-motion: reduce) { .office-chat-panel { transition: none; } .office-chat-pending > span, .office-chat-caret { animation: none; } }

@@ -164,7 +164,7 @@ test('business snapshots do not claim the whiteboard unless demo summary is expl
   const { OfficeTeamSession } = await server.ssrLoadModule('/example/office-web/src/application/OfficeTeamSession.ts')
   const { ExampleOfficeDataSource } = await server.ssrLoadModule('/example/office-web/src/dashboard/demoSource.ts')
   const original = new ExampleOfficeDataSource(), runtime = createOfficeRuntime({ referenceLayout: true })
-  const session = new OfficeTeamSession(runtime, { kind: 'http', getSnapshot: () => original.getSnapshot(), subscribe: listener => original.subscribe(listener), execute: action => original.execute(action) })
+  const session = new OfficeTeamSession(runtime, { kind: 'http', getSnapshot: async () => { const snapshot = await original.getSnapshot(); delete snapshot.whiteboard; return snapshot }, subscribe: listener => original.subscribe(listener), execute: action => original.execute(action) })
   try {
     const before = runtime.readWorld().props.find(prop => prop.id === 'whiteboard-1')
     await session.start(); await session.refresh()

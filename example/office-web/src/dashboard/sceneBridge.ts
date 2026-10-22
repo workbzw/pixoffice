@@ -59,8 +59,9 @@ export class DashboardSceneBridge {
 
     for (const event of [...data.events].reverse()) {
       if (event.kind !== 'task.assigned') continue
-      const seen = this.seenEvents.delete(event.id)
-      this.seenEvents.add(event.id)
+      const eventKey = JSON.stringify([data.conversationId ?? '', event.id])
+      const seen = this.seenEvents.delete(eventKey)
+      this.seenEvents.add(eventKey)
       if (this.seenEvents.size > eventCacheLimit) this.seenEvents.delete(this.seenEvents.values().next().value!)
       if (seen || !this.initialized || options.replayEvents === false || !event.employeeId || !event.fromEmployeeId) continue
       const visitor = data.employees.find(item => item.id === event.fromEmployeeId)?.sceneActorId

@@ -14,10 +14,17 @@ try {
     const { actions } = await post({ type: 'ui.next', timeoutMs: 30000 }); const action = actions[0]
     if (!action) continue
     console.log('收到用户操作：', action)
+    if (action.action === 'conversation.delete') {
+      const { snapshot } = await post({ type: 'office.read', teamId: action.teamId })
+      snapshot.seq++; snapshot.conversations = snapshot.conversations.filter(item => item.id !== action.conversationId)
+      await post({ type: 'office.snapshot', teamId: action.teamId, snapshot })
+      await post({ type: 'ui.respond', interactionId: action.id, presentation: { target: 'result', success: true, message: '会话已删除' } })
+      continue
+    }
     await post({ type: 'ui.respond', interactionId: action.id, presentation: { target: 'dialog', content: {
       template: 'detail-v1', title: action.action === 'dialog.action' ? '操作已提交' : '成员与任务详情',
       description: action.action === 'dialog.action' ? '登录模块已提交审核，等待审核人员处理。' : '登录接口与权限校验已完成，请检查异常场景与联调结果后提交审核。',
-      fields: [{ label: '办公室', value: action.teamId }, { label: '操作', value: action.action }, { label: '对象', value: action.actorId ?? action.employeeId ?? action.taskId ?? action.optionId ?? '' }],
+      fields: [{ label: '办公室', value: action.teamId }, { label: '会话', value: action.conversationId }, { label: '操作', value: action.action }, { label: '对象', value: action.actorId ?? action.employeeId ?? action.taskId ?? action.optionId ?? '' }],
       actions: action.action === 'dialog.action' ? [] : [{ id: 'review', label: '提交审核' }],
     } } })
   }

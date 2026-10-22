@@ -11,7 +11,7 @@ export const maxRelayTeams = 100
 
 // A delivery envelope around existing scene commands, not a new business protocol.
 export const relayMessageSchema = z.strictObject({
-  teamId: idSchema, command: z.union([commandSchema, batchSchema]),
+  teamId: idSchema, conversationId: idSchema.optional(), command: z.union([commandSchema, batchSchema]),
 }).superRefine((message, context) => {
   const payload = message.command
   const commands = 'commands' in payload ? payload.commands : [payload]

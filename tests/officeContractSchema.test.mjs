@@ -17,17 +17,17 @@ async function capabilities(t) {
 
 test('published request schemas accept omitted defaults and explicit empty references without weakening required identities', async t => {
   const data = await capabilities(t), validate = validator().compile(data.requests)
-  const sparse = { ...minimal(), employees: [{ id: 'dev', name: '开发' }], tasks: [{ id: 'task', title: '待分配任务', status: 'queued', updatedAt: '2026-10-18T10:00:00Z' }],
-    events: [{ id: 'note', kind: 'note', summary: '项目动态', occurredAt: '2026-10-18T10:00:00Z' }] }
+  const sparse = { ...minimal(), conversations: [{ id: 'main', title: '主会话', employees: [{ id: 'dev', name: '开发' }], tasks: [{ id: 'task', title: '待分配任务', status: 'queued', updatedAt: '2026-10-18T10:00:00Z' }], events: [{ id: 'note', kind: 'note', summary: '项目动态', occurredAt: '2026-10-18T10:00:00Z' }] }] }
   for (const request of [
     { type: 'office.read' }, { type: 'office.read', teamId: '' }, { type: 'ui.next' }, { type: 'office.capabilities' },
     { type: 'offices.initialize', offices: [sparse] },
     { type: 'offices.initialize', offices: [], chat: { url: 'https://backend.example/chat' } },
     { type: 'offices.initialize', offices: [], chat: { url: '' } },
     { type: 'office.snapshot', teamId: 'schema-office', snapshot: officeSnapshotSchema.parse(sparse) },
-    { type: 'decision.request', teamId: 'schema-office', decision: { id: 'menu', kind: 'confirmation', title: '是否继续？' } },
+    { conversationId: 'main', type: 'decision.request', teamId: 'schema-office', decision: { id: 'menu', kind: 'confirmation', title: '是否继续？' } },
     { type: 'ui.respond', interactionId: 'inspect', presentation: { target: 'dialog', content: { template: 'detail-v1', title: '详情' } } },
     { type: 'ui.respond', interactionId: 'inspect', presentation: { target: 'whiteboard', snapshot: minimal() } },
+    { type: 'ui.respond', interactionId: 'delete', presentation: { target: 'result', success: true, message: '会话已删除' } },
   ]) {
     assert(officeMessageSchema.safeParse(request).success)
     assert(validate(request), JSON.stringify({ request, errors: validate.errors }))
@@ -37,9 +37,9 @@ test('published request schemas accept omitted defaults and explicit empty refer
     { type: 'offices.initialize', offices: [], chat: null },
     { type: 'offices.initialize', offices: [], chat: { url: null } },
     { type: 'offices.initialize', offices: [{ ...minimal(), workspace: { id: '', name: '无效' } }] },
-    { type: 'offices.initialize', offices: [{ ...minimal(), employees: [{ id: '', name: '无效' }] }] },
-    { type: 'offices.initialize', offices: [{ ...sparse, tasks: [{ ...sparse.tasks[0], id: '' }] }] },
-    { type: 'offices.initialize', offices: [{ ...sparse, employees: [{ id: 'dev', name: '开发', sceneActorId: null }] }] },
+    { type: 'offices.initialize', offices: [{ ...minimal(), conversations: [{ id: 'main', title: '主会话', employees: [{ id: '', name: '无效' }] }] }] },
+    { type: 'offices.initialize', offices: [{ ...sparse, conversations: [{ ...sparse.conversations[0], tasks: [{ ...sparse.conversations[0].tasks[0], id: '' }] }] }] },
+    { type: 'offices.initialize', offices: [{ ...sparse, conversations: [{ ...sparse.conversations[0], employees: [{ id: 'dev', name: '开发', sceneActorId: null }] }] }] },
   ]) {
     assert.equal(officeMessageSchema.safeParse(request).success, false)
     assert.equal(validate(request), false)

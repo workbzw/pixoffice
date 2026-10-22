@@ -17,7 +17,7 @@ type Options = {
   createSession: (source: PushOfficeDataSource, id: string) => OfficeTeamSession
   storage?: Pick<Storage, 'getItem' | 'setItem'>
 }
-const storageKey = 'pixoffice:connected-offices:v4'
+const storageKey = 'pixoffice:connected-offices:v5'
 class IntegrationFault extends Error {
   readonly reasonCode: string
   readonly code: OfficeReply['result']['code']
@@ -57,7 +57,7 @@ export class OfficeIntegrationSession {
         const raw = this.options.storage?.getItem(storageKey)
         if (raw) {
           const cached: unknown = parseProtocolObject(raw)
-          if (!cached || typeof cached !== 'object' || !('version' in cached) || cached.version !== 4 || !('offices' in cached)
+          if (!cached || typeof cached !== 'object' || !('version' in cached) || cached.version !== 5 || !('offices' in cached)
             || !('stateId' in cached) || cached.stateId !== '' && !idSchema.safeParse(cached.stateId).success) throw new Error('缓存格式无效')
           const message = officeMessageSchema.parse({ type: 'offices.initialize', offices: cached.offices })
           this.stateId = cached.stateId as string
@@ -120,7 +120,9 @@ export class OfficeIntegrationSession {
     }
     const scene = relayMessageSchema.safeParse(value)
     if (scene.success) {
-      const runtime = this.offices.get(scene.data.teamId)?.session.runtime
+      const session = this.offices.get(scene.data.teamId)?.session
+      if (scene.data.conversationId && session?.chat.getSnapshot().selectedId !== scene.data.conversationId) return
+      const runtime = session?.runtime
       if (!runtime) return
       const command = scene.data.command
       const results = 'commands' in command ? runtime.submitBatch(command) : [runtime.submit(command)]
@@ -220,7 +222,7 @@ export class OfficeIntegrationSession {
 
   private validateBindings(office: ConnectedOffice, snapshot: OfficeSnapshot) {
     const actors = new Set(office.session.runtime.readActors().map(actor => actor.id))
-    for (const employee of snapshot.employees) if (employee.sceneActorId && !actors.has(employee.sceneActorId)) throw new IntegrationFault('INVALID_BINDING', `人物不存在：${employee.sceneActorId}`)
+    for (const conversation of snapshot.conversations) for (const employee of conversation.employees) if (employee.sceneActorId && !actors.has(employee.sceneActorId)) throw new IntegrationFault('INVALID_BINDING', `人物不存在：${employee.sceneActorId}`)
   }
 
   private async handle(delivery: OfficeDelivery, timing: { deadline: number; expiresAt: number }): Promise<OfficeReply | null> {
@@ -249,10 +251,11 @@ export class OfficeIntegrationSession {
 
   private enqueueDecision(office: ConnectedOffice, request: Extract<OfficeRequest, { type: 'decision.request' }>, delivery: OfficeDelivery, timing: { deadline: number; expiresAt: number }) {
     const decision = request.decision
+    if (!office.source.getConversations().some(item => item.id === request.conversationId)) throw new IntegrationFault('CONVERSATION_NOT_FOUND', '审批所属会话不存在', 404)
     const actor = decision.actorId ? office.session.runtime.readActors().find(actor => actor.id === decision.actorId) : office.session.runtime.readActors()[0]
     if (!actor) throw new IntegrationFault('ACTOR_NOT_FOUND', '菜单发起人物不存在')
     const token = delivery.responseToken
-    const entry = { ...decision, teamId: office.id, requester: { name: actor.name, appearanceId: actor.templateId },
+    const entry = { ...decision, teamId: office.id, conversationId: request.conversationId, requester: { name: actor.name, appearanceId: actor.templateId },
       createdAt: timing.expiresAt - request.timeoutMs, expiresAt: timing.expiresAt, deadline: timing.deadline }
     const reason = office.session.decisions.enqueueError(entry)
     if (reason) throw new IntegrationFault(reason, reason === 'DECISION_DUPLICATE' ? '菜单 ID 已使用' : reason === 'DECISION_EXPIRED' ? '菜单已过期' : '菜单等待队列已满', reason === 'DECISION_QUEUE_FULL' ? 503 : 409)
@@ -261,7 +264,7 @@ export class OfficeIntegrationSession {
       try {
         const label = decision.kind === 'choice' ? decision.options.find(option => option.id === choiceId)!.label
           : choiceId === 'confirm' ? decision.confirmLabel : decision.rejectLabel
-        await this.respond(delivery, 200, 'User selected', { teamId: office.id, decisionId: decision.id, choiceId, label })
+        await this.respond(delivery, 200, 'User selected', { teamId: office.id, conversationId: request.conversationId, decisionId: decision.id, choiceId, label })
         this.bindings.delete(token)
       } catch (error) {
         if (error && typeof error === 'object' && 'status' in error && error.status === 410) {
@@ -276,13 +279,13 @@ export class OfficeIntegrationSession {
 
   private describe() {
     return { offices: [...this.offices.values()].map(office => ({ id: office.id, name: office.name, runtimeReady: true,
-      seq: office.source.readSnapshot().seq, taskCount: office.source.readSnapshot().tasks.length })),
+      seq: office.source.readSnapshot().seq, taskCount: office.source.readSnapshot().conversations.reduce((sum, conversation) => sum + conversation.tasks.length, 0) })),
     actors: OFFICE_ROSTER.map(({ id, name }) => ({ id, name })),
     supportedMessages: [...officeSupportedMessages], sceneCommandProtocol: '2.0', ui: describeOfficeUi() }
   }
   private persist() {
     if (!this.options.storage || !this.writableCache) return
-    try { this.options.storage.setItem(storageKey, stringifyProtocolObject({ version: 4, stateId: this.stateId, offices: [...this.offices.values()].map(office => office.source.readSnapshot()) })) }
+    try { this.options.storage.setItem(storageKey, stringifyProtocolObject({ version: 5, stateId: this.stateId, offices: [...this.offices.values()].map(office => office.source.readSnapshot()) })) }
     catch { this.update({ error: '办公室状态已更新，但浏览器缓存写入失败；刷新后需要后端重新同步。' }) }
   }
   private result(delivery: OfficeDelivery, code: OfficeReply['result']['code'], msg: string, result: unknown): OfficeReply {

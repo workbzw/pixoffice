@@ -23,6 +23,7 @@
     "build:full": "npm run build && npm run server:build",
     "integration-example": "node integration/clients/client.mjs",
     "integration-ui-example": "node integration/clients/ui-client.mjs",
+    "integration-chat-example": "node integration/clients/chat-server.mjs",
     "docs:capture": "npm run build && node scripts/capture-readme.mjs",
     "characters:build": "node scripts/characters/build.mjs",
     "assets:build": "npm run characters:build && node scripts/build-office-assets.mjs && node scripts/build-visual-manifests.mjs && node scripts/build-asset-catalogs.mjs && npm run assets:classroom && npm run assets:farm",
@@ -61,6 +62,7 @@
   },
   "dependencies": {
     "@fastify/static": "^10.1.6",
+    "@tanstack/react-virtual": "^3.14.21",
     "fastify": "^5.12.7",
     "lucide-react": "^1.48.0",
     "pathfinding": "^0.4.18",
@@ -80,6 +82,7 @@
     "eslint": "^10.3.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "fake-indexeddb": "^6.2.6",
     "globals": "^17.6.0",
     "maxrects-packer": "^2.7.3",
     "sharp": "^0.35.4",

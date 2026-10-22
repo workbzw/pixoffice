@@ -6,7 +6,7 @@ import { describeOfficeUi } from '@pixoffice/protocol/office-integration'
 const workspace = () => ({ offices: [], actors: [], supportedMessages: [], sceneCommandProtocol: '2.0', ui: describeOfficeUi() })
 
 const message = data => data
-const state = id => ({ schemaVersion: '1.0', seq: 1, workspace: { id, name: id } })
+const state = id => ({ schemaVersion: '1.0', seq: 1, workspace: { id, name: id }, conversations: [{ id: 'main', title: '主会话' }] })
 const post = (app, value) => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers: { authorization: `Bearer ${DEMO_API_KEY}` }, payload: value })
 async function setup(t, options = {}) {
   const app = await createPixOfficeServer(options), base = await app.listen({ port: 0, host: '127.0.0.1' })
@@ -48,16 +48,18 @@ test('a backend initializes an empty browser and the same POST returns only afte
 })
 
 test('the original backend request returns the validated user choice without any callback endpoint', async t => {
-  const { app, base } = await setup(t), browser = await subscribe(t, base)
-  const request = post(app, message({ type: 'decision.request', teamId: 'team-a', timeoutMs: 5000,
+  const { app, base } = await setup(t)
+  await post(app, { type: 'offices.initialize', offices: [state('team-a')] })
+  const browser = await subscribe(t, base); await browser.next()
+  const request = post(app, message({ conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 5000,
     decision: { id: 'decision-one', kind: 'confirmation', title: '提交吗？', confirmLabel: '提交', rejectLabel: '暂不提交' } })).then(value => value)
   const delivery = await browser.next()
-  const invalid = await respond(app, delivery, { teamId: 'team-a', decisionId: 'decision-one', choiceId: 'unknown' })
+  const invalid = await respond(app, delivery, { conversationId: 'main', teamId: 'team-a', decisionId: 'decision-one', choiceId: 'unknown' })
   assert.equal(invalid.statusCode, 400)
-  assert.equal((await respond(app, delivery, { teamId: 'team-a', decisionId: 'decision-one', choiceId: 'reject', label: '不可信文字' })).statusCode, 200)
+  assert.equal((await respond(app, delivery, { conversationId: 'main', teamId: 'team-a', decisionId: 'decision-one', choiceId: 'reject', label: '不可信文字' })).statusCode, 200)
   const result = await request
   assert.equal(result.statusCode, 200)
-  assert.deepEqual(result.json().data, { teamId: 'team-a', decisionId: 'decision-one', choiceId: 'reject', label: '暂不提交' })
+  assert.deepEqual(result.json().data, { conversationId: 'main', teamId: 'team-a', decisionId: 'decision-one', choiceId: 'reject', label: '暂不提交' })
   assert.equal((await browser.next()).type, 'office.request.closed')
 })
 
@@ -109,7 +111,7 @@ test('an empty parallel page cannot reject an operation handled by an initialize
   const rejected = await empty.next(), accepted = await ready.next()
   await respond(app, rejected, { reasonCode: 'OFFICE_NOT_INITIALIZED' }, 404)
   const capabilities = await post(app, message({ type: 'office.capabilities' }))
-  await respond(app, accepted, { snapshot: { schemaVersion: '1.0', seq: 1, whiteboard: { template: 'task-board-v1', title: '', status: 'queued', steps: [] }, workspace: { id: 'team-a', name: 'ready-page' }, employees: [], tasks: [], events: [] },
+  await respond(app, accepted, { snapshot: { schemaVersion: '1.0', seq: 1, workspace: { id: 'team-a', name: 'ready-page' }, conversations: [{ id: 'main', title: '主会话', whiteboard: { template: 'task-board-v1', title: '', status: 'queued', steps: [] }, employees: [], tasks: [], events: [] }] },
     scene: capabilities.json().data.scene, pendingDecisions: [] })
   const response = await request
   assert.equal(response.statusCode, 200)
@@ -129,7 +131,7 @@ test('concurrent requests receive their own results through internal tokens, eve
     assert.deepEqual(Object.keys(delivery).sort(), ['remainingMs', 'request', 'responseToken', 'type'])
     const id = delivery.request.teamId
     assert.equal((await respond(app, delivery, {
-      snapshot: { schemaVersion: '1.0', seq: 1, whiteboard: { template: 'task-board-v1', title: '', status: 'queued', steps: [] }, workspace: { id, name: id }, employees: [], tasks: [], events: [] },
+      snapshot: { schemaVersion: '1.0', seq: 1, workspace: { id, name: id }, conversations: [{ id: 'main', title: '主会话', whiteboard: { template: 'task-board-v1', title: '', status: 'queued', steps: [] }, employees: [], tasks: [], events: [] }] },
       scene: { ...capabilities.json().data.scene, sceneId: id }, pendingDecisions: [],
     })).statusCode, 200)
   }

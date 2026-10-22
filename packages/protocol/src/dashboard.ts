@@ -10,6 +10,7 @@ const timestamp = z.iso.datetime({ offset: true })
 
 export const dashboardSnapshotSchema = z.strictObject({
   schemaVersion: z.literal('1.0'),
+  conversationId: id.optional(),
   seq: z.number().int().min(1).max(Number.MAX_SAFE_INTEGER).optional(),
   workspace: z.strictObject({ id, name: z.string().min(1).max(80) }),
   employees: z.array(z.strictObject({
@@ -46,6 +47,7 @@ export function validateDashboardSnapshot(snapshot: { employees: { id: string }[
 }
 
 export type DashboardSnapshot = z.input<typeof dashboardSnapshotSchema>
+export type DashboardConversation = Pick<DashboardSnapshot, 'employees' | 'tasks' | 'events' | 'whiteboard'> & { id: string; title: string }
 export type DashboardTask = DashboardSnapshot['tasks'][number]
 export type DashboardAction =
   | { type: 'task.start' | 'task.block' | 'task.complete'; taskId: string }
@@ -56,6 +58,8 @@ export interface OfficeDataSource {
   readonly canExecute?: boolean
   readonly replayEvents?: boolean
   getSnapshot(): Promise<DashboardSnapshot>
+  getConversations?(): readonly DashboardConversation[]
+  selectConversation?(id: string): void
   subscribe(listener: () => void): () => void
   execute(action: DashboardAction): Promise<void>
 }

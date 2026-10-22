@@ -135,7 +135,7 @@ test('invalidations are coalesced and fetches are serialized', async t => {
   const drained = session.refresh()
   assert.equal(requests.length, 1, 'notifications must not create concurrent requests')
   requests[0](snapshot)
-  await Promise.resolve(); await Promise.resolve()
+  await new Promise(resolve => setImmediate(resolve))
   assert.equal(requests.length, 2)
   requests[1]({ ...snapshot, workspace: { ...snapshot.workspace, name: '最新状态' } })
   await drained
@@ -396,6 +396,7 @@ test('parallel task actions keep separate busy states and coalesce duplicate sub
 test('a task failure remains visible while another task is still pending', async t => {
   const waiting = new Map()
   const session = setup(t, 'a', { ...remoteSource(), execute: action => new Promise((resolve, reject) => waiting.set(action.taskId, { resolve, reject })) })
+  await session.refresh()
   const old = session.execute({ type: 'task.start', taskId: 'old' }), latest = session.execute({ type: 'task.start', taskId: 'latest' })
   await Promise.resolve()
   const rejected = assert.rejects(old, /old error/)

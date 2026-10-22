@@ -26,19 +26,55 @@ async function canvasDensity(page: Page) {
   return density
 }
 
+test('conversation tabs isolate pushed tasks, wall boards and drafts, including background updates and reload', async ({ backend, page, service }, testInfo) => {
+  const state = office()
+  state.conversations[0].title = '登录开发'
+  const second = structuredClone(state.conversations[0]); second.id = 'review'; second.title = '需求评审'
+  second.tasks[0].title = '确认需求范围'; second.whiteboard.title = '需求评审目标'
+  state.conversations.push(second)
+  expect((await backend.post({ type: 'offices.initialize', offices: [state] })).code).toBe(202)
+  await openOffice(page, service.url)
+  await page.getByRole('button', { name: '展开对话', exact: true }).click()
+  await expect(page.locator('.office-chat-header')).toHaveCount(0)
+  await page.getByRole('tab', { name: '需求评审', exact: true }).click()
+  await expect(page.getByRole('complementary', { name: '会话概览' })).toHaveCount(0)
+  await expect(page.locator('.runtime-task-list')).toContainText('确认需求范围')
+  await page.getByRole('textbox', { name: '给办公室发送消息' }).fill('评审会话的未发送草稿')
+  state.seq = 2; state.conversations[0].tasks[0].title = '登录已完成'; state.conversations[0].tasks[0].status = 'completed'
+  state.conversations[0].whiteboard.title = '登录交付'; state.conversations[0].whiteboard.status = 'completed'
+  expect((await backend.post({ type: 'office.snapshot', teamId: 'team-a', snapshot: state })).code).toBe(200)
+  await expect(page.getByRole('tab', { name: '需求评审', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('.runtime-task-list')).not.toContainText('登录已完成')
+  await page.getByRole('button', { name: '收起聊天', exact: true }).click()
+  await expect(await showBoard(page)).toContainText('需求评审目标')
+  await page.getByRole('button', { name: '关闭白板', exact: true }).click()
+  await page.getByRole('button', { name: '展开对话', exact: true }).click()
+  await page.getByRole('tab', { name: '登录开发', exact: true }).click()
+  await expect(page.locator('.runtime-task-list')).toContainText('登录已完成')
+  await expect(page.getByRole('textbox', { name: '给办公室发送消息' })).toHaveValue('')
+  await page.getByRole('tab', { name: '需求评审', exact: true }).click()
+  await expect(page.getByRole('textbox', { name: '给办公室发送消息' })).toHaveValue('评审会话的未发送草稿')
+  await testInfo.attach('conversation-workspace', { body: await page.screenshot(), contentType: 'image/png' })
+  await page.waitForTimeout(700)
+  await page.reload()
+  await page.getByRole('button', { name: '展开对话', exact: true }).click()
+  await expect(page.getByRole('tab', { name: '需求评审', exact: true })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.getByRole('textbox', { name: '给办公室发送消息' })).toHaveValue('评审会话的未发送草稿')
+})
+
 test('initializes two offices and keeps task and whiteboard data separate', async ({ backend, page, service }, testInfo) => {
   const a = office(), b = office('team-b')
-  b.tasks[0].title = '产品调研验收'; b.whiteboard.title = '产品调研计划'
+  b.conversations[0].tasks[0].title = '产品调研验收'; b.conversations[0].whiteboard.title = '产品调研计划'
   const initialized = await backend.post({ type: 'offices.initialize', offices: [a, b] })
   expect(initialized.code).toBe(202)
   await openOffice(page, service.url)
-  await expect(page.locator('.runtime-task-list')).toContainText(a.tasks[0].title)
+  await expect(page.locator('.runtime-task-list')).toContainText(a.conversations[0].tasks[0].title)
   const board = await showBoard(page)
-  await expect(board).toContainText(a.whiteboard.title)
+  await expect(board).toContainText(a.conversations[0].whiteboard.title)
   await page.getByRole('button', { name: '关闭白板', exact: true }).click()
   await selectOffice(page, b.workspace.name)
-  await expect(page.locator('.runtime-task-list')).toContainText(b.tasks[0].title)
-  await expect(page.locator('.runtime-task-list')).not.toContainText(a.tasks[0].title)
+  await expect(page.locator('.runtime-task-list')).toContainText(b.conversations[0].tasks[0].title)
+  await expect(page.locator('.runtime-task-list')).not.toContainText(a.conversations[0].tasks[0].title)
   await selectOffice(page, a.workspace.name)
   const stats = await sharp(await page.locator('canvas').screenshot()).stats()
   expect(stats.channels[0].stdev).toBeGreaterThan(10)
@@ -51,9 +87,9 @@ test('updates running work to completed and restores it after refresh', async ({
   expect((await backend.post({ type: 'offices.initialize', offices: [state] })).code).toBe(202)
   await openOffice(page, service.url)
   await page.getByRole('button', { name: /登录模块验收.*进行中/ }).click()
-  await expect(page.locator('.runtime-task-detail')).toContainText(state.tasks[0].summary!)
-  state.seq = 2; state.tasks[0].status = 'completed'; state.tasks[0].progress = 100
-  state.whiteboard.status = 'completed'; state.whiteboard.steps[0].progress = 100
+  await expect(page.locator('.runtime-task-detail')).toContainText(state.conversations[0].tasks[0].summary!)
+  state.seq = 2; state.conversations[0].tasks[0].status = 'completed'; state.conversations[0].tasks[0].progress = 100
+  state.conversations[0].whiteboard.status = 'completed'; state.conversations[0].whiteboard.steps[0].progress = 100
   const response = await backend.post<{ status: string }>({ type: 'office.snapshot', teamId: 'team-a', snapshot: state })
   expect(response.code).toBe(200); expect(response.data.status).toBe('applied')
   await page.getByRole('button', { name: /^任务中心/ }).click()
@@ -69,24 +105,24 @@ test('updates running work to completed and restores it after refresh', async ({
 
 test('whiteboard progress advances below 100 until the backend sends completed status', async ({ backend, page, service }) => {
   const state = office()
-  state.whiteboard.steps[0].progress = 0
+  state.conversations[0].whiteboard.steps[0].progress = 0
   await backend.post({ type: 'offices.initialize', offices: [state] }); await openOffice(page, service.url)
-  const reader = await showBoard(page), bar = reader.getByRole('progressbar', { name: state.whiteboard.steps[0].title, exact: true })
+  const reader = await showBoard(page), bar = reader.getByRole('progressbar', { name: state.conversations[0].whiteboard.steps[0].title, exact: true })
   const first = Number(await bar.getAttribute('aria-valuenow'))
   await expect.poll(async () => Number(await bar.getAttribute('aria-valuenow'))).toBeGreaterThan(first + 2)
-  expect((await backend.read('team-a')).data.snapshot.whiteboard.steps[0].progress).toBe(0)
-  state.seq = 2; state.whiteboard.steps[0].progress = 100
+  expect((await backend.read('team-a')).data.snapshot.conversations[0].whiteboard.steps[0].progress).toBe(0)
+  state.seq = 2; state.conversations[0].whiteboard.steps[0].progress = 100
   expect((await backend.post({ type: 'office.snapshot', teamId: 'team-a', snapshot: state })).code).toBe(200)
   await expect(bar).toHaveAttribute('aria-valuenow', '99')
   await expect(reader).toContainText('执行中')
-  state.seq = 3; state.whiteboard.status = 'completed'; state.whiteboard.steps[0].progress = 25
+  state.seq = 3; state.conversations[0].whiteboard.status = 'completed'; state.conversations[0].whiteboard.steps[0].progress = 25
   expect((await backend.post({ type: 'office.snapshot', teamId: 'team-a', snapshot: state })).code).toBe(200)
   await expect(bar).toHaveAttribute('aria-valuenow', '100')
   await expect(reader).toContainText('已完成')
-  expect((await backend.read('team-a')).data.snapshot.whiteboard.steps[0].progress).toBe(25)
+  expect((await backend.read('team-a')).data.snapshot.conversations[0].whiteboard.steps[0].progress).toBe(25)
   await page.getByRole('button', { name: '关闭白板', exact: true }).click()
-  await expect((await showBoard(page)).getByRole('progressbar', { name: state.whiteboard.steps[0].title, exact: true })).toHaveAttribute('aria-valuenow', '100')
-  state.seq = 4; state.whiteboard.title = '下一个开发任务'; state.whiteboard.status = 'running'; state.whiteboard.steps[0].progress = 0
+  await expect((await showBoard(page)).getByRole('progressbar', { name: state.conversations[0].whiteboard.steps[0].title, exact: true })).toHaveAttribute('aria-valuenow', '100')
+  state.seq = 4; state.conversations[0].whiteboard.title = '下一个开发任务'; state.conversations[0].whiteboard.status = 'running'; state.conversations[0].whiteboard.steps[0].progress = 0
   await backend.post({ type: 'office.snapshot', teamId: 'team-a', snapshot: state })
   await expect(reader).toContainText('下一个开发任务')
   expect(Number(await bar.getAttribute('aria-valuenow'))).toBeLessThan(99)
@@ -98,7 +134,7 @@ test('a person click reaches the backend and dialog options return another user 
   const waiting = backend.next(), canvas = page.locator('canvas'), bounds = await canvas.boundingBox()
   await canvas.click({ position: { x: bounds!.width * .3, y: bounds!.height * .42 } })
   const action = (await waiting).data.actions[0]
-  expect(action).toMatchObject({ teamId: 'team-a', action: 'actor.inspect', actorId: 'office-lead' })
+  expect(action).toMatchObject({ conversationId: 'main', teamId: 'team-a', action: 'actor.inspect', actorId: 'office-lead' })
   expect((await backend.respond(action.id, { target: 'dialog', content: { template: 'detail-v1', title: '开发员实时详情', description: '后端返回的详情。',
     fields: [{ label: '任务', value: '登录模块验收' }], actions: [{ id: 'review', label: '提交验收' }] } })).code).toBe(200)
   const dialog = page.getByRole('dialog', { name: '开发员实时详情' })
@@ -106,7 +142,7 @@ test('a person click reaches the backend and dialog options return another user 
   const next = backend.next()
   await dialog.getByRole('button', { name: '提交验收', exact: true }).click()
   const option = (await next).data.actions[0]
-  expect(option).toMatchObject({ action: 'dialog.action', interactionId: action.id, optionId: 'review', teamId: 'team-a' })
+  expect(option).toMatchObject({ conversationId: 'main', action: 'dialog.action', interactionId: action.id, optionId: 'review', teamId: 'team-a' })
   await backend.respond(option.id, { target: 'dialog', content: { template: 'detail-v1', title: '验收已提交' } })
   await expect(page.getByRole('dialog', { name: '验收已提交' })).toBeVisible()
 })
@@ -119,9 +155,9 @@ test('task buttons request backend processing and the backend can display the re
   const waiting = backend.next()
   await page.getByRole('button', { name: '完成任务', exact: true }).click()
   const action = (await waiting).data.actions[0]
-  expect(action).toMatchObject({ action: 'task.complete', taskId: 'login', teamId: 'team-a' })
-  state.seq = 2; state.tasks[0].status = 'completed'; state.tasks[0].progress = 100
-  state.whiteboard.title = '后端确认任务完成'; state.whiteboard.status = 'completed'; state.whiteboard.steps[0].progress = 100
+  expect(action).toMatchObject({ conversationId: 'main', action: 'task.complete', taskId: 'login', teamId: 'team-a' })
+  state.seq = 2; state.conversations[0].tasks[0].status = 'completed'; state.conversations[0].tasks[0].progress = 100
+  state.conversations[0].whiteboard.title = '后端确认任务完成'; state.conversations[0].whiteboard.status = 'completed'; state.conversations[0].whiteboard.steps[0].progress = 100
   expect((await backend.respond(action.id, { target: 'whiteboard', snapshot: state })).code).toBe(200)
   await expect(page.getByText('等待后端处理…', { exact: true })).toBeHidden()
   await expect(await showBoard(page)).toContainText('后端确认任务完成')
@@ -130,7 +166,7 @@ test('task buttons request backend processing and the backend can display the re
 for (const choice of ['confirm', 'reject']) test(`confirmation menu returns ${choice} through its original request`, async ({ backend, page, service }) => {
   await backend.post({ type: 'offices.initialize', offices: [office()] })
   await openOffice(page, service.url)
-  const pending = backend.post<{ choiceId: string; decisionId: string }>({ type: 'decision.request', teamId: 'team-a', timeoutMs: 10000,
+  const pending = backend.post<{ choiceId: string; decisionId: string }>({ conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 10000,
     decision: { id: 'approval', kind: 'confirmation', title: '是否提交验收？', confirmLabel: '确认提交', rejectLabel: '拒绝提交' } })
   const panel = page.getByRole('complementary', { name: '待你决定' })
   await expect(panel.getByRole('heading', { name: '是否提交验收？' })).toBeVisible()
@@ -142,7 +178,7 @@ for (const choice of ['confirm', 'reject']) test(`confirmation menu returns ${ch
 
 test('choice menus show a shrinking bottom countdown and return the selected option', async ({ backend, page, service }, testInfo) => {
   await backend.post({ type: 'offices.initialize', offices: [office()] }); await openOffice(page, service.url)
-  const pending = backend.post<{ choiceId: string }>({ type: 'decision.request', teamId: 'team-a', timeoutMs: 15000,
+  const pending = backend.post<{ choiceId: string }>({ conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 15000,
     decision: { id: 'choice', kind: 'choice', title: '选择验收范围', options: [{ id: 'full', label: '完整验收' }, { id: 'smoke', label: '快速验收' }] } })
   const panel = page.getByRole('complementary', { name: '待你决定' })
   await expect(panel.getByRole('button', { name: '提交选择' })).toBeDisabled()
@@ -163,7 +199,7 @@ test('choice menus show a shrinking bottom countdown and return the selected opt
 
 test('an expired menu closes without creating a default approval', async ({ backend, page, service }) => {
   await backend.post({ type: 'offices.initialize', offices: [office()] }); await openOffice(page, service.url)
-  const pending = backend.post<{ reasonCode: string }>({ type: 'decision.request', teamId: 'team-a', timeoutMs: 5000,
+  const pending = backend.post<{ reasonCode: string }>({ conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 5000,
     decision: { id: 'timeout', kind: 'confirmation', title: '即将过期的验收' } })
   const title = page.getByRole('heading', { name: '即将过期的验收' })
   await expect(title).toBeVisible()
@@ -182,14 +218,14 @@ for (const mobile of [false, true]) test(`background-office decisions submit wit
   await backend.post({ type: 'offices.initialize', offices: [a, b] }); await openOffice(page, service.url)
   const card = page.getByRole('region', { name: `${b.workspace.name}待决定提示` })
   for (const choice of ['confirm', 'reject']) {
-    const pending = backend.post<{ teamId: string; choiceId: string }>({ type: 'decision.request', teamId: 'team-b', timeoutMs: 15000,
+    const pending = backend.post<{ teamId: string; choiceId: string }>({ conversationId: 'main', type: 'decision.request', teamId: 'team-b', timeoutMs: 15000,
       decision: { id: `background-${choice}`, kind: 'confirmation', title: '产品团队的确认', confirmLabel: '确认提交', rejectLabel: '暂不提交' } })
     await expect(card.getByRole('heading', { name: '产品团队的确认' })).toBeVisible()
     await card.getByRole('button', { name: choice === 'confirm' ? '确认提交' : '暂不提交', exact: true }).click()
     expect((await pending).data).toMatchObject({ teamId: 'team-b', choiceId: choice })
     await expect(page.getByRole('button', { name: new RegExp(`^团队空间，当前团队：${a.workspace.name}`) })).toBeVisible()
   }
-  const pending = backend.post<{ teamId: string; choiceId: string }>({ type: 'decision.request', teamId: 'team-b', timeoutMs: 15000,
+  const pending = backend.post<{ teamId: string; choiceId: string }>({ conversationId: 'main', type: 'decision.request', teamId: 'team-b', timeoutMs: 15000,
     decision: { id: 'background-choice', kind: 'choice', title: '选择验收方式', options: [{ id: 'full', label: '完整验收' }, { id: 'smoke', label: '快速验收' }] } })
   await expect(card.getByRole('button', { name: '先选择一项', exact: true })).toBeDisabled()
   await card.getByRole('radio', { name: '快速验收', exact: true }).check()
@@ -201,7 +237,7 @@ for (const mobile of [false, true]) test(`background-office decisions submit wit
 })
 
 test('real animation changes both the visible canvas and public actor state', async ({ backend, page, service }, testInfo) => {
-  const state = office(); state.tasks = []
+  const state = office(); state.conversations[0].tasks = []
   await backend.post({ type: 'offices.initialize', offices: [state] }); await openOffice(page, service.url)
   const discovered = await backend.post<Capabilities>({ type: 'office.capabilities' })
   expect(discovered.data.scene.capabilities.some(capability => capability.id === 'office.visit')).toBe(true)
@@ -223,15 +259,15 @@ test('offline updates recover after reconnection, refresh and a new browser page
   const state = office()
   await backend.post({ type: 'offices.initialize', offices: [state] }); await openOffice(page, service.url)
   await context.setOffline(true)
-  state.seq = 2; state.tasks[0].title = '离线期间更新的任务'
+  state.seq = 2; state.conversations[0].tasks[0].title = '离线期间更新的任务'
   const updated = await backend.post({ type: 'office.snapshot', teamId: 'team-a', snapshot: state })
   expect([200, 202, 408]).toContain(updated.code)
   await context.setOffline(false)
-  await expect(page.locator('.runtime-task-list')).toContainText(state.tasks[0].title, { timeout: 20000 })
+  await expect(page.locator('.runtime-task-list')).toContainText(state.conversations[0].tasks[0].title, { timeout: 20000 })
   await page.reload(); await openOffice(page, service.url)
-  await expect(page.locator('.runtime-task-list')).toContainText(state.tasks[0].title)
+  await expect(page.locator('.runtime-task-list')).toContainText(state.conversations[0].tasks[0].title)
   const another = await context.newPage(); await openOffice(another, service.url)
-  await expect(another.locator('.runtime-task-list')).toContainText(state.tasks[0].title)
+  await expect(another.locator('.runtime-task-list')).toContainText(state.conversations[0].tasks[0].title)
   expect((await backend.read('team-a')).data.snapshot.seq).toBe(2)
 })
 
@@ -242,9 +278,9 @@ test('server restart clears the stale directory and accepts fresh initialization
   await expect(page.getByText('等待后端初始化办公室', { exact: true })).toBeVisible({ timeout: 20000 })
   expect((await backend.post<{ offices: object[] }>({ type: 'office.read' })).data.offices).toEqual([])
   expect((await backend.read('team-a')).code).toBe(404)
-  const fresh = office(); fresh.tasks[0].title = '重启后的新任务'
+  const fresh = office(); fresh.conversations[0].tasks[0].title = '重启后的新任务'
   expect((await backend.post({ type: 'offices.initialize', offices: [fresh] })).code).toBe(200)
-  await expect(page.locator('.runtime-task-list')).toContainText(fresh.tasks[0].title)
+  await expect(page.locator('.runtime-task-list')).toContainText(fresh.conversations[0].tasks[0].title)
   expect((await backend.read('team-a')).data.snapshot.seq).toBe(1)
 })
 
@@ -253,13 +289,13 @@ test('duplicate, conflicting, invalid and concurrent out-of-order updates preser
   await backend.post({ type: 'offices.initialize', offices: [state] }); await openOffice(page, service.url)
   const second = await context.newPage(); await openOffice(second, service.url)
   expect((await backend.post({ type: 'office.snapshot', teamId: 'team-a', snapshot: state })).code).toBe(200)
-  const conflict = structuredClone(state); conflict.tasks[0].title = '相同版本冲突'
+  const conflict = structuredClone(state); conflict.conversations[0].tasks[0].title = '相同版本冲突'
   expect((await backend.post({ type: 'office.snapshot', teamId: 'team-a', snapshot: conflict })).code).toBe(409)
   expect((await backend.post({ type: 'office.read' }, { key: 'incorrect' })).code).toBe(401)
   expect((await backend.post({ type: 'office.snapshot', teamId: 'team-a', snapshot: { ...state, whiteboard: null } })).code).toBe(400)
   expect((await backend.post({ type: 'office.unknown' })).code).toBe(400)
   const requests = [9, 3, 12, 2, 5, 8, 11, 4, 7, 10, 6].map(seq => {
-    const next = structuredClone(state); next.seq = seq; next.tasks[0].title = `并发任务 ${seq}`
+    const next = structuredClone(state); next.seq = seq; next.conversations[0].tasks[0].title = `并发任务 ${seq}`
     return backend.post({ type: 'office.snapshot', teamId: 'team-a', snapshot: next })
   })
   expect((await Promise.all(requests)).every(response => response.code === 200 || response.code === 202)).toBe(true)
@@ -276,7 +312,7 @@ test('mobile page renders a nonblank scene and allows menu selection', async ({ 
   const stats = await sharp(await page.locator('canvas').screenshot()).stats()
   expect(stats.channels[0].stdev).toBeGreaterThan(10)
   await canvasDensity(page)
-  const pending = backend.post<{ choiceId: string }>({ type: 'decision.request', teamId: 'team-a', timeoutMs: 15000,
+  const pending = backend.post<{ choiceId: string }>({ conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 15000,
     decision: { id: randomUUID(), kind: 'confirmation', title: '移动端确认', confirmLabel: '确认验收', rejectLabel: '返回检查' } })
   await page.getByRole('button', { name: '确认验收', exact: true }).click()
   expect((await pending).data.choiceId).toBe('confirm')
@@ -501,20 +537,22 @@ test.describe('static local demo', () => {
     await expect(panel).toBeHidden()
     await page.getByRole('button', { name: '展开对话', exact: true }).click()
     await expect(page.getByLabel('决策记录', { exact: true })).toHaveCount(0)
-    await page.getByRole('button', { name: '重新演示决策', exact: true }).click()
+    await page.getByRole('button', { name: '收起聊天', exact: true }).click()
+    await page.getByRole('button', { name: '停止演示', exact: true }).click()
+    await page.getByRole('button', { name: '开始演示', exact: true }).click()
+    await page.clock.fastForward(15100)
     await expect(progress).toBeVisible()
     expect(Number(await progress.getAttribute('aria-valuenow'))).toBeGreaterThan(95)
     await expect(panel).toContainText('1 项待处理')
     await page.clock.fastForward(5000)
-    await page.getByRole('button', { name: '展开对话', exact: true }).click()
-    await page.getByRole('button', { name: '重新演示决策', exact: true }).click()
-    expect(Number(await progress.getAttribute('aria-valuenow'))).toBeGreaterThan(95)
     await panel.getByRole('button', { name: '暂不提交', exact: true }).click()
     await expect(panel.getByRole('heading')).toHaveCount(0)
+    await panel.getByRole('button', { name: '重新演示', exact: true }).click()
+    expect(Number(await progress.getAttribute('aria-valuenow'))).toBeGreaterThan(95)
+    await panel.getByRole('button', { name: '暂不提交', exact: true }).click()
     await page.clock.fastForward(3100)
     await expect(panel).toBeHidden()
     await page.getByRole('button', { name: '展开对话', exact: true }).click()
-    await page.getByRole('button', { name: '重新演示决策', exact: true }).click()
-    expect(Number(await progress.getAttribute('aria-valuenow'))).toBeGreaterThan(95)
+    await expect(page.getByLabel('决策记录', { exact: true })).toHaveCount(1)
   })
 })

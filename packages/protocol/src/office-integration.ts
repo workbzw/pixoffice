@@ -14,7 +14,7 @@ const eventSchema = dashboardSnapshotSchema.shape.events.element
 export const seqSchema = z.number().int().min(1).max(Number.MAX_SAFE_INTEGER)
 const optionalId = z.union([idSchema, z.literal('')]).default('')
 const unknownPercent = z.union([z.literal(-1), z.number().min(0).max(100)]).default(-1)
-export const officeSnapshotSchema = z.strictObject({ ...dashboardSnapshotSchema.shape, seq: seqSchema,
+export const officeConversationSchema = z.strictObject({ id: idSchema, title: text,
   employees: z.array(employeeSchema.safeExtend({ sceneActorId: employeeSchema.shape.sceneActorId.default(''),
     role: z.string().max(80).default(''), online: z.boolean().default(false) })).max(200).default([]),
   tasks: z.array(taskSchema.safeExtend({ assigneeId: taskSchema.shape.assigneeId.default(''), progress: unknownPercent,
@@ -22,17 +22,24 @@ export const officeSnapshotSchema = z.strictObject({ ...dashboardSnapshotSchema.
   events: z.array(eventSchema.safeExtend({
     taskId: eventSchema.shape.taskId.default(''), employeeId: eventSchema.shape.employeeId.default(''), fromEmployeeId: eventSchema.shape.fromEmployeeId.default(''),
   })).max(500).default([]),
-  system: z.strictObject({ cpuPercent: unknownPercent, memoryPercent: unknownPercent,
-    networkKbps: z.union([z.literal(-1), z.number().nonnegative()]).default(-1) }).default({ cpuPercent: -1, memoryPercent: -1, networkKbps: -1 }),
   whiteboard: whiteboardTaskBoardSchema.default(emptyWhiteboard),
 }).superRefine(validateDashboardSnapshot)
+export type OfficeConversation = z.infer<typeof officeConversationSchema>
+export const officeSnapshotSchema = z.strictObject({ schemaVersion: z.literal('1.0'), seq: seqSchema,
+  workspace: dashboardSnapshotSchema.shape.workspace,
+  conversations: z.array(officeConversationSchema).max(100).default([]),
+  system: z.strictObject({ cpuPercent: unknownPercent, memoryPercent: unknownPercent,
+    networkKbps: z.union([z.literal(-1), z.number().nonnegative()]).default(-1) }).default({ cpuPercent: -1, memoryPercent: -1, networkKbps: -1 }),
+}).superRefine((snapshot, context) => {
+  if (new Set(snapshot.conversations.map(item => item.id)).size !== snapshot.conversations.length) context.addIssue({ code: 'custom', path: ['conversations'], message: '会话 ID 重复' })
+})
 export type OfficeSnapshot = z.infer<typeof officeSnapshotSchema>
 export const officeReasonSchema = z.enum(['INVALID_MESSAGE', 'INVALID_REPLY', 'OFFICE_NOT_INITIALIZED', 'ACTOR_NOT_FOUND', 'INVALID_BINDING',
   'OFFICE_LIMIT', 'CACHE_FULL', 'STALE_SEQ', 'DUPLICATE_SEQ', 'SEQ_CONFLICT', 'REQUEST_TIMEOUT', 'NO_RECEIVER', 'RECEIVER_UNAVAILABLE',
   'BUSINESS_QUEUE_FULL', 'DECISION_DUPLICATE', 'DECISION_EXPIRED', 'DECISION_QUEUE_FULL', 'SERVER_CLOSING', 'CALLER_DISCONNECTED',
   'SCENE_SYNC_FAILED', 'BUSINESS_ERROR', 'UI_REQUEST_EXPIRED', 'UI_QUEUE_FULL', 'UI_WAIT_BUSY', 'UNSUPPORTED_UI_ACTION', 'SNAPSHOT_REQUIRED',
   'AUTH_FAILED', 'FORBIDDEN', 'NOT_FOUND', 'MESSAGE_TOO_LARGE', 'INTERNAL_ERROR', 'REQUEST_CLOSED',
-  'CHAT_NOT_CONFIGURED', 'CHAT_UPSTREAM_ERROR', 'CHAT_TIMEOUT'])
+  'CHAT_NOT_CONFIGURED', 'CHAT_UPSTREAM_ERROR', 'CHAT_TIMEOUT', 'CONVERSATION_NOT_FOUND'])
 export const officeErrorResultSchema = z.strictObject({ reasonCode: officeReasonSchema, details: jsonObjectSchema.default({}),
   issues: z.array(jsonObjectSchema).default([]) })
 
@@ -55,13 +62,14 @@ export const officeWorkspaceResultSchema = z.strictObject({
 })
 export const officeReadResultSchema = z.strictObject({ snapshot: officeSnapshotSchema, scene: officeSceneSchema, pendingDecisions: z.array(idSchema) })
 export const officeSnapshotResultSchema = z.strictObject({ teamId: idSchema, seq: seqSchema, status: z.enum(['applied', 'cached', 'ignored']), reasonCode: z.enum(['STALE_SEQ', 'DUPLICATE_SEQ']).optional() })
-export const officeDecisionResultSchema = z.strictObject({ teamId: idSchema, decisionId: idSchema, choiceId: idSchema, label: text })
+export const officeDecisionResultSchema = z.strictObject({ teamId: idSchema, conversationId: idSchema, decisionId: idSchema, choiceId: idSchema, label: text })
 export const officeCapabilitiesResultSchema = z.strictObject({ scene: officeSceneSchema, ui: uiManifestSchema, requests: jsonSchema, responses: z.strictObject({ success: jsonSchema, error: jsonSchema }) })
 export const officeSupportedMessages = ['offices.initialize', 'office.snapshot', 'office.read', 'office.capabilities', 'decision.request', 'ui.next', 'ui.respond'] as const
 export { officeUiManifest }
 
-const uiBase = { id: idSchema, teamId: idSchema }
+const uiBase = { id: idSchema, teamId: idSchema, conversationId: idSchema }
 export const officeUiActionSchema = z.discriminatedUnion('action', [
+  z.strictObject({ ...uiBase, action: z.literal('conversation.delete') }),
   z.strictObject({ ...uiBase, action: z.literal('actor.inspect'), actorId: idSchema }),
   z.strictObject({ ...uiBase, action: z.literal('employee.inspect'), employeeId: z.string().min(1).max(100) }),
   ...(['task.start', 'task.block', 'task.complete'] as const).map(action => z.strictObject({ ...uiBase, action: z.literal(action), taskId: z.string().min(1).max(100) })),
@@ -74,6 +82,7 @@ export const officeDialogSchema = z.strictObject({ template: z.literal('detail-v
   actions: z.array(z.strictObject({ id: idSchema, label: text })).max(8).default([]),
 })
 export const officeUiPresentationSchema = z.discriminatedUnion('target', [
+  z.strictObject({ target: z.literal('result'), success: z.boolean(), message: z.string().max(4000).default('') }),
   z.strictObject({ target: z.literal('dialog'), content: officeDialogSchema }),
   z.strictObject({ target: z.literal('whiteboard'), snapshot: officeSnapshotSchema }),
 ])
@@ -110,7 +119,7 @@ export const officeRequestSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('office.capabilities') }),
   z.strictObject({ type: z.literal('ui.next'), timeoutMs: z.number().int().min(1000).max(30000).default(30000) }),
   z.strictObject({ type: z.literal('ui.respond'), interactionId: idSchema, presentation: officeUiPresentationSchema }),
-  z.strictObject({ type: z.literal('decision.request'), teamId: idSchema, decision: officeDecisionSchema,
+  z.strictObject({ type: z.literal('decision.request'), teamId: idSchema, conversationId: idSchema, decision: officeDecisionSchema,
     timeoutMs: z.number().int().min(1000).max(300000).default(60000) }),
 ])
 export const officeMessageSchema = officeRequestSchema

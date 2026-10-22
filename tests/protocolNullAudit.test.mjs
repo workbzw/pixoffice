@@ -6,7 +6,7 @@ import { commandSchema, batchSchema } from '@pixoffice/protocol'
 import { assertProtocolObject, assertProtocolValue, jsonObjectSchema, jsonValueSchema, parseProtocolObject, responseEnvelopeSchema, stringifyDocumentObject, stringifyProtocolObject } from '@pixoffice/protocol/schema'
 import { relayMessageSchema } from '@pixoffice/protocol/relay'
 import { mapDocumentSchema, mapEditSchema, mapOperationSchema } from '@pixoffice/protocol/map'
-import { chatEventSchema, chatRequestSchema } from '@pixoffice/protocol/chat'
+import { chatEventSchema, chatRequestSchema, chatOperationSchema, chatHistoryPageSchema, chatCancelResultSchema } from '@pixoffice/protocol/chat'
 import { officeRequestSchema, officeSnapshotSchema, officeReplySchema, officeDeliverySchema, officeSyncSchema, officeSyncStartSchema, officeSyncCompleteSchema,
   officeClosedSchema, officeUiActionSchema, officeUiPresentationSchema, officeErrorResultSchema, officeSuccessResultSchema } from '@pixoffice/protocol/office-integration'
 import { whiteboardTaskBoardSchema } from '@pixoffice/protocol/office-ui'
@@ -37,10 +37,7 @@ function assertWire(value) {
 }
 const board = { template: 'task-board-v1', title: '协议审查', status: 'running', tagline: '', description: '', note: '',
   link: { label: '资料', url: 'https://example.com/' }, steps: [{ id: 'step', title: '检查', progress: -1 }] }
-const snapshot = () => officeSnapshotSchema.parse({ schemaVersion: '1.0', seq: 1, workspace: { id: 'audit', name: '审查' },
-  employees: [{ id: 'dev', name: '开发', sceneActorId: 'office-lead', role: '', online: false }],
-  tasks: [{ id: 'task', title: '审查', assigneeId: 'dev', status: 'running', progress: -1, summary: '', updatedAt: '2026-10-18T10:00:00Z' }],
-  events: [{ id: 'event', kind: 'note', summary: '检查', occurredAt: '2026-10-18T10:00:00Z', taskId: 'task', employeeId: 'dev', fromEmployeeId: 'dev' }], whiteboard: board })
+const snapshot = () => officeSnapshotSchema.parse({ schemaVersion: '1.0', seq: 1, workspace: { id: 'audit', name: '审查' }, conversations: [{ id: 'main', title: '主会话', employees: [{ id: 'dev', name: '开发', sceneActorId: 'office-lead', role: '', online: false }], tasks: [{ id: 'task', title: '审查', assigneeId: 'dev', status: 'running', progress: -1, summary: '', updatedAt: '2026-10-18T10:00:00Z' }], events: [{ id: 'event', kind: 'note', summary: '检查', occurredAt: '2026-10-18T10:00:00Z', taskId: 'task', employeeId: 'dev', fromEmployeeId: 'dev' }], whiteboard: board }] })
 const dialog = { target: 'dialog', content: { template: 'detail-v1', title: '详情', description: '', fields: [{ label: '任务', value: '' }], actions: [{ id: 'ok', label: '确认' }] } }
 const common = { protocolVersion: '2.0', sceneId: 'audit', commandId: 'command', after: ['before'], busyPolicy: 'queue', timeoutMs: 1000, expiresAt: '2026-10-18T12:00:00Z' }
 const activity = { ...common, type: 'activity.start', capability: 'audit.custom', participants: [{ entityId: 'office-lead', role: 'actor' }], params: { text: '', nested: [{ value: '', enabled: false, count: -1 }] } }
@@ -58,8 +55,9 @@ test('every value position in all request, response and event variants rejects a
     { type: 'office.read', teamId: 'audit' }, { type: 'office.capabilities' }, { type: 'ui.next', timeoutMs: 1000 },
     { type: 'ui.respond', interactionId: 'interaction', presentation: dialog },
     { type: 'ui.respond', interactionId: 'interaction', presentation: { target: 'whiteboard', snapshot: state } },
-    { type: 'decision.request', teamId: 'audit', timeoutMs: 1000, decision: { id: 'menu', actorId: 'office-lead', kind: 'confirmation', title: '确认', description: '', confirmLabel: '是', rejectLabel: '否' } },
-    { type: 'decision.request', teamId: 'audit', timeoutMs: 1000, decision: { id: 'menu', actorId: '', kind: 'choice', title: '选择', description: '', options: [{ id: 'a', label: '甲', description: '' }, { id: 'b', label: '乙', description: '' }] } })
+    { type: 'ui.respond', interactionId: 'interaction', presentation: { target: 'result', success: true, message: '' } },
+    { conversationId: 'main', type: 'decision.request', teamId: 'audit', timeoutMs: 1000, decision: { id: 'menu', actorId: 'office-lead', kind: 'confirmation', title: '确认', description: '', confirmLabel: '是', rejectLabel: '否' } },
+    { conversationId: 'main', type: 'decision.request', teamId: 'audit', timeoutMs: 1000, decision: { id: 'menu', actorId: '', kind: 'choice', title: '选择', description: '', options: [{ id: 'a', label: '甲', description: '' }, { id: 'b', label: '乙', description: '' }] } })
   add(commandSchema, activity, { ...common, type: 'activity.stop', activityId: 'activity' }, { ...common, type: 'command.cancel', targetCommandId: 'target' },
     { ...common, type: 'actor.presentation.set', actorId: 'actor', sourceRevision: 1, status: 'thinking', title: '' },
     { ...common, type: 'object.state.set', entityId: 'prop', expectedStateRevision: 0, state: { title: '', values: [{ value: false }] } })
@@ -75,16 +73,17 @@ test('every value position in all request, response and event variants rejects a
     ...['undo', 'redo', 'validate', 'commit', 'cancel'].map(action => ({ action, draftId: 'draft', expectedDraftRevision: 0 })),
     { action: 'route', draftId: 'draft', expectedDraftRevision: 0, from: { x: 0, y: 0 }, to: { x: 2, y: 2 } })
   add(whiteboardTaskBoardSchema, board)
-  add(officeUiPresentationSchema, dialog, { target: 'whiteboard', snapshot: state })
-  const actions = [{ id: 'action', teamId: 'audit', action: 'actor.inspect', actorId: 'actor' },
-    { id: 'action', teamId: 'audit', action: 'employee.inspect', employeeId: 'dev' },
-    ...['task.start', 'task.block', 'task.complete'].map(action => ({ id: 'action', teamId: 'audit', action, taskId: 'task' })),
-    { id: 'action', teamId: 'audit', action: 'task.assign', taskId: 'task', assigneeId: 'dev' },
-    { id: 'action', teamId: 'audit', action: 'dialog.action', interactionId: 'interaction', optionId: 'ok' }]
+  add(officeUiPresentationSchema, dialog, { target: 'whiteboard', snapshot: state }, { target: 'result', success: false, message: '拒绝删除' })
+  const actions = [{ conversationId: 'main', id: 'action', teamId: 'audit', action: 'actor.inspect', actorId: 'actor' },
+    { conversationId: 'main', id: 'delete-action', teamId: 'audit', action: 'conversation.delete' },
+    { conversationId: 'main', id: 'action', teamId: 'audit', action: 'employee.inspect', employeeId: 'dev' },
+    ...['task.start', 'task.block', 'task.complete'].map(action => ({ conversationId: 'main', id: 'action', teamId: 'audit', action, taskId: 'task' })),
+    { conversationId: 'main', id: 'action', teamId: 'audit', action: 'task.assign', taskId: 'task', assigneeId: 'dev' },
+    { conversationId: 'main', id: 'action', teamId: 'audit', action: 'dialog.action', interactionId: 'interaction', optionId: 'ok' }]
   add(officeUiActionSchema, ...actions)
   add(officeSuccessResultSchema, { actions: [actions[0]] }, { actions: [] }, { interactionId: 'interaction', delivered: true },
     { teamId: 'audit', seq: 1, status: 'ignored', reasonCode: 'STALE_SEQ' },
-    { teamId: 'audit', decisionId: 'menu', choiceId: 'ok', label: '确认' })
+    { conversationId: 'main', teamId: 'audit', decisionId: 'menu', choiceId: 'ok', label: '确认' })
   const scene = { protocolVersion: '2.0', sceneId: 'audit', command: { type: 'object' }, batch: { type: 'object' },
     actors: [{ id: 'actor', name: '人物', templateId: 'person', position: { x: 0, y: 0 }, presentation: { status: 'idle', title: '', sourceRevision: 0 } }],
     objects: [{ id: 'prop', name: '物品', templateId: 'object', state: { value: '' }, stateRevision: 0, stateSchema: { type: 'object' } }],
@@ -104,7 +103,12 @@ test('every value position in all request, response and event variants rejects a
   add(officeSyncStartSchema, { type: 'office.sync.start', stateId: 'server-instance' })
   add(officeSyncCompleteSchema, { type: 'office.sync.complete', offices: [{ teamId: 'audit', seq: 1 }] })
   add(officeClosedSchema, { type: 'office.request.closed', responseToken: 'token' })
-  add(chatRequestSchema, { version: '1.0', teamId: 'audit', conversationId: 'conversation', messages: [{ role: 'user', content: '' }, { role: 'assistant', content: '' }] })
+  add(chatRequestSchema, { version: '1.0', type: 'send', turnId: 'turn', teamId: 'audit', conversationId: 'conversation', messages: [{ role: 'user', content: '' }, { role: 'assistant', content: '' }] })
+  add(chatOperationSchema, { version: '1.0', type: 'history', teamId: 'audit', conversationId: 'conversation', cursor: '', limit: 20 },
+    ...['resume', 'cancel'].map(type => ({ version: '1.0', type, turnId: 'turn', teamId: 'audit', conversationId: 'conversation' })))
+  add(chatHistoryPageSchema, { turns: [{ id: 'turn', user: '问题', assistant: '回复', state: 'pending', error: '' }], hasMore: false, nextCursor: '', activeTurnId: 'turn' })
+  add(chatCancelResultSchema, { stopped: true })
+  add(chatEventSchema, { type: 'snapshot', text: '部分回复', state: 'pending', message: '' })
   add(chatEventSchema, { type: 'status', phase: 'thinking' }, { type: 'delta', text: '' }, { type: 'done' }, { type: 'error', message: '失败' })
   add(responseEnvelopeSchema, { code: 200, msg: 'OK', data: { offices: [state] } }, { code: 400, msg: '', data: fault })
   let mutations = 0

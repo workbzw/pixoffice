@@ -127,7 +127,9 @@ test('the directory projects submission and failure state from the owning team o
   const sessions = teams.slice(0, 2).map(team => ({
     runtime: { sceneId: team.id, readActors: () => [], subscribe: () => () => {} },
     getSnapshot: () => ({ dashboard: null }), subscribe: () => () => {},
-    decisions: { getSnapshot: () => ({ pending: [], submittingId: team.id === 'b' ? 'b-question' : undefined, error: team.id === 'b' ? 'B failed' : null }), subscribe: () => () => {} },
+    decisions: { getSnapshot: () => ({ pending: team.id === 'b' ? [{ id: 'b-question', conversationId: 'main' }] : [],
+      submittingIds: team.id === 'b' ? ['b-question'] : [], errorDecisionId: team.id === 'b' ? 'b-question' : undefined,
+      error: team.id === 'b' ? 'B failed' : null }), subscribe: () => () => {} },
   }))
   let options
   function Directory() { options = useOfficeTeamDirectory(teams.slice(0, 2), sessions); return null }

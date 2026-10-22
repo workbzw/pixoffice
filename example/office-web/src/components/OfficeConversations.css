@@ -1,0 +1,42 @@
+.office-conversation-nav { display: flex; align-items: stretch; gap: 12px; padding: 0 var(--chat-gutter); border-bottom: 1px solid var(--chat-line); flex: 0 0 52px; min-width: 0; position: relative; z-index: 2; }
+.office-conversation-tabs { display: flex; align-items: stretch; min-width: 0; flex: 1; overflow-x: auto; scrollbar-width: none; }
+.office-conversation-tabs::-webkit-scrollbar { display: none; }
+.office-conversation-tab-item { display: flex; align-items: stretch; min-width: 146px; max-width: 220px; flex: 1 0 auto; padding-right: 7px; border-bottom: 2px solid transparent; }
+.office-conversation-tab { display: flex; align-items: center; justify-content: center; gap: 9px; min-width: 0; flex: 1; padding: 0 7px 0 12px; border: 0; background: transparent; color: #84978b; font-size: 12px; }
+.office-conversation-tab > span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.office-conversation-tab-item[data-selected=true] { background: #fbfdfb; border-bottom-color: #6e987c; }
+.office-conversation-tab[aria-selected=true] { color: #507e5f; font-weight: 600; }
+.office-conversation-tab-item:hover { background: #f6faf7; }
+.office-conversation-tab-delete { display: grid; place-items: center; align-self: center; flex: 0 0 24px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: #8f9d94; }
+.office-conversation-tab-delete:hover { background: #fff0ed; color: #b15d4f; }
+.office-conversation-tab small, .office-conversation-menu small { display: grid; place-items: center; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 50%; background: #eaf3ed; color: #57866a; font-size: 10px; }
+.office-chat-dot { width: 6px; height: 6px; border-radius: 50%; background: #b1c1b7; flex: 0 0 6px; }
+.office-chat-dot.is-running { background: #51b97b; }
+.office-chat-dot.is-blocked { background: #e9ac44; }
+.office-chat-dot.is-completed { background: #6b9d80; }
+.office-chat-dot.is-failed { background: #cb7068; }
+.office-conversation-actions { display: flex; align-items: center; gap: 8px; position: relative; flex: 0 0 auto; }
+.office-conversation-add, .office-conversation-collapse { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 0; background: #fff; border: 1px solid var(--chat-line); border-radius: 8px; color: #70927b; }
+.office-conversation-add { width: 30px; padding: 0; border-style: dashed; background: #f8fbf9; }
+.office-conversation-collapse:hover { background: #edf5ef; }
+.office-conversation-menu { position: absolute; right: 0; top: calc(100% - 3px); width: min(290px, 75vw); padding: 10px; border: 1px solid #dfe9e2; border-radius: 10px; background: #fff; box-shadow: 0 10px 30px #1f392321; }
+.office-conversation-search { display: flex; align-items: center; gap: 7px; padding: 6px 8px; border: 1px solid #e2eae5; border-radius: 7px; color: #82978b; }
+.office-chat .office-conversation-search input { width: 100%; min-width: 0; padding: 0; border: 0; outline: none !important; background: transparent; font-size: 12px; }
+.office-conversation-search:focus-within { outline: 2px solid #b4d0be; outline-offset: 1px; }
+.office-conversation-menu-list { max-height: 260px; overflow-y: auto; padding-top: 7px; }
+.office-conversation-select { display: flex; align-items: center; width: 100%; min-width: 0; gap: 9px; padding: 9px 8px; border: 0; border-radius: 5px; background: transparent; color: #627a6b; text-align: left; font-size: 12px; }
+.office-conversation-select > span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.office-conversation-select > svg { flex-shrink: 0; }
+.office-conversation-select[aria-pressed=true], .office-conversation-select:hover { background: #edf5ef; }
+.office-conversation-delete-confirm { padding: 5px; }
+.office-conversation-delete-confirm > strong { display: block; color: #405848; font-size: 13px; overflow-wrap: anywhere; }
+.office-conversation-delete-confirm > p { margin: 10px 0 16px; color: #819086; font-size: 12px; line-height: 1.7; }
+.office-conversation-delete-confirm > .office-conversation-delete-error { color: #ad5548; }
+.office-conversation-delete-confirm > div { display: flex; justify-content: flex-end; gap: 8px; }
+.office-conversation-delete-confirm button { display: flex; align-items: center; justify-content: center; gap: 5px; min-width: 62px; min-height: 30px; padding: 5px 10px; border: 1px solid #e0e8e2; border-radius: 6px; background: #fff; color: #687e70; font-size: 12px; }
+.office-conversation-delete-confirm .office-conversation-delete-submit { background: #fff0ed; border-color: #f3d9d2; color: #ad5548; }
+.office-conversation-spinner { animation: office-conversation-spin 1s linear infinite; }
+@keyframes office-conversation-spin { to { transform: rotate(360deg); } }
+.office-conversation-menu-list p { padding: 12px; margin: 0; font-size: 12px; color: #8c9d92; }
+@media(max-width:1000px){.office-conversation-nav{gap:8px}.office-conversation-tab-item{min-width:137px}}
+@media(max-width:620px){.office-conversation-nav{padding:0 10px;gap:6px;flex-basis:47px}.office-conversation-tab-item{min-width:132px;padding-right:4px}.office-conversation-tab{padding:0 4px 0 7px;gap:6px;font-size:11px}.office-conversation-actions{gap:4px}.office-conversation-search input{font-size:16px}}

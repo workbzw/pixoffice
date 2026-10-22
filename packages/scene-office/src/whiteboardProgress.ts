@@ -10,6 +10,9 @@ export class WhiteboardProgress {
   private entries = new Map<string, Entry>()
   private now: () => number
   private reduceMotion: boolean
+  private scope = ''
+
+  setScope(scope: string) { this.scope = scope }
 
   constructor(options: { now?: () => number; reduceMotion?: boolean } = {}) {
     this.now = options.now ?? (() => performance.now())
@@ -17,6 +20,7 @@ export class WhiteboardProgress {
   }
 
   project(id: string, board: WhiteboardTaskBoardData): WhiteboardTaskBoardData {
+    id = JSON.stringify([this.scope, id])
     const now = this.now(), key = JSON.stringify([board.title, board.steps.map(step => [step.id, step.title])])
     let entry = this.entries.get(id)
     if (!entry || entry.key !== key || entry.status === 'completed' && board.status !== 'completed') {

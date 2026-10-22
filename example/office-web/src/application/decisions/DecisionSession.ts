@@ -1,13 +1,13 @@
 import { notifySubscribers } from '../../notifications.ts'
 
 export type DecisionRequester = { name: string; appearanceId: string }
-type DecisionBase = { teamId: string; id: string; requester: DecisionRequester; title: string; description: string; expiresAt?: number; createdAt?: number; deadline?: number }
+type DecisionBase = { teamId: string; conversationId?: string; id: string; requester: DecisionRequester; title: string; description: string; expiresAt?: number; createdAt?: number; deadline?: number }
 export type DecisionRequest = DecisionBase & (
   { kind: 'choice'; options: { id: string; label: string; description: string }[] }
   | { kind: 'confirmation'; confirmLabel: string; rejectLabel: string }
 )
 export type DecisionRecord = { id: string; request: DecisionRequest; choiceId: string; label: string }
-export type DecisionSnapshot = { teamId: string; pending: DecisionRequest[]; records: DecisionRecord[]; receipt: DecisionRecord | null; submittingId?: string; error?: string | null }
+export type DecisionSnapshot = { teamId: string; pending: DecisionRequest[]; records: DecisionRecord[]; receipt: DecisionRecord | null; submittingId?: string; submittingIds?: readonly string[]; error?: string | null; errorDecisionId?: string }
 const remaining = (request: DecisionRequest) => request.deadline !== undefined ? request.deadline - performance.now()
   : request.expiresAt !== undefined ? request.expiresAt - Date.now() : Infinity
 
@@ -84,16 +84,16 @@ export class DecisionSession {
     if (existing) return existing
     const submit = this.submissions.get(decisionId)
     if (!submit) return Promise.resolve(this.resolve(teamId, decisionId, choiceId))
-    const request = this.snapshot.pending[0]
+    const request = this.firstForConversation(decisionId)
     if (!request || teamId !== this.teamId || request.id !== decisionId || remaining(request) <= 0) return Promise.resolve(null)
     if (request.kind === 'choice' ? !request.options.some(option => option.id === choiceId) : !['confirm', 'reject'].includes(choiceId)) return Promise.resolve(null)
-    this.update({ ...this.snapshot, submittingId: decisionId, error: null })
+    this.update({ ...this.snapshot, submittingId: decisionId, submittingIds: [...this.flights.keys(), decisionId], error: null, errorDecisionId: undefined })
     const flight = Promise.resolve().then(() => submit(choiceId)).then(() => this.commit(teamId, decisionId, choiceId)).catch(error => {
-      if (this.snapshot.pending.some(item => item.id === decisionId)) this.update({ ...this.snapshot, error: error instanceof Error ? error.message : '选择提交失败，请重试' })
+      if (this.snapshot.pending.some(item => item.id === decisionId)) this.update({ ...this.snapshot, errorDecisionId: decisionId, error: error instanceof Error ? error.message : '选择提交失败，请重试' })
       return null
     }).finally(() => {
       this.flights.delete(decisionId)
-      if (this.snapshot.submittingId === decisionId) this.update({ ...this.snapshot, submittingId: undefined })
+      this.update({ ...this.snapshot, submittingIds: [...this.flights.keys()], submittingId: this.flights.keys().next().value })
     })
     this.flights.set(decisionId, flight)
     return flight
@@ -105,14 +105,14 @@ export class DecisionSession {
       ...(this.snapshot.submittingId === decisionId ? { submittingId: undefined, error: null } : {}) })
   }
   private commit(teamId: string, decisionId: string, choiceId: string): DecisionRecord | null {
-    const request = this.snapshot.pending[0]
+    const request = this.firstForConversation(decisionId)
     if (teamId !== this.teamId || !request || request.teamId !== teamId || request.id !== decisionId) return null
     if (remaining(request) <= 0) { this.dismiss(decisionId); return null }
     const label = request.kind === 'choice' ? request.options.find(option => option.id === choiceId)?.label
       : choiceId === 'confirm' ? request.confirmLabel : choiceId === 'reject' ? request.rejectLabel : undefined
     if (!label) return null
     const record = { id: `${teamId}:${request.id}:${choiceId}`, request, choiceId, label }
-    const pending = this.snapshot.pending.slice(1)
+    const pending = this.snapshot.pending.filter(item => item.id !== decisionId)
     clearTimeout(this.expiryTimers.get(decisionId)); this.expiryTimers.delete(decisionId); this.submissions.delete(decisionId)
     clearTimeout(this.receiptTimer)
     if (!pending.length) this.receiptTimer = setTimeout(() => {
@@ -125,7 +125,20 @@ export class DecisionSession {
     clearTimeout(this.receiptTimer); this.receiptTimer = undefined
     if (this.snapshot.receipt) this.update({ ...this.snapshot, receipt: null })
   }
+  private firstForConversation(decisionId: string) {
+    const target = this.snapshot.pending.find(item => item.id === decisionId)
+    return target && this.snapshot.pending.find(item => item.conversationId === target.conversationId)
+  }
   clearRecords() { clearTimeout(this.receiptTimer); this.update({ ...this.snapshot, records: [], receipt: null }) }
+  removeConversation(conversationId: string) {
+    for (const request of this.snapshot.pending) if (request.conversationId === conversationId) {
+      clearTimeout(this.expiryTimers.get(request.id)); this.expiryTimers.delete(request.id); this.submissions.delete(request.id)
+    }
+    const receipt = this.snapshot.receipt?.request.conversationId === conversationId ? null : this.snapshot.receipt
+    if (!receipt) clearTimeout(this.receiptTimer)
+    this.update({ ...this.snapshot, pending: this.snapshot.pending.filter(request => request.conversationId !== conversationId),
+      records: this.snapshot.records.filter(record => record.request.conversationId !== conversationId), receipt })
+  }
   reset() {
     const requests = this.initialRequests()
     clearTimeout(this.receiptTimer)

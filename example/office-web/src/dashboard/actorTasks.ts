@@ -23,5 +23,5 @@ export function officeActorPrimaryTasks(data: DashboardSnapshot | null): Map<str
 
 export function officeActorTasks(data: DashboardSnapshot | null): Map<string, ActorTaskPresentation> {
   return new Map([...officeActorPrimaryTasks(data)].map(([actorId, task]) => [actorId,
-    { id: task.id, title: task.title, detail: task.summary, status: task.status, progress: task.progress, progressMode: 'activity' }]))
+    { id: data?.conversationId ? JSON.stringify([data.conversationId, task.id]) : task.id, title: task.title, detail: task.summary, status: task.status, progress: task.progress, progressMode: 'activity' }]))
 }

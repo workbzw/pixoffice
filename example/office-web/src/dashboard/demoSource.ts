@@ -1,5 +1,7 @@
-import type { DashboardAction, DashboardSnapshot, OfficeDataSource } from '@pixoffice/protocol/dashboard'
+import type { DashboardAction, DashboardConversation, DashboardSnapshot, OfficeDataSource } from '@pixoffice/protocol/dashboard'
 import { parseDashboardSnapshot } from '@pixoffice/protocol/dashboard'
+import { emptyWhiteboard } from '@pixoffice/protocol/office-ui'
+import { dashboardWhiteboardTaskBoard } from './whiteboard.ts'
 import { notifySubscribers } from '../notifications.ts'
 
 const initialEmployees: DashboardSnapshot['employees'] = [
@@ -21,6 +23,7 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
   readonly kind = 'example'
   private listeners = new Set<() => void>()
   private snapshot: DashboardSnapshot
+  private conversations = new Map<string, DashboardSnapshot>()
 
   constructor(now = new Date(), seed: ExampleOfficeSeed = {}) {
     const at = now.toISOString()
@@ -50,9 +53,43 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
       }))
     }
     this.snapshot = parseDashboardSnapshot(this.snapshot)
+    this.snapshot.conversationId = 'main'
+    this.snapshot.whiteboard = dashboardWhiteboardTaskBoard(this.snapshot)
+    this.conversations.set('main', this.snapshot)
+    if (this.snapshot.workspace.id === 'office-1' && seed.tasks) {
+      const make = (id: string, title: string, tasks: DashboardSnapshot['tasks']) => {
+        const snapshot = parseDashboardSnapshot({ ...structuredClone(this.snapshot), conversationId: id, tasks, events: [],
+          whiteboard: { ...emptyWhiteboard(), title, status: tasks.some(task => task.status === 'running') ? 'running' : 'queued',
+            description: title === '产品需求评审' ? '明确需求边界与验收标准。' : title === '登录接口联调' ? '核对接口协议，完成端到端验证。' : '汇总本周进展与下一步计划。',
+            steps: tasks.slice(0, 3).map(task => ({ id: task.id, title: task.title, progress: task.progress ?? -1 })) } })
+        this.conversations.set(id, snapshot)
+      }
+      make('requirements', '产品需求评审', [
+        { id: 'review-scope', title: '梳理需求范围', assigneeId: 'code-agent', status: 'running', progress: 65, summary: '核对登录流程与边界场景。', updatedAt: at },
+        { id: 'review-design', title: '评审交互方案', assigneeId: 'app-agent', status: 'queued', progress: 0, updatedAt: at },
+      ])
+      make('integration', '登录接口联调', [
+        { id: 'api-contract', title: '核对接口协议', assigneeId: 'file-agent', status: 'completed', progress: 100, updatedAt: at },
+        { id: 'api-check', title: '验证登录流程', assigneeId: 'review-agent', status: 'blocked', progress: 42, summary: '等待测试环境访问授权。', updatedAt: at },
+      ])
+      make('weekly', '本周项目周报', [])
+    }
   }
 
   async getSnapshot() { return structuredClone(this.snapshot) }
+  getConversations(): DashboardConversation[] {
+    return [...this.conversations].map(([id, snapshot]) => ({ id, title: snapshot.whiteboard?.title || snapshot.workspace.name,
+      employees: structuredClone(snapshot.employees), tasks: structuredClone(snapshot.tasks), events: structuredClone(snapshot.events), whiteboard: structuredClone(snapshot.whiteboard) }))
+  }
+  selectConversation(id: string) {
+    if ((this.snapshot.conversationId ?? '') === id) return
+    let snapshot = this.conversations.get(id)
+    if (!snapshot) {
+      snapshot = { schemaVersion: '1.0', workspace: { ...this.snapshot.workspace }, ...(id ? { conversationId: id } : {}), employees: [], tasks: [], events: [], whiteboard: emptyWhiteboard() }
+    }
+    this.snapshot = snapshot
+    notifySubscribers(this.listeners, 'ExampleOfficeDataSource')
+  }
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
 
   async execute(action: DashboardAction) {
@@ -81,6 +118,14 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
       occurredAt: task.updatedAt,
     })
     this.snapshot.events = this.snapshot.events.slice(0, 100)
+    if (this.snapshot.conversationId === 'main') this.snapshot.whiteboard = dashboardWhiteboardTaskBoard(this.snapshot)
+    else if (this.snapshot.whiteboard) {
+      const tasks = this.snapshot.tasks
+      this.snapshot.whiteboard = { ...this.snapshot.whiteboard,
+        status: tasks.length && tasks.every(task => task.status === 'completed') ? 'completed' : tasks.some(task => task.status === 'running') ? 'running'
+          : tasks.some(task => task.status === 'blocked') ? 'blocked' : tasks.some(task => task.status === 'failed') ? 'failed' : 'queued',
+        steps: (this.snapshot.whiteboard.steps ?? []).map(step => ({ ...step, progress: tasks.find(task => task.id === step.id)?.progress ?? -1 })) }
+    }
     notifySubscribers(this.listeners, 'ExampleOfficeDataSource')
   }
 }

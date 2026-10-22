@@ -12,6 +12,7 @@ test('chat subscribers cannot strand a response in the thinking state', async t 
   const { ChatSession } = await server.ssrLoadModule('/example/office-web/src/chat/ChatSession.ts')
   const session = new ChatSession('team-a', { kind: 'test', async *stream() { yield { type: 'delta', text: 'Answer' }; yield { type: 'done' } } })
   t.after(() => session.dispose())
+  await session.ready
   session.subscribe(brokenView)
   let notifications = 0
   session.subscribe(() => notifications++)

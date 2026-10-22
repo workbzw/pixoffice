@@ -5,12 +5,14 @@ import { randomUUID } from 'node:crypto'
 export type Envelope<T extends object = Record<string, unknown>> = { code: number; msg: string; data: T }
 export type OfficeSnapshot = {
   schemaVersion: '1.0'; seq: number; workspace: { id: string; name: string }
+  conversations: { id: string; title: string
   employees: { id: string; sceneActorId?: string; name: string; online?: boolean }[]
   tasks: { id: string; title: string; status: string; assigneeId?: string; progress?: number; summary?: string; updatedAt: string }[]
   events: object[]
   whiteboard: { template: 'task-board-v1'; title: string; status: string; description: string; note: string; steps: { id: string; title: string; progress: number }[] }
+  }[]
 }
-export type UserAction = { id: string; teamId: string; action: string; actorId?: string; employeeId?: string; taskId?: string; interactionId?: string; optionId?: string }
+export type UserAction = { id: string; teamId: string; conversationId: string; action: string; actorId?: string; employeeId?: string; taskId?: string; interactionId?: string; optionId?: string }
 export type Capabilities = { scene: { actors: { id: string; name: string; position: { x: number; y: number } }[];
   capabilities: { id: string }[] }; ui: object; requests: object; responses: object }
 export type OfficeRead = { snapshot: OfficeSnapshot; scene: Capabilities['scene']; pendingDecisions: string[] }
@@ -52,8 +54,5 @@ export class ExternalClient {
 }
 
 export function office(id = 'team-a', seq = 1): OfficeSnapshot {
-  return { schemaVersion: '1.0', seq, workspace: { id, name: id === 'team-a' ? '研发验收办公室' : '产品验收办公室' },
-    employees: [{ id: 'developer', sceneActorId: 'office-lead', name: '验收开发员', online: true }, { id: 'researcher', sceneActorId: 'code-agent', name: '验收调研员', online: true }],
-    tasks: [{ id: 'login', title: '登录模块验收', status: 'running', assigneeId: 'developer', progress: 35, summary: '验证真实后端对接与页面展示。', updatedAt: '2026-10-18T10:00:00Z' }], events: [],
-    whiteboard: { template: 'task-board-v1', title: '研发交付计划', status: 'running', description: '完成协议、界面与验收。', note: '通过真实浏览器验收。', steps: [{ id: 'develop', title: '开发与联调', progress: 35 }] } }
+  return { schemaVersion: '1.0', seq, workspace: { id, name: id === 'team-a' ? '研发验收办公室' : '产品验收办公室' }, conversations: [{ id: 'main', title: '主会话', employees: [{ id: 'developer', sceneActorId: 'office-lead', name: '验收开发员', online: true }, { id: 'researcher', sceneActorId: 'code-agent', name: '验收调研员', online: true }], tasks: [{ id: 'login', title: '登录模块验收', status: 'running', assigneeId: 'developer', progress: 35, summary: '验证真实后端对接与页面展示。', updatedAt: '2026-10-18T10:00:00Z' }], events: [], whiteboard: { template: 'task-board-v1', title: '研发交付计划', status: 'running', description: '完成协议、界面与验收。', note: '通过真实浏览器验收。', steps: [{ id: 'develop', title: '开发与联调', progress: 35 }] } }] }
 }
