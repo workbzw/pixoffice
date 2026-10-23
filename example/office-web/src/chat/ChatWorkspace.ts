@@ -72,7 +72,7 @@ export class ChatWorkspace {
   }
   private add(id: string, title: string, local: boolean, archive?: ChatArchive) {
     const initial: ChatArchive = archive ?? { version: 1, teamId: this.teamId, conversationId: id, draft: '', activeTurnId: '',
-      messages: (this.source instanceof PreviewChatSource && this.teamId === 'office-1' ? this.source.initialHistory(id) : []).map(message => ({ ...message, id: crypto.randomUUID(), state: 'complete' as const })) }
+      messages: (this.source instanceof PreviewChatSource ? this.source.initialHistory(id, this.teamId) : []).map(message => ({ ...message, id: crypto.randomUUID(), state: 'complete' as const })) }
     this.archives.set(id, initial)
     const session = new ChatSession(this.teamId, this.source, { conversationId: id, syncOnRestore: false, persistence: {
       read: async () => initial,
@@ -114,6 +114,17 @@ export class ChatWorkspace {
   select(id: string) {
     if (!this.state.ready || !this.entries.has(id) || this.state.selectedId === id) return
     this.emit({ selectedId: id }); this.scheduleSave(); void this.selected?.synchronize(true)
+  }
+  invalidateHistory(conversationId?: string) {
+    for (const entry of this.entries.values()) {
+      if (conversationId && entry.id !== conversationId) continue
+      void entry.session.invalidateHistory(entry.id === this.state.selectedId)
+    }
+  }
+  restorePreviewConversation(id: string) {
+    if (!this.state.ready || this.source.kind !== 'preview' || !this.catalogue.some(entry => entry.id === id)) return
+    if (this.deletedIds.delete(id)) { this.sync(this.catalogue); this.scheduleSave() }
+    this.select(id)
   }
   create() {
     if (!this.state.ready) return

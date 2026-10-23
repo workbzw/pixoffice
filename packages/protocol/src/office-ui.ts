@@ -19,6 +19,7 @@ export const officeUiManifest = {
     { id: 'whiteboard', content: 'task-board-v1', persistent: true, update: 'office.snapshot' },
     { id: 'dialog', content: 'detail-v1', persistent: false, update: 'ui.respond' },
     { id: 'computer.task', content: 'task', persistent: true, update: 'office.snapshot' },
+    { id: 'actor.insights', content: 'agent-insights-v1', persistent: false, update: 'office.snapshot' },
     { id: 'decision', content: 'confirmation-or-choice', persistent: false, update: 'decision.request' },
   ],
   actions: ['actor.inspect', 'employee.inspect', 'task.start', 'task.block', 'task.complete', 'task.assign', 'dialog.action', 'conversation.delete'],

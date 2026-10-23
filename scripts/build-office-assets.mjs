@@ -4,12 +4,18 @@ import { fileURLToPath } from 'node:url'
 import sharp from 'sharp'
 
 const root = fileURLToPath(new URL('../public/assets/office/', import.meta.url))
+export const OFFICE_WORK_EFFECT_SOURCE = fileURLToPath(new URL('../art/office/work-crafting-v1/spritesheet-white-cloud-soft.png', import.meta.url))
 export const OFFICE_IMAGES = ['office', 'desk', 'chair', 'workstation-trial-v1/desk', 'workstation-trial-v1/chair', 'workstation-trial-v1/computer', 'reference-v1/room-whiteboard-v3', 'reference-v1/conference-table', 'reference-v1/desk-accessories', 'effects/work-crafting-lite-v1']
 
 export async function buildOfficeCraftingAtlas(source) {
+  const { width, height, hasAlpha } = await sharp(source).metadata()
+  if (!width || !height || !hasAlpha || Math.abs(width / height - 4 / 3) > .01) throw new Error('Office smoke source must be a transparent 4 by 3 frame sheet')
   const frames = []
   for (const [i, frame] of [0, 2, 4, 6, 8, 11].entries()) {
-    const input = await sharp(source).extract({ left: frame % 4 * 362, top: Math.floor(frame / 4) * 362, width: 362, height: 362 })
+    const column = frame % 4, row = Math.floor(frame / 4)
+    const left = Math.round(column * width / 4), top = Math.round(row * height / 3)
+    const input = await sharp(source).extract({ left, top,
+      width: Math.round((column + 1) * width / 4) - left, height: Math.round((row + 1) * height / 3) - top })
       .resize(160, 160).png().toBuffer()
     frames.push({ input, left: i % 3 * 160, top: Math.floor(i / 3) * 160 })
   }
@@ -32,7 +38,7 @@ export async function buildOfficeAssets(directory = root) {
   for (const name of OFFICE_IMAGES) {
     const png = path.join(directory, `${name}.png`)
     const artSource = name === 'effects/work-crafting-lite-v1' && path.resolve(directory) === path.resolve(root)
-      ? fileURLToPath(new URL('../art/office/work-crafting-v1/spritesheet-small-tools-white-smoke.png', import.meta.url)) : png
+      ? OFFICE_WORK_EFFECT_SOURCE : png
     const source = await readFile(artSource)
     const original = artSource !== png ? await buildOfficeCraftingAtlas(source) : source
     if (artSource !== png) await publish(png, original)

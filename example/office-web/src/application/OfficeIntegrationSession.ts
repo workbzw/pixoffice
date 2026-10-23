@@ -1,10 +1,9 @@
 import { maxRelayTeams, relayMessageSchema } from '@pixoffice/protocol/relay'
-import { officeClosedSchema, officeDeliverySchema, officeMessageSchema, officeSyncSchema, officeSyncStartSchema, officeSyncCompleteSchema, officeResultSchema, officeErrorResultSchema, officeSupportedMessages, describeOfficeUi } from '@pixoffice/protocol/office-integration'
-import type { OfficeDelivery, OfficeReply, OfficeRequest, OfficeSnapshot } from '@pixoffice/protocol/office-integration'
+import { officeClosedSchema, officeDeliverySchema, officeMessageSchema, officeSyncSchema, officeSyncStartSchema, officeSyncCompleteSchema, officeBrowserResultSchema, officeErrorResultSchema, describeOfficeRuntime, unavailableOfficeRuntime, defaultOfficeLayout, officeLayoutStateSchema, officeLayoutSyncSchema, describeOfficeLayouts, officeChatUpdatedSchema } from '@pixoffice/protocol/office-integration'
+import type { OfficeDelivery, OfficeReply, OfficeRequest, OfficeSnapshot, OfficeLayoutId, OfficeLayoutState } from '@pixoffice/protocol/office-integration'
 import type { MessageTransport } from '@pixoffice/runtime/adapters/messages'
 import { canonical, idSchema } from '@pixoffice/protocol'
 import { parseProtocolObject, stringifyProtocolObject } from '@pixoffice/protocol/schema'
-import { OFFICE_ROSTER } from '@pixoffice/scene-office/core/roster'
 import { describeOfficeScene } from '@pixoffice/scene-office/core'
 import type { OfficeTeamSession } from './OfficeTeamSession.ts'
 import { PushOfficeDataSource } from '../dashboard/PushOfficeDataSource.ts'
@@ -15,9 +14,10 @@ type Options = {
   transport: MessageTransport
   reply: (reply: OfficeReply) => Promise<void>
   createSession: (source: PushOfficeDataSource, id: string) => OfficeTeamSession
+  changeLayout?: (layoutId: OfficeLayoutId) => Promise<OfficeLayoutState>
   storage?: Pick<Storage, 'getItem' | 'setItem'>
 }
-const storageKey = 'pixoffice:connected-offices:v5'
+const storageKey = 'pixoffice:connected-offices:v6'
 class IntegrationFault extends Error {
   readonly reasonCode: string
   readonly code: OfficeReply['result']['code']
@@ -28,7 +28,8 @@ class IntegrationFault extends Error {
 export class OfficeIntegrationSession {
   private readonly options: Options
   private offices = new Map<string, ConnectedOffice>()
-  private state: { offices: readonly ConnectedOffice[]; connection: string; error: string | null } = { offices: [], connection: '连接中', error: null }
+  private state: { offices: readonly ConnectedOffice[]; connection: string; error: string | null; layout: OfficeLayoutState; layoutBusy: boolean } = {
+    offices: [], connection: '连接中', error: null, layout: { ...defaultOfficeLayout }, layoutBusy: false }
   private listeners = new Set<() => void>()
   private disconnect?: () => void
   private active = false
@@ -40,12 +41,37 @@ export class OfficeIntegrationSession {
   private stateId = ''
   private work = Promise.resolve()
   private pendingWork = 0
+  private resyncRequired = false
+  private layoutSyncError = false
+  private layoutChangeGeneration = 0
+  private chatRecoveryNeeded = false
   private bindings = new Map<string, { session: OfficeTeamSession; decisionId: string }>()
   private submitting = new Set<string>()
 
   constructor(options: Options) { this.options = options }
   getSnapshot = () => this.state
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
+  refreshChatHistory = () => { for (const office of this.offices.values()) office.session.chat.invalidateHistory() }
+
+  selectLayout = async (layoutId: OfficeLayoutId) => {
+    if (this.state.layoutBusy) return
+    if (!this.active || !this.options.changeLayout) { this.update({ error: '布局连接不可用' }); return }
+    const generation = this.generation, stateId = this.stateId, change = ++this.layoutChangeGeneration
+    const current = () => this.active && generation === this.generation && stateId === this.stateId && change === this.layoutChangeGeneration
+    this.update({ layoutBusy: true, error: null })
+    try {
+      const selection = await this.options.changeLayout(layoutId)
+      if (current()) { this.applyLayout(selection); this.persist() }
+    } catch (error) {
+      if (current()) this.update({ error: `布局切换失败：${error instanceof Error ? error.message : String(error)}` })
+    } finally { if (current()) this.update({ layoutBusy: false }) }
+  }
+
+  private applyLayout(layout: OfficeLayoutState, reset = false) {
+    const previous = this.state.layout
+    if (reset || layout.revision > previous.revision) this.update({ layout: { ...layout } })
+    else if (layout.revision === previous.revision && layout.currentLayoutId !== previous.currentLayoutId) throw new IntegrationFault('LAYOUT_CONFLICT', '相同布局版本对应不同布局', 409)
+  }
 
   async start() {
     if (this.active) return
@@ -57,10 +83,11 @@ export class OfficeIntegrationSession {
         const raw = this.options.storage?.getItem(storageKey)
         if (raw) {
           const cached: unknown = parseProtocolObject(raw)
-          if (!cached || typeof cached !== 'object' || !('version' in cached) || cached.version !== 5 || !('offices' in cached)
+          if (!cached || typeof cached !== 'object' || !('version' in cached) || cached.version !== 6 || !('offices' in cached) || !('layout' in cached)
             || !('stateId' in cached) || cached.stateId !== '' && !idSchema.safeParse(cached.stateId).success) throw new Error('缓存格式无效')
           const message = officeMessageSchema.parse({ type: 'offices.initialize', offices: cached.offices })
           this.stateId = cached.stateId as string
+          this.applyLayout(officeLayoutStateSchema.parse(cached.layout), true)
           if (message.type === 'offices.initialize') await this.initialize(message.offices, false, true)
         }
       } catch { this.writableCache = false; this.update({ error: '办公室缓存无法读取，原缓存未覆盖；可继续接收后端初始化。' }) }
@@ -70,6 +97,8 @@ export class OfficeIntegrationSession {
 
   stop() {
     this.active = false; this.transportOpen = false; this.generation++
+    this.layoutChangeGeneration++; this.resyncRequired = false
+    if (this.state.layoutBusy) this.update({ layoutBusy: false })
     const disconnect = this.disconnect; this.disconnect = undefined
     try { disconnect?.() } catch (error) { console.warn('[OfficeIntegration] disconnect failed', error) }
     for (const { session, decisionId } of this.bindings.values()) session.decisions.dismiss(decisionId)
@@ -82,12 +111,25 @@ export class OfficeIntegrationSession {
     const start = officeSyncStartSchema.safeParse(value)
     if (start.success) {
       this.queue(async () => {
-        if (this.stateId !== start.data.stateId) {
+        const replaced = this.stateId !== start.data.stateId
+        if (replaced) {
+          this.layoutChangeGeneration++
           for (const id of [...this.offices.keys()]) this.removeOffice(id)
           this.stateId = start.data.stateId
-          this.update({ offices: [], error: null })
-          this.persist()
+          this.update({ offices: [], error: null, layoutBusy: false })
         }
+        this.applyLayout(start.data.layout, replaced || start.data.layout.revision === this.state.layout.revision)
+        if (this.layoutSyncError) { this.layoutSyncError = false; this.update({ error: null }) }
+        this.persist()
+        return null
+      })
+      return
+    }
+    const layout = officeLayoutSyncSchema.safeParse(value)
+    if (layout.success) {
+      this.queue(async () => {
+        try { this.applyLayout(layout.data.layout); this.persist() }
+        catch { this.layoutSyncError = true; this.requireResync('布局状态存在冲突，正在恢复最新选择。') }
         return null
       })
       return
@@ -99,6 +141,10 @@ export class OfficeIntegrationSession {
         const ids = new Set(complete.data.offices.map(item => item.teamId))
         for (const id of [...this.offices.keys()]) if (!ids.has(id)) this.removeOffice(id)
         this.update({ offices: [...this.offices.values()] })
+        if (this.chatRecoveryNeeded) {
+          this.chatRecoveryNeeded = false
+          this.refreshChatHistory()
+        }
         this.persist()
         const ready = complete.data.offices.every(item => { const office = this.offices.get(item.teamId); return office && office.source.readSnapshot().seq >= item.seq && !office.session.getSnapshot().sceneLinkError && !office.session.getSnapshot().dashboardError })
         this.setConnection(!ready ? '状态同步失败' : complete.data.offices.length ? '已连接' : '已连接，等待后端初始化')
@@ -109,6 +155,14 @@ export class OfficeIntegrationSession {
     const sync = officeSyncSchema.safeParse(value)
     if (sync.success) {
       this.queue(async () => { await this.initialize([sync.data.snapshot], true, true); return null })
+      return
+    }
+    const chatUpdated = officeChatUpdatedSchema.safeParse(value)
+    if (chatUpdated.success) {
+      this.queue(async () => {
+        this.offices.get(chatUpdated.data.teamId)?.session.chat.invalidateHistory(chatUpdated.data.conversationId)
+        return null
+      })
       return
     }
     const closed = officeClosedSchema.safeParse(value)
@@ -143,15 +197,32 @@ export class OfficeIntegrationSession {
     })
   }
 
+  private requireResync(message: string) {
+    if (this.resyncRequired) return
+    this.resyncRequired = true; this.transportOpen = false; this.chatRecoveryNeeded = true
+    this.connectionGeneration++
+    const disconnect = this.disconnect; this.disconnect = undefined
+    try { disconnect?.() } catch (error) { console.warn('[OfficeIntegration] disconnect failed', error) }
+    this.setConnection('等待恢复最新状态')
+    this.update({ error: message })
+  }
+
   private queue(task: () => Promise<OfficeReply | null>) {
-    if (this.pendingWork >= 128) { this.update({ error: '前端业务处理队列已满，最新状态将在重连时同步。' }); return }
+    if (this.pendingWork >= 128) { this.requireResync('前端业务处理队列已满，正在恢复最新状态。'); return }
     const generation = this.generation
     this.pendingWork++
     const work = this.work.then(async () => {
       if (!this.active || generation !== this.generation) return null
       return task()
     })
-    this.work = work.then(() => {}, () => {}).finally(() => { this.pendingWork-- })
+    this.work = work.then(() => {}, () => {}).finally(() => {
+      this.pendingWork--
+      if (!this.pendingWork && this.active && this.resyncRequired) {
+        this.resyncRequired = false
+        this.setConnection('正在同步最新状态')
+        this.connect()
+      }
+    })
     void work.then(result => { if (result && this.active && generation === this.generation) return this.options.reply(result) }).catch(error => {
       // Another page may have answered first, or the original HTTP request has ended.
       if (error && typeof error === 'object' && 'status' in error && error.status === 410) return
@@ -167,6 +238,7 @@ export class OfficeIntegrationSession {
       onMessage: message => { if (this.active && generation === this.connectionGeneration) this.receive(message) },
       onStatus: connection => {
         if (!this.active || generation !== this.connectionGeneration) return
+        if (connection !== '已连接' && this.offices.size) this.chatRecoveryNeeded = true
         this.transportOpen = connection === '已连接'
         this.setConnection(connection === '已连接' ? '正在同步最新状态' : connection)
       },
@@ -216,7 +288,7 @@ export class OfficeIntegrationSession {
       if (office.session.getSnapshot().dashboardError) throw new IntegrationFault('BUSINESS_ERROR', office.session.getSnapshot().dashboardError!)
       if (office.session.getSnapshot().sceneLinkError) throw new IntegrationFault('SCENE_SYNC_FAILED', office.session.getSnapshot().sceneLinkError!)
     }
-    this.update({ offices: [...this.offices.values()], error: null })
+    this.update({ offices: [...this.offices.values()], error: this.resyncRequired ? this.state.error : null })
     if (persist) this.persist()
   }
 
@@ -227,6 +299,10 @@ export class OfficeIntegrationSession {
 
   private async handle(delivery: OfficeDelivery, timing: { deadline: number; expiresAt: number }): Promise<OfficeReply | null> {
     const request = delivery.request
+    if (request.type === 'office.layout.set') {
+      if (request.layoutId !== this.state.layout.currentLayoutId) throw new IntegrationFault('LAYOUT_CONFLICT', '布局已被更新，请重新查询当前布局', 409)
+      return this.result(delivery, 200, 'OK', describeOfficeLayouts(this.state.layout))
+    }
     if (request.type === 'offices.initialize') {
       await this.initialize(request.offices)
       if (this.transportOpen) this.setConnection('已连接')
@@ -236,8 +312,7 @@ export class OfficeIntegrationSession {
     const teamId = 'teamId' in request ? request.teamId : undefined
     const office = teamId && this.offices.get(teamId)
     if (!office) return this.result(delivery, 404, '办公室未初始化', { reasonCode: 'OFFICE_NOT_INITIALIZED' })
-    if (request.type === 'office.read') return this.result(delivery, 200, 'OK', { snapshot: office.source.readSnapshot(),
-      scene: describeOfficeScene(office.session.runtime), pendingDecisions: office.session.decisions.getSnapshot().pending.map(item => item.id) })
+    if (request.type === 'office.read') return this.result(delivery, 200, 'OK', this.describeOffice(office))
     if (request.type === 'office.snapshot') {
       const previous = office.source.readSnapshot()
       await this.initialize([request.snapshot])
@@ -278,19 +353,22 @@ export class OfficeIntegrationSession {
   }
 
   private describe() {
-    return { offices: [...this.offices.values()].map(office => ({ id: office.id, name: office.name, runtimeReady: true,
-      seq: office.source.readSnapshot().seq, taskCount: office.source.readSnapshot().conversations.reduce((sum, conversation) => sum + conversation.tasks.length, 0) })),
-    actors: OFFICE_ROSTER.map(({ id, name }) => ({ id, name })),
-    supportedMessages: [...officeSupportedMessages], sceneCommandProtocol: '2.0', ui: describeOfficeUi() }
+    return { offices: [...this.offices.values()].map(office => this.describeOffice(office)) }
+  }
+  private describeOffice(office: ConnectedOffice) {
+    const state = office.session.getSnapshot()
+    return { id: office.id, seq: office.source.readSnapshot().seq,
+      runtime: state.sceneLinkError || state.dashboardError ? unavailableOfficeRuntime()
+        : describeOfficeRuntime(describeOfficeScene(office.session.runtime), office.session.chat.getSnapshot().selectedId, office.session.decisions.getSnapshot().pending.map(item => item.id)) }
   }
   private persist() {
     if (!this.options.storage || !this.writableCache) return
-    try { this.options.storage.setItem(storageKey, stringifyProtocolObject({ version: 5, stateId: this.stateId, offices: [...this.offices.values()].map(office => office.source.readSnapshot()) })) }
+    try { this.options.storage.setItem(storageKey, stringifyProtocolObject({ version: 6, stateId: this.stateId, layout: this.state.layout, offices: [...this.offices.values()].map(office => office.source.readSnapshot()) })) }
     catch { this.update({ error: '办公室状态已更新，但浏览器缓存写入失败；刷新后需要后端重新同步。' }) }
   }
   private result(delivery: OfficeDelivery, code: OfficeReply['result']['code'], msg: string, result: unknown): OfficeReply {
     return { responseToken: delivery.responseToken, result: { code, msg: msg.slice(0, 500),
-      data: code === 200 ? officeResultSchema(delivery.request.type, delivery.request.type === 'office.read' && Boolean(delivery.request.teamId)).parse(result) : officeErrorResultSchema.parse(result) } }
+      data: code === 200 ? officeBrowserResultSchema(delivery.request.type, delivery.request.type === 'office.read' && Boolean(delivery.request.teamId)).parse(result) : officeErrorResultSchema.parse(result) } }
   }
   private respond(delivery: OfficeDelivery, code: OfficeReply['result']['code'], msg: string, result: unknown) {
     return this.options.reply(this.result(delivery, code, msg, result))

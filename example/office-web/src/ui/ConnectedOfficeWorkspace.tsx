@@ -18,13 +18,18 @@ import type { LayoutMode } from '../../../shared/scene/layout.tsx'
 import { OfficeShell } from './OfficeShell.tsx'
 import { OfficeEmptyState } from './OfficeEmptyState.tsx'
 import { SceneOnlyLayout } from '../../../shared/scene/layout.tsx'
+import { requestOfficeLayout } from '../application/requestOfficeLayout.ts'
+import type { OfficeLayoutControl } from './officeLayout.ts'
+import { OfficeLayoutSwitch } from './OfficeLayoutSwitch.tsx'
+import { MemberOfficeShell } from './MemberOfficeShell.tsx'
 
 export function ConnectedOfficeWorkspace({ baseUrl, renderOffice }: { baseUrl: string; renderOffice: (props: {
-  session: OfficeTeamSession; teamSelection: OfficeTeamSelection; layout: LayoutMode; decisionOpenToken: number; integrationError: string | null
+  session: OfficeTeamSession; teamSelection: OfficeTeamSelection; layout: LayoutMode; pageLayout: OfficeLayoutControl; decisionOpenToken: number; integrationError: string | null
 }) => ReactNode }) {
   const [chatSource] = useState(() => new HttpChatSource(`${baseUrl.replace(/\/$/, '')}${chatPath}`))
   const [integration] = useState(() => new OfficeIntegrationSession({
     transport: new SseMessageTransport(baseUrl), storage: localStorage,
+    changeLayout: layoutId => requestOfficeLayout(baseUrl, layoutId),
     createSession: (source, sceneId) => new OfficeTeamSession(createOfficeRuntime({ sceneId, referenceLayout: true,
       seatStepDuration: seatStepDurationMs, supportsPose: supportsCharacterPose }), source, { chatSource,
       requestUi: async action => {
@@ -44,11 +49,16 @@ export function ConnectedOfficeWorkspace({ baseUrl, renderOffice }: { baseUrl: s
     },
   }))
   const state = useSyncExternalStore(integration.subscribe, integration.getSnapshot)
+  const pageLayout: OfficeLayoutControl = { value: state.layout.currentLayoutId, busy: state.layoutBusy, onChange: id => { void integration.selectLayout(id) } }
   const [activeId, select] = useState('')
   const [decisionOpenToken, setDecisionOpenToken] = useState(0)
   const [focusedDecisionTeamId, setFocusedDecisionTeamId] = useState('')
   const selectTeam = (id: string) => { select(id); setFocusedDecisionTeamId('') }
-  useEffect(() => { void integration.start(); return () => integration.stop() }, [integration])
+  useEffect(() => {
+    void integration.start()
+    window.addEventListener('online', integration.refreshChatHistory)
+    return () => { window.removeEventListener('online', integration.refreshChatHistory); integration.stop() }
+  }, [integration])
   const [layout] = useState<LayoutMode>(() => new URLSearchParams(location.search).get('layout') === 'scene' ? 'scene' : 'full')
   const sessions = useMemo(() => state.offices.map(office => office.session), [state.offices])
   useOfficeTeamHost(sessions)
@@ -57,11 +67,13 @@ export function ConnectedOfficeWorkspace({ baseUrl, renderOffice }: { baseUrl: s
   if (!office) {
     const scene = <OfficeEmptyState message="等待后端初始化办公室" />
     if (layout === 'scene') return <SceneOnlyLayout>{scene}</SceneOnlyLayout>
-    return <OfficeShell connection={state.connection} dashboard={null} dashboardError={state.error} sceneLinkError={null} dataMode="push"
+    const Shell = pageLayout.value === 'members' ? MemberOfficeShell : OfficeShell
+    return <Shell connection={state.connection} dashboard={null} dashboardError={state.error} sceneLinkError={null} dataMode="push"
       hasOffice={false} canExecuteActions={false} executeAction={async () => { throw new Error('暂无办公室') }} pendingTaskIds={[]} actionError={null}
+      layoutControl={<OfficeLayoutSwitch value={pageLayout.value} onChange={pageLayout.onChange} disabled={pageLayout.busy} />}
       appearanceIds={{}} scene={scene} editing={false} canRecoverLayout={false} recoverLayout={() => {}} exportCapabilities={() => {}} exportSnapshot={() => {}} renderScenePanel={() => null} />
   }
-  return renderOffice({ session: office.session, layout, decisionOpenToken, integrationError: state.error,
+  return renderOffice({ session: office.session, layout, pageLayout, decisionOpenToken, integrationError: state.error,
     teamSelection: { teams: options, activeId: office.id, focusedDecisionTeamId, select: selectTeam,
       openDecisions: id => {
         const session = state.offices.find(item => item.id === id)?.session

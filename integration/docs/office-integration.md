@@ -20,7 +20,7 @@ PixOffice 服务端 -- SSE 消息 --> PixOffice 浏览器页面
 
 ## 完整调用流程
 
-以下流程以服务器部署、浏览器页面在线为例。外部业务后端发送的 `office.capabilities`、`offices.initialize`、`office.snapshot`、`ui.next`、`ui.respond` 和 `decision.request`，均为 `POST /api/pixoffice/messages` 请求体中的 `type`。
+以下流程以服务器部署、浏览器页面在线为例。外部业务后端发送的 `office.capabilities`、`office.layout.read`、`office.layout.set`、`offices.initialize`、`office.snapshot`、`office.read`、`ui.next`、`ui.respond` 和 `decision.request`，均为 `POST /api/pixoffice/messages` 请求体中的 `type`。
 
 图中的 `/api/pixoffice/events`、`/api/pixoffice/reply` 和 `/api/pixoffice/ui` 由 PixOffice 浏览器代码调用。各操作的字段定义见后续章节。
 
@@ -172,7 +172,7 @@ Content-Type: application/json
 | --- | --- | --- |
 | `code` | 整数 | 与 HTTP 状态码一致 |
 | `msg` | 字符串 | 供人阅读的结果说明；程序应根据 `code` 和业务字段判断结果 |
-| `data` | 对象 | 该操作的返回数据；列表存放在对象内，例如 `data.offices`、`data.actions` |
+| `data` | 对象 | 该操作的返回数据；列表存放在对象内，例如 `data.state.offices`、`data.actions` |
 
 例如，等待用户操作时暂时没有可领取的操作，返回：
 
@@ -208,14 +208,95 @@ Content-Type: application/json
 | --- | --- |
 | `offices.initialize` | 取得浏览器逻辑初始化结果后返回 `200`；已缓存但未等待浏览器确认时返回 `202` |
 | `office.snapshot` | 取得浏览器应用结果后返回 `200` 和 `applied`；已缓存但未等待浏览器确认时返回 `202` 和 `cached`；较旧状态返回 `200` 和 `ignored`；相同版本、相同内容可重试同步 |
-| `office.read` | 返回办公室目录，或等待在线页面返回指定办公室的状态 |
-| `office.capabilities` | 服务端立即返回人物、物品、行为及 UI 的 JSON Schema，初始化前也可查询 |
+| `office.read` | 返回完整能力与所有办公室状态，指定 `teamId` 时只返回该办公室；无在线页面时仍返回缓存快照 |
+| `office.capabilities` | 服务端立即返回布局、动画、业务操作、UI 和聊天的完整契约，初始化前也可查询 |
+| `office.layout.read` | 服务端立即返回当前页面布局、可选布局及各自的业务数据 JSON Schema |
+| `office.layout.set` | 取得在线页面接受结果后返回 `200`；选择已缓存但未等待页面确认时返回 `202` |
+| `chat.updated` | 通知指定会话读取最新聊天历史；投递到在线页面返回 `200`，没有可投递页面返回 `202`，不等待页面回执 |
 | `ui.next` | 领取一个用户操作；等待时间内没有操作则返回 `data.actions: []` |
 | `ui.respond` | 服务端接收指定用户操作的展示结果后返回 |
 | `decision.request` | 等待用户选择后返回；到期返回 `408` |
 | `{teamId, command}` | 指令发送到在线页面连接后返回 `200`；播放由浏览器随后执行 |
 
-初始化、状态更新和状态查询等待浏览器处理的默认时限为 10 秒。菜单等待时限默认 60 秒，`timeoutMs` 可设为 1000–300000 毫秒。外部业务后端和反向代理的 HTTP 超时应大于相应等待时限，例如为最长菜单配置 310 秒。
+初始化、状态更新、布局切换和状态查询等待浏览器处理的默认时限为 10 秒。菜单等待时限默认 60 秒，`timeoutMs` 可设为 1000–300000 毫秒。外部业务后端和反向代理的 HTTP 超时应大于相应等待时限，例如为最长菜单配置 310 秒。
+
+## 页面布局查询与切换
+
+页面布局决定导航、成员和业务面板的排列，不改变办公室内部地图、人物身份或任务状态。目前提供 `classic`（经典布局）和 `members`（成员布局）。
+
+### 获取当前布局与可选目录
+
+独立查询可在办公室初始化前后调用：
+
+```json
+{ "type": "office.layout.read" }
+```
+
+`office.layout.read` 和 `office.layout.set` 的响应 `data` 包含以下字段：
+
+| 字段 | 类型 | 含义 |
+| --- | --- | --- |
+| `currentLayoutId` | 字符串 | 当前选择的页面布局 ID |
+| `revision` | 非负整数 | PixOffice 服务端生成的布局版本，用于自身状态同步；外部后端无需生成或提交 |
+| `layouts` | 对象数组 | 当前可选布局目录 |
+| `layouts[].id` | 字符串 | 可供选择的布局 ID |
+| `layouts[].name` | 字符串 | 布局显示名称 |
+| `layouts[].dataMessageType` | 字符串 | 该布局接收业务数据的操作类型，目前均为 `office.snapshot` |
+| `layouts[].dataSchema` | 对象 | 该布局业务快照的完整 JSON Schema，包括必需字段、可选字段和默认值 |
+| `layouts[].ui.slots` | 字符串数组 | 该布局支持的展示位置 ID，对应能力清单的 `ui.slots` |
+| `layouts[].ui.actions` | 字符串数组 | 该布局可产生的用户操作，对应 `ui.actionSchema` |
+| `layouts[].ui.localControls` | 字符串数组 | 浏览器本地交互，不是外部后端可发送的命令 |
+
+初始化与全局 `office.read` 将动态选择放在 `data.state.layout`，可选目录放在 `data.capabilities.layouts`；独立 `office.capabilities` 返回 `data.layouts`。目录由同一份协议定义生成。经典布局支持人物悬停统计，成员布局不提供人物悬停统计，而使用成员侧栏；相同业务数据不代表两套布局的交互完全一致。
+
+### 初始化指定与运行中切换
+
+初始化时可增加 `layoutId`：
+
+```json
+{ "type": "offices.initialize", "offices": [], "layoutId": "members" }
+```
+
+此处 `offices: []` 表示不增加办公室，也不删除现有办公室。省略 `layoutId` 保留当前选择；服务实例首次启动时默认为 `classic`。
+
+运行中单独切换，不需要重新初始化办公室或重新投递任务：
+
+```json
+{ "type": "office.layout.set", "layoutId": "classic" }
+```
+
+切换结果的 `data` 与 `office.layout.read` 使用相同结构。`200` 表示至少一个在线页面已接受该布局选择，不代表全部浏览器已经完成绘制；`202` 表示选择已缓存，页面上线或重连时恢复。请求重复指定同一布局不会增加布局版本。无效 ID 返回 `400`，不改变已有选择。
+
+```mermaid
+sequenceDiagram
+    participant E as 外部业务后端
+    participant S as PixOffice 服务端
+    participant B as PixOffice 浏览器
+    E->>S: office.layout.read
+    S-->>E: currentLayoutId、revision、layouts及数据Schema
+    E->>S: offices.initialize，可选layoutId
+    S-->>B: SSE同步布局选择和办公室数据
+    B->>S: 初始化结果
+    S-->>E: capabilities完整契约、state完整状态
+    E->>S: office.layout.set，指定另一个layoutId
+    S-->>B: SSE同步最新布局版本
+    B->>B: 替换页面界面，保留办公室运行时与会话
+    B->>S: 布局选择已接受
+    S-->>E: 当前布局和可选目录
+    E->>S: office.snapshot，继续更新业务数据
+    S-->>B: 更新任务和白板，不改变布局选择
+```
+
+### 状态范围与数据投递
+
+- 布局选择属于整个 PixOffice 服务实例，不属于某个 `teamId` 或会话。同一实例连接的浏览器页面共用选择；页面按钮切换也会更新服务端状态，因此后端查询可以看到用户的选择。
+- 连接模式下，服务端状态优先于浏览器保存的布局偏好与 `?shell=` 参数。纯静态演示没有外部控制，仍使用本地偏好。`?layout=scene` 是仅展示场景的页面入口，不属于可选布局 ID。
+- 目前两套布局都投影同一份办公室业务快照。后端继续使用 `office.snapshot` 投递，不需要按布局保存两份任务、成员或白板数据。布局目录分别提供各自的数据 Schema；以后增加专属数据要求时，应更新对应定义。
+- 业务数据更新与布局选择是两个操作，`office.snapshot` 不接受 `layoutId`。向当前未显示的办公室更新数据不会切换页面布局。
+- 切换布局不销毁办公室运行时、不取消人物活动，也不清除聊天记录、输入草稿或正在生成的回复。
+- 服务端只在内存中保存最新布局选择，不保存切换历史。重连和新页面使用最新选择；服务端重启后恢复默认，外部后端可在重新初始化时指定布局。
+
+`/api/pixoffice/layout` 是 PixOffice 浏览器按钮使用的同源内部接口，无需外部项目调用；外部后端的查询、初始化和切换继续共用 `/api/pixoffice/messages`。
 
 ## 1. 初始化办公室
 
@@ -226,6 +307,7 @@ Content-Type: application/json
 ```json
 {
   "type": "offices.initialize",
+  "layoutId": "members",
   "chat": {
     "url": "https://your-host.example/chat"
   },
@@ -283,11 +365,73 @@ Content-Type: application/json
 - `chat` 可选，为本 PixOffice 服务实例注册聊天接口；`url` 为服务端可访问的完整 HTTP(S) 地址。省略 `chat` 保留已有配置，`chat: { "url": "" }` 停用服务。可使用 `offices: []` 单独更换聊天地址，后续聊天立即生效；配置独立于快照 `seq`，服务端重启后须重新注册。地址只保存在 PixOffice 服务端，不广播给浏览器。详见[聊天接入文档](./chat-integration.md)。
 - `conversations[].id` 是办公室内唯一的会话 ID，`title` 是标签显示名称。聊天请求、审批请求及用户操作使用 `conversationId` 引用该 ID。
 - `conversations[].employees` 是会话的业务成员列表，可代表员工、功能或智能体。成员 `id` 在该会话内唯一；`sceneActorId` 指定负责展示该成员的场景人物。多个成员可以绑定同一人物，不同会话可有不同的绑定关系。
-- 每个办公室提供固定六个人物及对应工位、外观。可绑定人物通过 `office.capabilities` 的 `data.scene.actors`，或初始化结果的 `data.actors` 查询。
+- 每个办公室提供固定六个人物及对应工位、外观。可绑定人物通过 `office.capabilities` 的 `data.scene.actors`，或初始化结果的 `data.capabilities.scene.actors` 查询。
 - 初始化按 `workspace.id` 新增或更新办公室。请求未列出的办公室保留；此操作不提供删除办公室功能。一个服务实例最多管理 100 个办公室。
 - 新增办公室时，其他办公室继续执行各自活动。更新已有办公室使用完整快照和 `seq` 规则，见下文“恢复与顺序”。
-- 返回的 `data` 包含 `offices`、`actors`、`supportedMessages`、`sceneCommandProtocol` 和 `ui`。每项 `offices` 含 `id`、`name`、`seq`、`runtimeReady`、`taskCount`。
-- `runtimeReady: true` 表示浏览器已创建该办公室的逻辑运行环境；图片资源按需加载。返回 `202` 时，目录中的 `runtimeReady` 为 `false`，表示此响应尚未取得浏览器就绪确认；即使页面实际在线，也应按未确认处理。
+- 返回 `data.capabilities`（完整接口契约）和 `data.state`（当前状态），字段定义见下表。初始化后无需额外调用能力查询即可得到同一份契约。
+
+### 初始化响应结构
+
+| 字段 | 内容 |
+| --- | --- |
+| `data.capabilities` | 与独立 `office.capabilities` 的 `data` 完全同构：布局目录、人物与物品定义、动画参数和参与者要求、业务请求与返回 Schema、UI 展示格式、聊天四种操作及流事件契约 |
+| `data.state.layout` | `{currentLayoutId, revision}`，当前布局及服务端生成的版本 |
+| `data.state.chat.configured` | 聊天服务地址是否已注册；不表示上游服务健康检查通过，不返回地址或密钥 |
+| `data.state.offices[].snapshot` | 服务端保存的最新完整办公室快照，包含 `seq`、`workspace`、所有 `conversations` 及 `system`；每个会话包含成员、任务、动态、白板 |
+| `data.state.offices[].runtime.available` | 是否取得与该快照版本匹配的在线页面运行状态 |
+| `data.state.offices[].runtime.selectedConversationId` | 响应页面在此办公室选择的会话 ID；不可用时为 `""` |
+| `data.state.offices[].runtime.actors` | 人物 ID、名称、外观 ID、当前格子坐标和工作展示状态 |
+| `data.state.offices[].runtime.objects` | 物品 ID、名称、模板 ID、当前状态和状态版本，以及当前物品的交互目录 |
+| `data.state.offices[].runtime.pendingDecisions` | 此办公室尚待选择的菜单 ID 列表 |
+
+`snapshot` 是业务事实，`runtime` 是一个在线浏览器处理请求时的采样，不是所有页面的共同视图，也不保证图片资源已经完成绘制。不同页面可选择不同会话。若页面应用状态失败，或回复采样版本与服务端最新 `seq` 不一致，返回最新 `snapshot`，并将 `runtime` 标为不可用，不拼接失败或过期的运行状态。
+
+返回 `202` 或没有在线浏览器时，仍给出完整能力清单与所有缓存快照，运行状态统一为：
+
+```json
+{
+  "available": false,
+  "selectedConversationId": "",
+  "actors": [],
+  "objects": [],
+  "pendingDecisions": []
+}
+```
+
+能力清单只描述本项目提供的功能，不包含模型密钥、聊天正文、浏览器输入草稿或内部消息队列。聊天历史由聊天服务按会话提供；初始化中的 `chat` 契约给出读取方式。
+
+### 人物历史统计（可选）
+
+`conversations[].employees[].insights` 提供成员历史统计，随初始化及完整 `office.snapshot` 同步，并参与现有 `seq` 顺序控制与重连恢复。省略此字段时，人物弹窗显示“暂无历史统计”。不需要新增 HTTP 接口、悬停回调或动画回执。
+
+统计由外部业务后端汇总。`scope` 为 `conversation`（当前会话）或 `office`（本办公室），`updatedAt` 为含时区的 ISO 时间；`periods` 支持 `last7Days`、`last30Days`，每种最多一项。业务成员 ID 及其 `sceneActorId` 仍由所在 `employees` 项指定。多个成员绑定同一人物时，弹窗分别展示，不自动合并统计。
+
+以下为一个成员的 `insights` 字段示例：
+
+```json
+{
+  "scope": "conversation",
+  "updatedAt": "2026-10-22T10:00:00+08:00",
+  "periods": [{
+    "id": "last7Days", "label": "近 7 天",
+    "metrics": [{ "id": "completed", "label": "完成任务", "value": 28, "unit": "项" }],
+    "blocks": [{
+      "id": "daily", "type": "trend", "title": "完成趋势", "unit": "项",
+      "points": [{ "label": "10/21", "value": 5 }, { "label": "10/22", "value": 8 }]
+    }]
+  }]
+}
+```
+
+- 每个时间范围最多 4 个 `metrics`、4 个 `blocks`；同组项目 `id` 唯一。指标及完整统计遵循数组顺序；悬停概览选取首个图表区块和首个动态区块。
+- 指标 `value` 为非负有限数值，`-1` 表示未知，页面显示“暂无数据”，不等同于零。可选 `changePercent` 表示相对上一等长周期的变化百分比；`sentiment` 为 `positive`、`negative` 或 `neutral`，决定变化的语义颜色，默认中性。
+- `trend`：`points: [{label, value}]`，1～31 个非负数据点，可选 `unit`。
+- `bars`：`items: [{label, value}]`，1～8 项，可选 `unit`。
+- `distribution`：`items: [{label, value}]`，1～6 项；前端按实际合计计算占比，合计为零时显示空环。
+- `activity`：`items: [{label, occurredAt, status}]`，最多 5 条；`status` 为 `completed`、`running`、`blocked` 或 `failed`。
+- 标签只支持纯文本，不接受 HTML、脚本、CSS 或自定义组件。所有字段均不得为 `null`。完整校验规则可从 `office.capabilities` 的请求 Schema 获取。
+- 前端按区块类型渲染，不按 agent 名称或职责硬编码。悬停读取已同步的数据，不产生网络请求；“完整统计”展开已提供的其他区块。“更多操作”对当前所选成员发出 `employee.inspect`，未绑定成员时使用 `actor.inspect`，沿用现有用户操作链路。
+- 统计必须使用真实业务历史，不以展示动画进度推算。PixOffice 不新增历史数据库；本地演示统计不代表实际 agent 执行结果。
 
 ## 2. 更新任务与展示状态
 
@@ -441,7 +585,7 @@ sequenceDiagram
 { "type": "office.read" }
 ```
 
-省略 `teamId` 或使用 `teamId: ""` 时，返回办公室目录。`data` 结构与初始化结果相同，包含各办公室的任务数量、版本与就绪状态，以及可绑定人物和 UI 能力。
+省略 `teamId` 或使用 `teamId: ""` 时，返回完整工作区信息。`data` 与初始化结果使用同一结构：`{capabilities, state}`。没有办公室时 `state.offices` 为 `[]`，能力契约仍完整返回。
 
 查询指定办公室：
 
@@ -449,7 +593,7 @@ sequenceDiagram
 { "type": "office.read", "teamId": "team-a" }
 ```
 
-返回 `data.snapshot`（完整业务快照）、`data.scene`（人物、物品和场景行为描述）及 `data.pendingDecisions`（等待选择的菜单 ID 列表）。办公室未在当前服务端初始化时返回 `404 OFFICE_NOT_INITIALIZED`；已初始化但无在线浏览器页面时返回 `409`。
+返回 `data.snapshot` 和 `data.runtime`，与全局结果的 `state.offices[]` 相同。办公室未在当前服务端初始化时返回 `404 OFFICE_NOT_INITIALIZED`；已初始化但无在线页面时返回 `200`、最新缓存快照和 `runtime.available: false`。在线页面无法在时限内回复时返回 `408`。
 
 ### 查询能力与字段 Schema
 
@@ -461,12 +605,68 @@ sequenceDiagram
 
 | 字段 | 内容 |
 | --- | --- |
-| `scene` | 人物 ID、物品 ID、物品状态结构、行为参数、参与者角色和人数限制 |
+| `layouts` | 可选布局、各自业务数据 Schema、展示位置、用户操作与本地交互 |
+| `scene` | 固定人物和物品定义、物品交互目录及状态 Schema、场景命令及批次 Schema、行为参数、参与者角色和人数限制；不含实时坐标和状态 |
 | `ui` | 展示位置、内容格式、用户操作及白板的 JSON Schema |
+| `chat` | 聊天服务调用方向和配置入口、`send/history/resume/cancel` 的请求及成功响应 Schema、NDJSON 事件、超时和大小限制 |
+| `http` | 业务入口、方法、鉴权方式、请求大小上限、等待浏览器处理的时限 |
+| `animation` | 动画投递请求与成功响应 Schema、尽力展示与不回报播放完成的语义 |
+| `supportedMessages` | 可提交的业务操作类型 |
 | `requests` | 业务请求的 JSON Schema |
-| `responses` | 业务成功结果和错误结果的 JSON Schema；用于校验响应中的 `data` |
+| `responses.envelope` | `{code, msg, data}` 完整响应的通用 Schema |
+| `responses.success`、`responses.error` | 成功数据联合 Schema、错误数据 Schema，均用于校验响应 `data` |
+| `responses.operations[]` | 按 `type` 列出成功 HTTP `codes` 及对应 `dataSchema`；`office.read` 以 `scope: workspace/office` 区分全局和指定办公室，其余操作为 `operation` |
+| `rules` | 序号、引用、运行状态采样、动画与菜单等跨字段语义要求 |
 
-初始化之前即可调用该操作。指定办公室的实时场景状态通过 `office.read` 查询。
+初始化之前即可调用该操作，结果与初始化的 `data.capabilities` 一致。当前布局和聊天是否配置等动态值只放在 `state`，不混入能力定义。指定办公室的实时场景状态通过 `office.read` 查询。
+
+`chat.operations[].responseSchema` 对 `send/resume` 校验每一行 NDJSON 事件，对 `history/cancel` 校验完整 JSON 响应。流式响应开始前的错误使用 `responses.envelope` 与 `responses.error`；开始后的错误使用聊天 `error` 事件。`chat.operations[].timeoutMs` 是当前服务实例实际使用的时限。所有操作均携带办公室和会话身份，`turnId` 只用于发送、恢复和停止，历史查询使用游标。
+
+完整可执行查询示例见 [`discovery-client.mjs`](../clients/discovery-client.mjs)。它只查询，不创建或修改办公室，并将完整响应输出为 JSON。
+
+### 家具交互目录
+
+初始化的 `data.capabilities.scene.objects[].interactions` 和独立能力查询的 `data.scene.objects[].interactions` 描述内置家具的交互方式。指定办公室查询的 `data.runtime.objects[].interactions` 来自在线页面当前场景，包括用户编辑后的物品和工位归属。
+
+```json
+{
+  "id": "desk-0",
+  "name": "王明的工位",
+  "templateId": "office.reference-workstation",
+  "interactions": [
+    { "id": "seat", "name": "入座工作", "requiresHome": true, "actorIds": ["office-lead"] }
+  ]
+}
+```
+
+上例展示目录相关字段；能力查询中的物品还包含 `stateSchema`，运行状态中的物品还包含 `state` 和 `stateRevision`。
+
+| 字段 | 含义 |
+| --- | --- |
+| `interactions[].id` | `furniture.use.params.interactionId` 的可用值 |
+| `interactions[].name` | 交互名称 |
+| `interactions[].requiresHome` | 是否要求人物绑定此物品为自己的工位 |
+| `interactions[].actorIds` | 按工位归属规则允许使用此交互的人物 ID；空数组表示当前没有符合条件的人物 |
+
+`interactions: []` 表示物品没有 `furniture.use` 交互，例如当前会议桌。参与者仍使用 `role: "user"`，命令如下：
+
+```json
+{
+  "teamId": "team-a",
+  "command": {
+    "protocolVersion": "2.0", "sceneId": "team-a", "commandId": "seat-1",
+    "type": "activity.start", "capability": "furniture.use",
+    "participants": [{ "entityId": "office-lead", "role": "user" }],
+    "params": { "objectId": "desk-0", "interactionId": "seat", "durationMs": 4000 }
+  }
+}
+```
+
+目录给出固定使用条件，人物忙碌、路径可达和动作素材支持仍由浏览器运行时判断，沿用动画尽力展示、不回报播放完成的规则。
+
+### 聊天更新通知
+
+外部聊天服务保存新内容后，通过同一业务入口发送 `{ "type": "chat.updated", "teamId": "team-a", "conversationId": "main" }`，通知页面读取最新聊天历史。此操作不携带正文、不修改快照版本、不等待浏览器回执，详细流程见[聊天协议的主动更新通知](./chat-integration.md#后端主动通知更新)。
 
 请求、展示内容、白板、场景行为参数和物品状态的 Schema 描述可提交的输入：带默认值的字段可以省略。响应 Schema 描述返回的数据：应补齐的默认字段会实际出现在响应中。身份及跨字段引用约束同时由服务端校验。
 
@@ -636,7 +836,7 @@ HTTP `200` 表示指令已发送到至少一个在线页面连接。浏览器负
 | 等于当前 `seq` 且补齐默认值后的内容相同 | 重新同步到浏览器；确认应用后返回 `200` / `applied`，未取得应用确认时返回 `202` / `cached` |
 | 等于当前 `seq` 且补齐默认值后的内容不同 | 返回 `409 SEQ_CONFLICT` |
 
-PixOffice 服务端在内存中缓存每个办公室的最新完整快照，最多 100 个办公室、合计 8 MiB。浏览器首次连接或 SSE 重连时，服务端发送最新快照；浏览器应用完成后显示已连接。浏览器保存本地快照用于连接前的临时展示，连接后的办公室目录以服务端为准。目录查询只返回当前服务端已初始化的办公室，`runtimeReady: true` 还要求在线页面确认了该办公室的当前版本。
+PixOffice 服务端在内存中缓存每个办公室的最新完整快照，最多 100 个办公室、合计 8 MiB。浏览器首次连接或 SSE 重连时，服务端发送最新快照；浏览器应用完成后显示已连接。浏览器保存本地快照用于连接前的临时展示，连接后的办公室目录以服务端为准。全局查询只返回当前服务端已初始化的办公室，`runtime.available: true` 还要求在线页面确认了该办公室的当前版本。
 
 PixOffice 服务端重启会清空内存缓存，外部业务后端需要重新发送初始化。浏览器自动识别服务端状态已重建，移除旧目录并同步新的初始化数据；同一服务的正常重连会保留已有运行时。临时动画和待选择菜单只向在线页面发送，不保存为离线待办；刷新页面后不补播历史动画。
 

@@ -3,13 +3,13 @@ import { before, after, test } from 'node:test'
 import { createTestServer } from './helpers/vite.mjs'
 import { beginMapEdit } from './helpers/map.mjs'
 import { base, visit, move, safeTick, until, completed, noClaims } from './helpers/grid.mjs'
-let server, createOfficeRuntime, MovementController, GridNavigation, pack, advanceCell, actorPixels
+let server, createOfficeRuntime, MovementController, GridNavigation, pack, advanceCell, actorPixels, CELL_STEP_MS
 before(async () => {
   server = await createTestServer()
   ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts'))
   ;({ MovementController } = await server.ssrLoadModule('/packages/runtime/src/movement.ts'))
   ;({ GridNavigation } = await server.ssrLoadModule('/packages/runtime/src/navigation.ts'))
-  ;({ advanceCell } = await server.ssrLoadModule('/packages/runtime/src/cellMovement.ts'))
+  ;({ advanceCell, CELL_STEP_MS } = await server.ssrLoadModule('/packages/runtime/src/cellMovement.ts'))
   ;({ actorPixels } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/projection'))
   pack = await server.ssrLoadModule('@pixoffice/scene-office/core/pack')
 })
@@ -110,10 +110,10 @@ test('position commits only at integer cell boundaries while pixels interpolate 
   const { world, nav } = fixture(), actor = world.actors[0]
   standing(actor, { x: 8, y: 6 })
   const start = actorPixels(actor)
-  advanceCell(world, actor, { x: 9, y: 6 }, 240, nav)
+  advanceCell(world, actor, { x: 9, y: 6 }, CELL_STEP_MS / 2, nav)
   assert.deepEqual(actor.position, { x: 8, y: 6 })
   assert.deepEqual(actorPixels(actor), { x: start.x + 25, y: start.y })
-  advanceCell(world, actor, { x: 9, y: 6 }, 240, nav)
+  advanceCell(world, actor, { x: 9, y: 6 }, CELL_STEP_MS / 2, nav)
   assert.deepEqual(actor.position, { x: 9, y: 6 })
   assert.equal(actor.step, undefined)
   assert.throws(() => advanceCell(world, actor, { x: 11, y: 6 }, 50, nav), { code: 'INVALID_STEP' })

@@ -1,0 +1,29 @@
+.office-member-dialog { box-sizing: border-box; width: min(392px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 0; overflow-y: auto; border: 1px solid #dfe8e2; border-radius: 8px; background: #fff; color: #28372f; font: 13px/1.5 system-ui, sans-serif; letter-spacing: 0; }
+.office-member-dialog * { box-sizing: border-box; }
+.office-member-dialog::backdrop { background: #23362b45; }
+.office-member-dialog > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #e8eee9; }
+.office-member-dialog h2 { margin: 0; font-size: 16px; font-weight: 650; }
+.office-member-dialog button, .office-member-dialog input { font: inherit; }
+.office-member-dialog button { cursor: pointer; }
+.office-member-dialog button:disabled { cursor: not-allowed; opacity: .5; }
+.office-member-dialog > header button { display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 5px; background: transparent; color: #667b6d; }
+.office-member-dialog > header button:hover:not(:disabled) { background: #edf3ef; }
+.office-member-dialog form { padding: 16px 18px 18px; }
+.office-member-dialog fieldset { display: grid; gap: 14px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.office-member-dialog fieldset > label { display: grid; gap: 6px; color: #62756a; font-size: 12px; }
+.office-member-dialog fieldset > label > input { width: 100%; min-height: 36px; padding: 7px 10px; border: 1px solid #dce5df; border-radius: 5px; background: #fff; color: #28372f; }
+.office-member-dialog :is(button, input):focus-visible { outline: 2px solid #488f6b; outline-offset: 2px; }
+.office-member-actors > span { display: block; margin-bottom: 7px; color: #62756a; font-size: 12px; }
+.office-member-actors > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.office-member-actor { position: relative; min-width: 0; }
+.office-member-actor > input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+.office-member-actor > span { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 70px; padding: 6px; border: 1px solid #e5ebe7; border-radius: 6px; background: #fff; }
+.office-member-actor strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; font-weight: 500; }
+.office-member-actor > input:checked + span { border-color: #79c5a2; background: #f0f8f3; }
+.office-member-actor > input:focus-visible + span { outline: 2px solid #488f6b; outline-offset: 2px; }
+.office-member-actor > input:disabled { cursor: not-allowed; }
+.office-member-error { margin: 12px 0 0; color: #a14f45; font-size: 12px; overflow-wrap: anywhere; }
+.office-member-dialog footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+.office-member-dialog footer button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; min-height: 34px; padding: 7px 13px; border: 1px solid #dce5df; border-radius: 5px; background: #fff; color: #62756a; }
+.office-member-dialog footer .office-member-submit { border-color: #3c8561; background: #3c8561; color: #fff; }
+.office-member-dialog footer .office-member-submit:hover:not(:disabled) { background: #347453; }

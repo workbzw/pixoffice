@@ -27,6 +27,7 @@ export interface SceneViewOptions {
   resolveAppearance(id: string): Promise<VisualAssetManifest>
   propViews?: PropViewRegistry
   onActorClick?: (event: { actorId: string; clientX: number; clientY: number }) => void
+  onActorHover?: (event: { actorId: string; clientX: number; clientY: number; hovered: boolean }) => void
   onPropClick?: (event: { propId: string; clientX: number; clientY: number }) => void
   onCellClick?: (event: { cell: Point; clientX: number; clientY: number }) => void
   onDraftChange?: (error: string | null) => void
@@ -158,6 +159,12 @@ export class SceneView {
         this.options.onActorClick?.({ actorId: actor.id, clientX: event.clientX, clientY: event.clientY })
       }
       entity.on('pointertap', select); entity.overlay.on('pointertap', select)
+      for (const [name, hovered] of [['pointerenter', true], ['pointerleave', false]] as const) {
+        entity.on(name, (event: FederatedPointerEvent) => {
+          if (this.runtime.isEditing || this.renderingSuspended) return
+          this.options.onActorHover?.({ actorId: actor.id, clientX: event.clientX, clientY: event.clientY, hovered })
+        })
+      }
       this.agentEntities.set(actor.id, entity); this.layer!.addChild(entity)
       this.overlays.addChild(entity.overlay)
     })
@@ -181,6 +188,17 @@ export class SceneView {
   }
 
   get areActionsReady() { return this.actionsReady }
+  selectActor(id?: string) {
+    this.selectedActorId = id && this.runtime.readActors().some(actor => actor.id === id) ? id : undefined
+    this.refresh()
+  }
+  actorClientAnchor(actorId: string) {
+    const actor = this.agentEntities.get(actorId)
+    if (!actor || !this.app) return undefined
+    const bounds = actor.getBounds(), canvas = this.app.canvas.getBoundingClientRect()
+    return { clientX: canvas.left + (bounds.x + bounds.width / 2) * canvas.width / this.app.screen.width,
+      clientY: canvas.top + (bounds.y + bounds.height / 2) * canvas.height / this.app.screen.height }
+  }
   prepareActions(): Promise<void> {
     if (this.destroyed || !this.firstFrameReady) return Promise.resolve()
     if (this.actionPreparation) return this.actionPreparation
@@ -337,7 +355,7 @@ export class SceneView {
       if (entity) entity.overlay.visible = !this.runtime.isEditing
     }
     this.syncTaskOcclusion(dt)
-    for (const view of this.ambientViews) view.update(this.runtime.isEditing ? 0 : dt, world)
+    for (const view of this.ambientViews) view.update(this.runtime.isEditing ? 0 : dt, world, agents)
     this.layer?.sortChildren()
     this.overlays.sortChildren()
   }

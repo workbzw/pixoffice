@@ -1,12 +1,29 @@
 import { z } from 'zod'
 import { idSchema } from './schema.ts'
 import { whiteboardTaskBoardSchema } from './office-ui.ts'
+import { agentInsightsSchema } from './agent-insights.ts'
 // Optional office dashboard domain; other scene products need not import it.
 
 const id = z.string().min(1).max(100)
 const businessReference = z.string().max(100).optional()
 const actorReference = z.union([idSchema, z.literal('')]).optional()
 const timestamp = z.iso.datetime({ offset: true })
+
+export const maxOfficeMembers = 6
+export const officeMemberLimitMessage = `办公室已满，最多 ${maxOfficeMembers} 位成员`
+export function officeMemberOccupancy(conversations: readonly { employees: readonly { id: string; sceneActorId?: string }[] }[]) {
+  const memberIds = new Set<string>(), actorIds = new Set<string>()
+  for (const conversation of conversations) for (const employee of conversation.employees) {
+    memberIds.add(employee.id)
+    if (employee.sceneActorId) actorIds.add(employee.sceneActorId)
+  }
+  return { memberIds, actorIds }
+}
+
+export const officeMemberInputSchema = z.strictObject({
+  name: z.string().trim().min(1).max(80), role: z.string().trim().max(80).default(''), sceneActorId: idSchema,
+})
+export type OfficeMemberInput = z.infer<typeof officeMemberInputSchema>
 
 export const dashboardSnapshotSchema = z.strictObject({
   schemaVersion: z.literal('1.0'),
@@ -16,6 +33,7 @@ export const dashboardSnapshotSchema = z.strictObject({
   employees: z.array(z.strictObject({
     id, sceneActorId: actorReference, name: z.string().min(1).max(80),
     role: z.string().max(80).optional(), online: z.boolean().optional(),
+    insights: agentInsightsSchema.optional(),
   })).max(200),
   tasks: z.array(z.strictObject({
     id, title: z.string().min(1).max(160), assigneeId: businessReference,
@@ -60,6 +78,7 @@ export interface OfficeDataSource {
   getSnapshot(): Promise<DashboardSnapshot>
   getConversations?(): readonly DashboardConversation[]
   selectConversation?(id: string): void
+  createEmployee?(input: OfficeMemberInput): Promise<void>
   subscribe(listener: () => void): () => void
   execute(action: DashboardAction): Promise<void>
 }

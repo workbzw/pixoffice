@@ -22,9 +22,10 @@ const STATE_ACTIONS: Array<{
   { label: '暂时空闲', state: 'idle' },
 ]
 
-export function OfficeSceneControls({ runtime, controller, mapView, setMapView, teamSelection, teamName, onTeamPickerOpenChange }: {
+export function OfficeSceneControls({ runtime, controller, mapView, setMapView, teamSelection, teamName, onTeamPickerOpenChange, teamSwitcherTarget }: {
   runtime: SceneRuntime; controller: OfficeSceneController; mapView: MapView; setMapView: Dispatch<SetStateAction<MapView>>
   teamSelection?: OfficeTeamSelection; teamName?: string; onTeamPickerOpenChange?: (open: boolean) => void
+  teamSwitcherTarget?: HTMLElement | null
 }) {
   const { sceneRef, menu, setMenu, demo, setDemo, canDemo, setNotice, loaded, actions, thumbnails, previewProp, highlightProp } = controller
   const editorRuntime = runtime, editor = runtime.editorSnapshot()
@@ -76,7 +77,7 @@ export function OfficeSceneControls({ runtime, controller, mapView, setMapView, 
   }
 
   return <>
-      {!editor && <TeamSwitcher selection={teamSelection} fallbackName={teamName} onOpenChange={onTeamPickerOpenChange} />}
+      {!editor && <TeamSwitcher selection={teamSelection} fallbackName={teamName} onOpenChange={onTeamPickerOpenChange} triggerTarget={teamSwitcherTarget} />}
       {editor && editorRuntime ? <>
         <MapEditorOverlay runtime={editorRuntime} draft={editor} view={mapView} setView={setMapView} onError={setNotice} onPreview={previewProp} onHighlight={highlightProp} />
         <RoomEditor key={editor.id} runtime={editorRuntime} draft={editor} view={mapView} setView={setMapView} onError={setNotice} thumbnails={thumbnails} />
@@ -85,7 +86,6 @@ export function OfficeSceneControls({ runtime, controller, mapView, setMapView, 
           {canDemo && <button type="button" title={demo ? '停止演示' : '开始演示'} aria-label={demo ? '停止演示' : '开始演示'} disabled={!loaded || !actions.ready} onClick={toggleDemo}>{demo ? <Pause size={17} /> : <Play size={17} />}</button>}
           {loaded && !actions.ready && <span role="status" title={actions.error}>{actions.error ? '互动动作加载失败' : `准备互动动作 · ${actions.completed}/${actions.total}`}</span>}
           {loaded && actions.error && <button type="button" title="重试加载互动动作" aria-label="重试加载互动动作" onClick={() => { void sceneRef.current?.prepareActions() }}><RotateCw size={16} /></button>}
-          {demo && <span>演示中</span>}
       </div>}
       {menu && !editor && (
         <div

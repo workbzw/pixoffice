@@ -47,7 +47,7 @@ async function stream(t, base, query = 'workspace=1') {
 test('offline state is cached, stale snapshots ignored and new browsers receive the latest full state', async t => {
   const { app, base } = await setup(t)
   const initialized = await post(app, { type: 'offices.initialize', offices: [snapshot()] })
-  assert.equal(initialized.statusCode, 202); assert.equal(initialized.json().data.offices[0].runtimeReady, false)
+  assert.equal(initialized.statusCode, 202); assert.equal(initialized.json().data.state.offices[0].runtime.available, false)
   assert.equal((await post(app, { type: 'office.snapshot', teamId: 'team-a', snapshot: snapshot(2) })).statusCode, 202)
   const stale = await post(app, { type: 'office.snapshot', teamId: 'team-a', snapshot: snapshot() })
   assert.equal(stale.statusCode, 200); assert.equal(stale.json().data.reasonCode, 'STALE_SEQ')
@@ -95,6 +95,29 @@ test('offline identical snapshots remain cached rather than claiming successful 
 const speech = id => ({ teamId: 'team-a', command: { protocolVersion: '2.0', sceneId: 'team-a', commandId: id, type: 'activity.start', capability: 'scene.say',
   participants: [{ entityId: 'office-lead', role: 'actor' }], params: { text: '动画通道测试' } } })
 
+test('chat notifications use the existing authenticated POST and workspace SSE without a browser acknowledgement', async t => {
+  const { app, base } = await setup(t, { maxOfficeRequests: 0 })
+  const update = { type: 'chat.updated', teamId: 'team-a', conversationId: 'main' }
+  assert.equal((await post(app, update)).json().data.reasonCode, 'OFFICE_NOT_INITIALIZED')
+  await post(app, { type: 'offices.initialize', offices: [snapshot()] })
+  assert.equal((await post(app, update)).json().data.reasonCode, 'CHAT_NOT_CONFIGURED')
+  await post(app, { type: 'offices.initialize', offices: [], chat: { url: 'https://chat.example/api' } })
+  const offline = await post(app, update)
+  assert.equal(offline.statusCode, 202)
+  assert.deepEqual(offline.json().data, { teamId: 'team-a', conversationId: 'main', forwarded: 0 })
+  assert.equal((await post(app, { ...update, conversationId: 'unknown' })).json().data.reasonCode, 'CONVERSATION_NOT_FOUND')
+  const denied = await app.inject({ method: 'POST', url: '/api/pixoffice/messages', payload: update })
+  assert.equal(denied.statusCode, 401)
+  const animation = await stream(t, base, 'teams=team-a'), browser = await stream(t, base)
+  await browser.next()
+  const notified = await post(app, update)
+  assert.equal(notified.statusCode, 200)
+  assert.deepEqual(notified.json().data, { teamId: 'team-a', conversationId: 'main', forwarded: 1 })
+  assert.deepEqual(await browser.next(), update)
+  await post(app, speech('animation-after-chat'))
+  assert.equal((await animation.next()).command.commandId, 'animation-after-chat')
+})
+
 test('animation-only subscribers do not make office business pages appear online', { timeout: 5000 }, async t => {
   const { app, base } = await setup(t, { officeRequestMs: 50 })
   await post(app, { type: 'offices.initialize', offices: [snapshot()] })
@@ -102,12 +125,13 @@ test('animation-only subscribers do not make office business pages appear online
   const updated = await post(app, { type: 'office.snapshot', teamId: 'team-a', snapshot: snapshot(2) })
   assert.equal(updated.statusCode, 202); assert.equal(updated.json().data.status, 'cached')
   assert.equal((await post(app, { type: 'offices.initialize', offices: [snapshot(2)] })).statusCode, 202)
-  for (const request of [{ type: 'office.read', teamId: 'team-a' },
-    { conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 1000, decision: { id: 'no-workspace', kind: 'confirmation', title: '继续吗？' } }]) {
+  const cached = await post(app, { type: 'office.read', teamId: 'team-a' })
+  assert.equal(cached.statusCode, 200); assert.equal(cached.json().data.runtime.available, false)
+  for (const request of [{ conversationId: 'main', type: 'decision.request', teamId: 'team-a', timeoutMs: 1000, decision: { id: 'no-workspace', kind: 'confirmation', title: '继续吗？' } }]) {
     const result = await post(app, request)
     assert.equal(result.statusCode, 409); assert.equal(result.json().data.reasonCode, 'NO_RECEIVER')
   }
-  assert.equal((await post(app, { type: 'office.read' })).json().data.offices[0].seq, 2)
+  assert.equal((await post(app, { type: 'office.read' })).json().data.state.offices[0].snapshot.seq, 2)
   assert.equal((await post(app, speech('only-animation'))).json().data.forwarded, 1)
   assert.equal((await animation.next()).command.commandId, 'only-animation', 'business frames must never enter animation-only subscriptions')
   const workspace = await stream(t, base)
@@ -146,10 +170,9 @@ test('initialization retries include identical offices, add new offices and excl
   const delivery = await browser.next()
   assert.equal(delivery.type, 'office.request')
   assert.deepEqual(delivery.request.offices.map(item => [item.workspace.id, item.seq]), [['team-a', 2], ['team-c', 1]])
-  const directory = (await post(app, { type: 'office.capabilities' })).json().data
   await app.inject({ method: 'POST', url: '/api/pixoffice/reply', payload: { responseToken: delivery.responseToken, result: { code: 200, msg: 'Initialized', data: {
-    offices: [current, other, added].map(item => ({ id: item.workspace.id, name: item.workspace.name, runtimeReady: true, seq: item.seq, taskCount: 1 })),
-    actors: directory.scene.actors.map(({ id, name }) => ({ id, name })), supportedMessages: [], sceneCommandProtocol: '2.0', ui: directory.ui,
+    offices: [current, other, added].map(item => ({ id: item.workspace.id, seq: item.seq,
+      runtime: { available: true, selectedConversationId: 'main', actors: [], objects: [], pendingDecisions: [] } })),
   } } } })
   assert.equal((await pending).statusCode, 200)
 })

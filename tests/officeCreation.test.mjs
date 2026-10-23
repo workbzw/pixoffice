@@ -63,7 +63,7 @@ test('creation validates names and duplicates without changing the directory', a
   const directory = new DemoOfficeDirectory(new ExampleOfficeDataSource())
   await assert.rejects(directory.create({ name: '  ' }), /名称/)
   await assert.rejects(directory.create({ name: '字'.repeat(41) }), /名称/)
-  await assert.rejects(directory.create({ name: '内容运营团队' }), /已存在/)
+  await assert.rejects(directory.create({ name: directory.list()[1].name }), /已存在/)
   assert.equal(directory.list().length, 3)
   await directory.create({ name: 'Team Alpha' })
   await assert.rejects(directory.create({ name: ' team alpha ' }), /已存在/)

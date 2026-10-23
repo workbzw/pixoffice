@@ -98,16 +98,16 @@ test('the template bounds its rows and progress and does not invent unknown perc
   assert(!html.includes('aria-valuenow'))
 })
 
-test('the coding example groups five real tasks into three stages and updates from task data', async () => {
-  const { codingOfficeExample } = await server.ssrLoadModule('/example/office-web/src/dashboard/codingExample.ts')
-  const data = structuredClone(codingOfficeExample)
-  const board = toBoard(data)
-  assert.deepEqual(board.steps.map(step => [step.title, step.progress]), [['需求与方案', 100], ['功能开发', 66], ['测试与审查', 10]])
-  data.tasks.find(task => task.id === 'login-api').progress = 100
-  assert.equal(toBoard(data).steps[1].progress, 80)
-  assert.equal(board.steps[1].progress, 66)
-  data.tasks.forEach(task => { task.status = 'completed'; task.progress = 100 })
-  assert.equal(toBoard(data).status, 'completed')
+test('commerce boards use explicit business stages without leaking the retired programming template', async () => {
+  const { CommerceOfficeDataSource } = await server.ssrLoadModule('/example/office-web/src/dashboard/CommerceOfficeDataSource.ts')
+  const source = new CommerceOfficeDataSource('operations')
+  const before = (await source.getSnapshot()).whiteboard
+  assert.deepEqual(before.steps.map(step => [step.title, step.progress]), [['商品与上架', 0], ['销量与反馈', 0], ['优化与复盘', 0]])
+  source.applyStage('observing')
+  assert.deepEqual((await source.getSnapshot()).whiteboard.steps.map(step => step.progress), [100, 20, 0])
+  assert.equal(before.steps[0].progress, 0)
+  source.applyStage('completed')
+  assert.equal((await source.getSnapshot()).whiteboard.status, 'completed')
 })
 
 test('empty and partial backend task data remain honest and team-local', () => {

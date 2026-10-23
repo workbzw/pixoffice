@@ -9,6 +9,75 @@ const tick = () => new Promise(resolve => setImmediate(resolve))
 const turn = (id, state = 'complete', assistant = `回复 ${id}`) => ({ id, user: `问题 ${id}`, assistant, state, error: '' })
 const page = (turns, nextCursor = '', activeTurnId = '') => ({ turns, nextCursor, hasMore: Boolean(nextCursor), activeTurnId })
 
+test('history notifications refresh an idle transcript while retaining its draft', async t => {
+  let answer = '原回复', reads = 0
+  const session = new ChatSession('team', { kind: 'test', async *stream() {}, history: async () => { reads++; return page([turn('a', 'complete', answer)]) } })
+  t.after(() => session.dispose())
+  await session.ready; session.setDraft('保留输入草稿')
+  answer = '后端更新的回复'
+  await session.invalidateHistory()
+  assert.equal(reads, 2); assert.equal(session.getSnapshot().messages.at(-1).content, answer)
+  assert.equal(session.getSnapshot().draft, '保留输入草稿')
+})
+
+test('notifications arriving during a history read are coalesced into one follow-up read', async t => {
+  let release, reads = 0
+  const gate = new Promise(resolve => { release = resolve })
+  const session = new ChatSession('team', { kind: 'test', async *stream() {}, history: async () => {
+    const version = ++reads
+    if (version === 2) await gate
+    return page([turn('a', 'complete', `版本 ${version}`)])
+  } }); t.after(() => { release(); session.dispose() })
+  await session.ready
+  const first = session.invalidateHistory()
+  for (let i = 0; i < 20; i++) void session.invalidateHistory()
+  assert.equal(reads, 2)
+  release(); await first
+  assert.equal(reads, 3); assert.equal(session.getSnapshot().messages.at(-1).content, '版本 3')
+})
+
+test('history notifications wait for an active stream instead of replacing its partial reply', async t => {
+  let release, reads = 0
+  const gate = new Promise(resolve => { release = resolve })
+  const session = new ChatSession('team', { kind: 'test', history: async () => { reads++; return page(reads > 1 ? [turn('remote', 'complete', '后台最终内容')] : []) },
+    async *stream() { yield { type: 'delta', text: '正在生成' }; await gate; yield { type: 'done' } },
+  }); t.after(() => { release(); session.dispose() })
+  await session.ready
+  const sending = session.send('继续执行'); await tick()
+  await session.invalidateHistory()
+  assert.equal(reads, 1); assert.equal(session.getSnapshot().messages.at(-1).content, '正在生成')
+  release(); await sending; await tick()
+  assert.equal(reads, 2); assert.equal(session.getSnapshot().messages.at(-1).content, '后台最终内容')
+})
+
+test('an update arriving during a failed read still triggers one recovery read', async t => {
+  let release, reads = 0
+  const gate = new Promise(resolve => { release = resolve })
+  const session = new ChatSession('team', { kind: 'test', async *stream() {}, history: async () => {
+    reads++
+    if (reads === 2) { await gate; throw new Error('短暂断网') }
+    return page([turn('a', 'complete', `版本 ${reads}`)])
+  } }); t.after(() => { release(); session.dispose() })
+  await session.ready
+  const failed = session.invalidateHistory()
+  void session.invalidateHistory()
+  release(); await failed
+  assert.equal(reads, 3); assert.equal(session.getSnapshot().historyError, null)
+  assert.equal(session.getSnapshot().messages.at(-1).content, '版本 3')
+})
+
+test('detaching a stream clears deferred refresh notifications', async t => {
+  let release, reads = 0
+  const gate = new Promise(resolve => { release = resolve })
+  const session = new ChatSession('team', { kind: 'test', history: async () => { reads++; return page([]) },
+    async *stream() { yield { type: 'delta', text: '正在生成' }; await gate; yield { type: 'done' } },
+  }); t.after(() => { release(); session.dispose() })
+  await session.ready
+  const sending = session.send('开始'); await tick(); await session.invalidateHistory()
+  session.detach(); release(); await sending; await tick()
+  assert.equal(reads, 1)
+})
+
 test('a new browser loads existing history and resumes the same unfinished answer without appending it twice', async t => {
   const requests = []
   const session = new ChatSession('team', { kind: 'test',

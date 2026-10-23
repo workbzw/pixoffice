@@ -19,7 +19,7 @@ import type { WhiteboardProgress } from '@pixoffice/scene-office/whiteboard'
 
 export type { SceneLoadProgress, SceneActionProgress }
 export type OfficeAgentClick = { agent: Agent; rosterNo: number; clientX: number; clientY: number }
-export type OfficeSceneOptions = Partial<Pick<SceneViewOptions, 'animations' | 'resolveAppearance' | 'propViews' | 'onPropClick'>> & {
+export type OfficeSceneOptions = Partial<Pick<SceneViewOptions, 'animations' | 'resolveAppearance' | 'propViews' | 'onPropClick' | 'onActorHover'>> & {
   runtime?: SceneRuntime
   simulation?: OfficeSimulation
   onAgentClick?: (event: OfficeAgentClick) => void

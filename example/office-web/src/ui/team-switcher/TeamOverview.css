@@ -145,6 +145,7 @@
   .team-overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 620px) {
+  .runtime-workspace .team-decision-notice { position: fixed; z-index: 30; top: 72px; left: 12px; }
   .team-picker { --team-picker-padding: 17px; width: calc(100vw - 24px); max-height: calc(100dvh - 24px); border-radius: 20px; }
   .team-picker-header { flex-wrap: wrap; gap: 16px; }
   .team-picker-header h2 { font-size: 21px; }

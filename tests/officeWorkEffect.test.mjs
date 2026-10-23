@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto'
 import sharp from 'sharp'
 import { Container, Texture, TextureSource } from 'pixi.js'
 import { createTestServer } from './helpers/vite.mjs'
-import { buildOfficeCraftingAtlas } from '../scripts/build-office-assets.mjs'
+import { buildOfficeCraftingAtlas, OFFICE_WORK_EFFECT_SOURCE } from '../scripts/build-office-assets.mjs'
 
 let server, effect, createReferenceOfficePresentation
 before(async () => {
@@ -24,6 +24,18 @@ function fixture() {
 }
 
 function atlas() { return new Texture({ source: new TextureSource({ width: 480, height: 320 }) }) }
+
+test('the renderer can supply current actor projections without a second effect projection', () => {
+  const { world, actor, runtime } = fixture(), texture = atlas()
+  const view = effect.createOfficeWorkEffects(texture, runtime, ['worker'], () => { throw new Error('Redundant projection') }, () => false)
+  try {
+    for (let frame = 0; frame < 60; frame++) view.update(.05, world, [actor])
+    assert.equal(view.roots[0].visible, true)
+    const idle = { ...actor, status: 'idle', task: { ...actor.task, status: 'idle' } }
+    for (let frame = 0; frame < 60; frame++) view.update(.05, world, [idle])
+    assert.equal(view.roots[0].visible, false, 'the supplied state can stop the effect immediately')
+  } finally { view.dispose(); view.roots.forEach(root => root.destroy({ children: true })); texture.destroy(true) }
+})
 
 test('work clouds are opt-in and require a running task at the actor own workstation', () => {
   const { world, actor } = fixture()
@@ -83,6 +95,9 @@ test('work effect swaps six small atlas frames without procedural tool motion or
   try {
     assert.equal(root.children.length, 1)
     const sprite = root.children[0]
+    assert.equal(sprite.width, 160, 'the cloud must extend beyond the worker without adding outer puffs')
+    assert.equal(sprite.height, 160)
+    assert(!sprite.filters?.length, 'the outline is removed in the atlas, not with a runtime filter')
     for (let i = 0; i < 6000; i++) {
       view.update(.016, world)
       frames.add(sprite.texture)
@@ -111,22 +126,22 @@ test('work effect swaps six small atlas frames without procedural tool motion or
   } finally { view.dispose(); root.destroy({ children: true }); texture.destroy(true) }
 })
 
-test('the combined work effect stays translucent during work and completion', () => {
+test('work clouds reach full opacity and only fade during entry, interruption and completion', () => {
   const { world, actor, runtime } = fixture(), texture = atlas()
   const view = effect.createOfficeWorkEffects(texture, runtime, ['worker'], () => [actor], () => false)
   const root = view.roots[0], sprite = root.children[0]
   try {
     for (let i = 0; i < 30; i++) {
       view.update(.05, world)
-      assert(sprite.alpha > 0 && sprite.alpha <= .8)
+      assert(sprite.alpha > 0 && sprite.alpha <= 1)
     }
-    assert.equal(sprite.alpha, .8)
+    assert.equal(sprite.alpha, 1, 'steady work must not apply an extra transparency multiplier')
     actor.task.status = 'completed'
     view.update(0, world)
-    assert.equal(sprite.alpha, .8, 'the completion tail must not flash back to opaque')
+    assert.equal(sprite.alpha, 1, 'completion starts at the same full opacity as steady work')
     for (let i = 0; i < 30; i++) {
       view.update(.05, world)
-      assert(sprite.alpha >= 0 && sprite.alpha <= .8)
+      assert(sprite.alpha >= 0 && sprite.alpha <= 1)
     }
     assert.equal(root.visible, false)
   } finally { view.dispose(); root.destroy({ children: true }); texture.destroy(true) }
@@ -208,8 +223,8 @@ test('reduced motion keeps the working decoration still after fade-in', () => {
   } finally { view.dispose(); root.destroy({ children: true }); texture.destroy(true) }
 })
 
-for (const file of ['spritesheet.png', 'spritesheet-small-tools.png', 'spritesheet-small-tools-white-smoke.png']) test(`${file}: authoring sheet retains twelve transparent frames without edge clipping`, async () => {
-  const image = await readFile(new URL(`../art/office/work-crafting-v1/${file}`, import.meta.url))
+test('the current cloud authoring sheet retains twelve transparent frames without edge clipping', async () => {
+  const image = await readFile(OFFICE_WORK_EFFECT_SOURCE)
   const { data, info } = await sharp(image).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
   assert.equal(info.width, 1448); assert.equal(info.height, 1086)
   const hashes = new Set()
@@ -229,7 +244,7 @@ for (const file of ['spritesheet.png', 'spritesheet-small-tools.png', 'spriteshe
 })
 
 test('the runtime atlas uses six downscaled keyframes at less than one tenth of the source pixel area', async () => {
-  const source = await readFile(new URL('../art/office/work-crafting-v1/spritesheet-small-tools-white-smoke.png', import.meta.url))
+  const source = await readFile(OFFICE_WORK_EFFECT_SOURCE)
   const first = await buildOfficeCraftingAtlas(source), second = await buildOfficeCraftingAtlas(source)
   assert.deepEqual(first, second)
   const metadata = await sharp(first).metadata()
@@ -247,62 +262,45 @@ test('the runtime atlas uses six downscaled keyframes at less than one tenth of 
   }
 })
 
-test('the smaller notebook keeps its half-size footprint through the smoke recoloring', async () => {
-  const notebookBounds = async (file, frame, denoise = false) => {
-    const { data, info } = await sharp(new URL(`../art/office/work-crafting-v1/${file}`, import.meta.url).pathname)
-      .extract({ left: frame % 4 * 362, top: Math.floor(frame / 4) * 362, width: 362, height: 362 }).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
-    let left = info.width, right = -1, top = info.height, bottom = -1
-    const teal = i => data[i + 3] >= 192 && data[i] < 100 && data[i + 1] > data[i] * 1.3 && data[i + 2] > data[i] * 1.1 && data[i + 1] > data[i + 2]
-    for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) {
-      const i = (y * info.width + x) * 4
-      if (teal(i)) {
-        // Ignore isolated color noise when comparing the recolored outline.
-        if (denoise) {
-          let neighbors = 0
-          for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
-            if ((dx || dy) && x + dx >= 0 && x + dx < info.width && y + dy >= 0 && y + dy < info.height
-              && teal(i + (dy * info.width + dx) * 4)) neighbors++
-          }
-          if (neighbors < 2) continue
-        }
-        left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y)
-      }
-    }
-    assert(right >= left && bottom >= top)
-    return { width: right - left + 1, height: bottom - top + 1 }
-  }
-  for (const frame of [0, 2, 11]) {
-    const original = await notebookBounds('spritesheet.png', frame)
-    const smaller = await notebookBounds('spritesheet-small-tools.png', frame)
-    const beforeColor = await notebookBounds('spritesheet-small-tools.png', frame, true)
-    const afterColor = await notebookBounds('spritesheet-small-tools-white-smoke.png', frame, true)
-    for (const axis of ['width', 'height']) {
-      assert(smaller[axis] / original[axis] >= .4 && smaller[axis] / original[axis] <= .6,
-        `frame ${frame + 1}: ${axis} must remain close to half size, regardless of flight placement`)
-      assert(Math.abs(afterColor[axis] - beforeColor[axis]) * effect.OFFICE_WORK_EFFECT.cellPixels / 362 <= 4,
-        `frame ${frame + 1}: the painted tool outline must stay within four runtime pixels of its prior footprint`)
-    }
-  }
-})
-
-test('every active smoke frame uses neutral white shading instead of yellow', async () => {
-  const { data, info } = await sharp(new URL('../art/office/work-crafting-v1/spritesheet-small-tools-white-smoke.png', import.meta.url).pathname)
-    .ensureAlpha().raw().toBuffer({ resolveWithObject: true })
-  for (let frame = 0; frame < 12; frame++) {
+test('every published frame contains restrained white clouds without dark outlines or outward plumes', async () => {
+  const source = await readFile(OFFICE_WORK_EFFECT_SOURCE)
+  const atlas = await buildOfficeCraftingAtlas(source)
+  const published = await readFile(new URL('../public/assets/office/effects/work-crafting-lite-v1.png', import.meta.url))
+  assert.deepEqual(published, atlas, 'the live asset must use the compact white-cloud source')
+  const hashes = new Set()
+  const { data, info } = await sharp(atlas).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+  for (let frame = 0; frame < 6; frame++) {
     const channels = [0, 0, 0]
-    let samples = 0
-    // The middle of the lower puff is smoke only, clear of tools and sparkles.
-    for (let y = 260; y < 300; y++) for (let x = 130; x < 220; x++) {
-      const i = ((Math.floor(frame / 4) * 362 + y) * info.width + frame % 4 * 362 + x) * 4
+    const brightness = [], pixels = []
+    let samples = 0, transparent = 0
+    let left = 160, right = 0, top = 160, bottom = 0
+    for (let y = 0; y < 160; y++) for (let x = 0; x < 160; x++) {
+      const i = ((Math.floor(frame / 3) * 160 + y) * info.width + frame % 3 * 160 + x) * 4
+      pixels.push(...data.subarray(i, i + 4))
+      if (!data[i + 3]) transparent++
+      if (x === 0 || y === 0 || x === 159 || y === 159) assert(data[i + 3] < 128, `frame ${frame + 1}: clouds must not bleed into adjacent frames`)
+      if (y < 40 || y >= 150) assert(data[i + 3] < 128, `frame ${frame + 1}: retain compact puffs and a transparent footer`)
+      if (data[i + 3] < 64) continue
+      assert(Math.min(data[i], data[i + 1], data[i + 2]) >= 170, `frame ${frame + 1}: no dark outline may remain`)
+      assert(Math.max(data[i], data[i + 1], data[i + 2]) - Math.min(data[i], data[i + 1], data[i + 2]) <= 20,
+        `frame ${frame + 1}: no colored tool or sparkle may remain`)
       if (data[i + 3] < 200) continue
+      left = Math.min(left, x); right = Math.max(right, x); top = Math.min(top, y); bottom = Math.max(bottom, y)
       samples++
+      brightness.push(Math.min(data[i], data[i + 1], data[i + 2]))
       channels.forEach((_value, channel) => { channels[channel] += data[i + channel] })
     }
-    assert(samples >= 3000, `frame ${frame + 1}: smoke must retain its original coverage`)
+    hashes.add(createHash('sha256').update(Uint8Array.from(pixels)).digest('hex'))
+    assert(samples >= 1000 && transparent >= 1000, `frame ${frame + 1}: retain visible puffs and transparent space`)
     const averages = channels.map(value => value / samples)
-    assert(Math.min(...averages) > 200, `frame ${frame + 1}: smoke must remain light`)
+    brightness.sort((a, b) => a - b)
+    assert(brightness[Math.floor(brightness.length / 2)] > 225, `frame ${frame + 1}: clouds must remain bright white`)
+    assert(right - left < 115 && bottom - top < 70, `frame ${frame + 1}: contain the cloud in a compact central envelope`)
+    const visibleWidth = (right - left + 1) * effect.OFFICE_WORK_EFFECT.displayPixels / effect.OFFICE_WORK_EFFECT.cellPixels
+    assert(visibleWidth >= 95, `frame ${frame + 1}: the compact cloud must remain wider than the seated worker`)
     assert(Math.max(...averages) - Math.min(...averages) < 5, `frame ${frame + 1}: smoke must be neutral white/gray`)
   }
+  assert.equal(hashes.size, 6, 'the effect must still animate through six distinct frames')
 })
 
 test('the frame clock respects authored holds and loops to the compact first puff', () => {

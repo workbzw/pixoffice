@@ -89,3 +89,14 @@ PIXOFFICE_E2E_IMAGE=pixoffice:your-release PIXOFFICE_E2E_BROWSER_CHANNEL=chrome 
 ```sh
 npm run test:integration:types
 ```
+
+## 布局同步专项
+
+布局专项使用本机 Fastify 实例和实际生产页面，不依赖 Docker。外部客户端通过公开 HTTP 接口查询和切换布局，浏览器自行完成 SSE 同步：
+
+```sh
+npm run build:full
+PIXOFFICE_E2E_BROWSER_CHANNEL=chrome npx playwright test --config tests/integration-e2e/playwright.config.ts layout.spec.ts
+```
+
+覆盖初始化指定布局、运行中切换、页面按钮与后端共享选择、空办公室切换、多页面同步、刷新恢复，以及切换时保留任务和聊天草稿。单元测试另行覆盖乱序版本、冲突恢复及服务实例更换。

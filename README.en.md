@@ -14,7 +14,9 @@ PixOffice is a 2D interactive scene project built with Vite, React, and PixiJS. 
 
 ![PixOffice office: task whiteboard, walking characters and desk conversations](./docs/office-demo.gif)
 
-The office recording uses local sample data. [View the full-page high-resolution screenshot](./docs/page-preview.jpeg).
+The default local scenario follows an ecommerce product from preparation and individual task handoffs through launch approval, sales observation, optimization and review. The flow takes about a minute, excluding time spent awaiting user decisions. Store operations and business figures use local sample data only.
+
+Switch between classic and member layouts with the top-left layout control. The member sidebar retains each person's task activity. [View the full-page high-resolution screenshot](./docs/page-preview.jpeg).
 
 <a id="quick-start"></a>
 

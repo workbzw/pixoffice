@@ -1,8 +1,9 @@
-import type { DashboardAction, DashboardConversation, DashboardSnapshot, OfficeDataSource } from '@pixoffice/protocol/dashboard'
-import { parseDashboardSnapshot } from '@pixoffice/protocol/dashboard'
+import type { DashboardAction, DashboardConversation, DashboardSnapshot, OfficeDataSource, OfficeMemberInput } from '@pixoffice/protocol/dashboard'
+import { maxOfficeMembers, officeMemberInputSchema, officeMemberLimitMessage, officeMemberOccupancy, parseDashboardSnapshot } from '@pixoffice/protocol/dashboard'
 import { emptyWhiteboard } from '@pixoffice/protocol/office-ui'
 import { dashboardWhiteboardTaskBoard } from './whiteboard.ts'
 import { notifySubscribers } from '../notifications.ts'
+import { demoAgentInsights } from './demoInsights.ts'
 
 const initialEmployees: DashboardSnapshot['employees'] = [
   { id: 'office-lead', sceneActorId: 'office-lead', name: '王明', role: '负责人', online: true },
@@ -16,7 +17,12 @@ const initialEmployees: DashboardSnapshot['employees'] = [
 export type ExampleOfficeSeed = {
   workspace?: DashboardSnapshot['workspace']
   roles?: Record<string, string>
+  employees?: DashboardSnapshot['employees']
   tasks?: Array<Omit<DashboardSnapshot['tasks'][number], 'updatedAt'>>
+  whiteboard?: DashboardSnapshot['whiteboard']
+  conversationTitle?: string
+  conversations?: DashboardConversation[]
+  insightDomain?: 'commerce'
 }
 
 export class ExampleOfficeDataSource implements OfficeDataSource {
@@ -24,8 +30,14 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
   private listeners = new Set<() => void>()
   private snapshot: DashboardSnapshot
   private conversations = new Map<string, DashboardSnapshot>()
+  private conversationTitles = new Map<string, string>()
+  private readonly generatedWhiteboard: boolean
+  private readonly insightAt: Date
+  private readonly insightDomain?: 'commerce'
 
   constructor(now = new Date(), seed: ExampleOfficeSeed = {}) {
+    this.generatedWhiteboard = !seed.whiteboard
+    this.insightAt = now; this.insightDomain = seed.insightDomain
     const at = now.toISOString()
     this.snapshot = parseDashboardSnapshot({
       schemaVersion: '1.0', workspace: { id: 'office-1', name: '我的空间' },
@@ -44,6 +56,7 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
       ],
     })
     if (seed.workspace) this.snapshot.workspace = { ...seed.workspace }
+    if (seed.employees) this.snapshot.employees = structuredClone(seed.employees)
     if (seed.roles) this.snapshot.employees = this.snapshot.employees.map(employee => ({ ...employee, role: seed.roles![employee.id] ?? employee.role }))
     if (seed.tasks) {
       this.snapshot.tasks = seed.tasks.map(task => ({ ...task, updatedAt: at }))
@@ -53,32 +66,35 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
       }))
     }
     this.snapshot = parseDashboardSnapshot(this.snapshot)
+    this.snapshot.employees = this.snapshot.employees.map((employee, index) => ({ ...employee, insights: employee.insights ?? demoAgentInsights(index, now, 'main', this.insightDomain) }))
     this.snapshot.conversationId = 'main'
-    this.snapshot.whiteboard = dashboardWhiteboardTaskBoard(this.snapshot)
+    this.snapshot.whiteboard = seed.whiteboard ?? dashboardWhiteboardTaskBoard(this.snapshot)
     this.conversations.set('main', this.snapshot)
-    if (this.snapshot.workspace.id === 'office-1' && seed.tasks) {
-      const make = (id: string, title: string, tasks: DashboardSnapshot['tasks']) => {
-        const snapshot = parseDashboardSnapshot({ ...structuredClone(this.snapshot), conversationId: id, tasks, events: [],
-          whiteboard: { ...emptyWhiteboard(), title, status: tasks.some(task => task.status === 'running') ? 'running' : 'queued',
-            description: title === '产品需求评审' ? '明确需求边界与验收标准。' : title === '登录接口联调' ? '核对接口协议，完成端到端验证。' : '汇总本周进展与下一步计划。',
-            steps: tasks.slice(0, 3).map(task => ({ id: task.id, title: task.title, progress: task.progress ?? -1 })) } })
-        this.conversations.set(id, snapshot)
-      }
-      make('requirements', '产品需求评审', [
-        { id: 'review-scope', title: '梳理需求范围', assigneeId: 'code-agent', status: 'running', progress: 65, summary: '核对登录流程与边界场景。', updatedAt: at },
-        { id: 'review-design', title: '评审交互方案', assigneeId: 'app-agent', status: 'queued', progress: 0, updatedAt: at },
-      ])
-      make('integration', '登录接口联调', [
-        { id: 'api-contract', title: '核对接口协议', assigneeId: 'file-agent', status: 'completed', progress: 100, updatedAt: at },
-        { id: 'api-check', title: '验证登录流程', assigneeId: 'review-agent', status: 'blocked', progress: 42, summary: '等待测试环境访问授权。', updatedAt: at },
-      ])
-      make('weekly', '本周项目周报', [])
+    this.conversationTitles.set('main', seed.conversationTitle ?? this.snapshot.whiteboard?.title ?? this.snapshot.workspace.name)
+    for (const conversation of seed.conversations ?? []) {
+      this.conversations.set(conversation.id, this.conversationSnapshot(conversation))
+      this.conversationTitles.set(conversation.id, conversation.title)
     }
+  }
+
+  private conversationSnapshot(conversation: DashboardConversation) {
+    return parseDashboardSnapshot({ ...this.snapshot, conversationId: conversation.id, employees: conversation.employees.map((employee, index) => ({ ...employee,
+      insights: employee.insights ?? demoAgentInsights(index, this.insightAt, conversation.id, this.insightDomain) })),
+      tasks: conversation.tasks, events: conversation.events, whiteboard: conversation.whiteboard })
+  }
+  protected replaceConversations(conversations: readonly DashboardConversation[]) {
+    for (const conversation of conversations) {
+      this.conversations.set(conversation.id, this.conversationSnapshot(conversation))
+      this.conversationTitles.set(conversation.id, conversation.title)
+    }
+    const selected = this.conversations.get(this.snapshot.conversationId ?? 'main')
+    if (selected) this.snapshot = selected
+    notifySubscribers(this.listeners, 'ExampleOfficeDataSource')
   }
 
   async getSnapshot() { return structuredClone(this.snapshot) }
   getConversations(): DashboardConversation[] {
-    return [...this.conversations].map(([id, snapshot]) => ({ id, title: snapshot.whiteboard?.title || snapshot.workspace.name,
+    return [...this.conversations].map(([id, snapshot]) => ({ id, title: this.conversationTitles.get(id) || snapshot.workspace.name,
       employees: structuredClone(snapshot.employees), tasks: structuredClone(snapshot.tasks), events: structuredClone(snapshot.events), whiteboard: structuredClone(snapshot.whiteboard) }))
   }
   selectConversation(id: string) {
@@ -91,6 +107,20 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
     notifySubscribers(this.listeners, 'ExampleOfficeDataSource')
   }
   subscribe(listener: () => void) { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
+
+  async createEmployee(input: OfficeMemberInput) {
+    const member = officeMemberInputSchema.parse(input)
+    const occupancy = officeMemberOccupancy([...this.conversations.values()])
+    if (occupancy.memberIds.size >= maxOfficeMembers) throw new Error(officeMemberLimitMessage)
+    if (!initialEmployees.some(employee => employee.sceneActorId === member.sceneActorId)) throw new Error('绑定的人物不存在')
+    if (occupancy.actorIds.has(member.sceneActorId)) throw new Error('这个人物和工位已有成员，请选择空闲工位')
+    const employee = { ...member, id: crypto.randomUUID(), online: true }
+    const next = parseDashboardSnapshot({ ...this.snapshot, employees: [...this.snapshot.employees, employee],
+      events: [{ id: crypto.randomUUID(), kind: 'note', employeeId: employee.id, summary: `${employee.name}加入了团队`, occurredAt: new Date().toISOString() }, ...this.snapshot.events].slice(0, 100) })
+    this.conversations.set(next.conversationId ?? 'main', next)
+    this.snapshot = next
+    notifySubscribers(this.listeners, 'ExampleOfficeDataSource')
+  }
 
   async execute(action: DashboardAction) {
     const task = this.snapshot.tasks.find(item => item.id === action.taskId)
@@ -118,7 +148,7 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
       occurredAt: task.updatedAt,
     })
     this.snapshot.events = this.snapshot.events.slice(0, 100)
-    if (this.snapshot.conversationId === 'main') this.snapshot.whiteboard = dashboardWhiteboardTaskBoard(this.snapshot)
+    if (this.snapshot.conversationId === 'main' && this.generatedWhiteboard) this.snapshot.whiteboard = dashboardWhiteboardTaskBoard(this.snapshot)
     else if (this.snapshot.whiteboard) {
       const tasks = this.snapshot.tasks
       this.snapshot.whiteboard = { ...this.snapshot.whiteboard,

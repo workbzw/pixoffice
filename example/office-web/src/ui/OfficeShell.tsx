@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import type { ReactNode } from 'react'
+import type { ReactNode, RefCallback } from 'react'
 import { Blocks, Braces, Download, FileJson, Globe, House, ListTodo, Plug, SlidersHorizontal, Users } from 'lucide-react'
-import type { DashboardAction, DashboardSnapshot, DashboardTask, OfficeDataSource } from '@pixoffice/protocol/dashboard'
+import type { DashboardAction, DashboardSnapshot, DashboardTask, OfficeDataSource, OfficeMemberInput } from '@pixoffice/protocol/dashboard'
 import { dashboardMetrics } from '../dashboard/selectors.ts'
 import { CharacterAvatar } from '../components/CharacterArtwork.tsx'
 import type { ScenePanel } from '../components/SceneControlPanel.tsx'
@@ -38,9 +38,16 @@ export interface OfficeShellProps {
   exportSnapshot: () => void
   renderScenePanel: (panel: ScenePanel) => ReactNode
   hasOffice?: boolean
+  layoutControl?: ReactNode
+  officeSwitcherRef?: RefCallback<HTMLDivElement>
+  selectedEmployeeId?: string
+  onSelectEmployee?: (employeeId: string) => void
+  createEmployee?: (input: OfficeMemberInput) => Promise<void>
+  memberCreationBlockReason?: string
+  memberActors?: readonly { id: string; name: string }[]
 }
 export function OfficeShell({ connection, dashboard, dashboardError, sceneLinkError, dataMode, executeAction,
-  pendingTaskIds, actionError, appearanceIds, scene, editing, persistenceError, canRecoverLayout, recoverLayout, exportCapabilities, exportSnapshot, renderScenePanel, hasOffice = true, canExecuteActions = true, onInspectEmployee }: OfficeShellProps) {
+  pendingTaskIds, actionError, appearanceIds, scene, editing, persistenceError, canRecoverLayout, recoverLayout, exportCapabilities, exportSnapshot, renderScenePanel, hasOffice = true, canExecuteActions = true, onInspectEmployee, layoutControl }: OfficeShellProps) {
   const [section, setSection] = useState<Section>('overview')
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null)
   const [layoutError, setLayoutError] = useState<string | null>(null)
@@ -65,7 +72,7 @@ export function OfficeShell({ connection, dashboard, dashboardError, sceneLinkEr
 
   return <div className={`runtime-workspace ${editing ? 'map-editing' : ''}`}>
     <aside className="runtime-sidebar">
-      <a className="runtime-brand" href={import.meta.env.BASE_URL} title="返回官网"><img className="runtime-brand-title" src={`${import.meta.env.BASE_URL}brand/title.png`} width={2172} height={724} alt="PixOffice 官网" /></a>
+      <div className="runtime-brand-row"><a className="runtime-brand" href={import.meta.env.BASE_URL} title="返回官网"><img className="runtime-brand-title" src={`${import.meta.env.BASE_URL}brand/title.png`} width={2172} height={724} alt="PixOffice 官网" /></a>{layoutControl}</div>
       <nav aria-label="主导航" className="runtime-nav">
         {nav.map(item => <button key={item.id} type="button" disabled={!hasOffice && ['controls', 'plugins', 'protocol'].includes(item.id)} className={section === item.id ? 'selected' : ''} aria-current={section === item.id ? 'page' : undefined} onClick={() => setSection(item.id)}><item.icon size={17} strokeWidth={1.8} /><span>{item.label}</span>{item.count !== undefined && item.count > 0 && <small>{item.count}</small>}</button>)}
         <a href={`${import.meta.env.BASE_URL}minimal/`}><Blocks size={17} strokeWidth={1.8} /><span>最小装配</span></a>

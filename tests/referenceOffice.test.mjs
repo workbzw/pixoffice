@@ -204,21 +204,26 @@ test('dashboard updates real whiteboard tasks and does not write duplicate snaps
   } finally { runtime.dispose() }
 })
 
-test('the local programming example populates the wall board and tracks task actions', async () => {
-  const { codingOfficeExample } = await server.ssrLoadModule('/example/office-web/src/dashboard/codingExample.ts')
-  const { ExampleOfficeDataSource } = await server.ssrLoadModule('/example/office-web/src/dashboard/demoSource.ts')
-  const source = new ExampleOfficeDataSource(new Date('2026-10-15T00:00:00Z'), codingOfficeExample)
+test('the local commerce scenario populates the wall board and tracks business stages', async () => {
+  const { CommerceOfficeDataSource } = await server.ssrLoadModule('/example/office-web/src/dashboard/CommerceOfficeDataSource.ts')
+  const source = new CommerceOfficeDataSource('operations', new Date('2026-10-15T00:00:00Z'))
   const runtime = create(), bridge = new DashboardSceneBridge(runtime, { whiteboard: 'demo-summary' })
   try {
     assert.deepEqual(bridge.sync(await source.getSnapshot()), [])
     const board = () => runtime.readWorld().props.find(prop => prop.id === 'whiteboard-1').state
-    assert.equal(board().taskBoard.title, '登录模块开发')
-    assert.deepEqual(board().taskBoard.steps.map(task => task.title), ['需求与方案', '功能开发', '测试与审查'])
-    assert.equal(runtime.readActors().find(a => a.id === 'file-agent').presentation.status, 'working')
-    await source.execute({ type: 'task.complete', taskId: 'login-api' })
+    assert.equal(board().taskBoard.title, '电脑支架待派工')
+    assert.deepEqual(board().taskBoard.steps.map(task => task.title), ['商品与上架', '销量与反馈', '优化与复盘'])
+    assert.equal(runtime.readActors().find(a => a.id === 'file-agent').presentation.status, 'idle')
+    source.beginDispatch()
+    source.acceptAssignment('file-agent')
     bridge.sync(await source.getSnapshot())
-    assert.equal((await source.getSnapshot()).tasks.find(task => task.title === '登录接口').progress, 100)
-    assert(board().taskBoard.steps.find(step => step.title === '功能开发').progress > 66)
-    assert.equal(codingOfficeExample.tasks.find(task => task.id === 'login-api').progress, 72, 'seed data is not mutated')
+    assert.equal(runtime.readActors().find(a => a.id === 'file-agent').presentation.status, 'working')
+    source.applyStage('approval')
+    bridge.sync(await source.getSnapshot())
+    assert.equal((await source.getSnapshot()).tasks.find(task => task.id === 'product-images').progress, 100)
+    assert.equal(board().taskBoard.steps[0].progress, 95, 'the listing is not complete before permission')
+    source.applyStage('completed')
+    bridge.sync(await source.getSnapshot())
+    assert.equal(board().taskBoard.status, 'completed')
   } finally { runtime.dispose() }
 })

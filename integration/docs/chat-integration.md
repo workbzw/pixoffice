@@ -10,6 +10,8 @@
 
 一个办公室对应一个工作区，办公室内可以有多个独立会话。底部输入条向上展开后，通过顶部标签切换会话，也可点击输入条左侧的绿色会话标签打开完整列表。聊天记录、草稿、生成状态、任务和白板分别归属会话；切换会话或办公室不会停止其他会话的回复生成。
 
+机器可读契约由初始化响应 `data.capabilities.chat` 或独立 `office.capabilities` 的 `data.chat` 提供，包含四种操作的请求、成功响应、流事件 JSON Schema 和当前服务端使用的超时及大小限制。初始化与全局查询的 `data.state.chat.configured` 表示是否已注册地址，不返回服务地址或模型密钥。
+
 ## HTTP 接入
 
 外部业务后端通过 `POST /api/pixoffice/messages`，在 `offices.initialize` 请求顶层提供 `chat`：
@@ -108,6 +110,36 @@ PixOffice 服务端以 `Content-Type: application/json` 和 `Accept: application
 聊天请求体上限为 512 KiB。办公室未初始化时返回 `404 OFFICE_NOT_INITIALIZED`；未注册或已停用聊天服务时返回 `503 CHAT_NOT_CONFIGURED`；连接失败、重定向、上游非成功响应或错误 Content-Type 返回 `502 CHAT_UPSTREAM_ERROR`；开始流式响应前超时返回 `504 CHAT_TIMEOUT`。这些错误使用统一 `{ "code": 503, "msg": "外部后端尚未配置聊天服务", "data": { "reasonCode": "CHAT_NOT_CONFIGURED", "details": {}, "issues": [] } }` 格式。流式响应开始后发生超时、非法事件或连接中断时，以 `error` 事件结束。
 
 ## 历史分页
+
+### 后端主动通知更新
+
+外部聊天服务保存新的记录或更新已有轮次后，外部业务后端通过现有鉴权入口发送：
+
+```json
+{
+  "type": "chat.updated",
+  "teamId": "office-1",
+  "conversationId": "main"
+}
+```
+
+此操作使用 `POST /api/pixoffice/messages` 和 `Authorization: Bearer <PIXOFFICE_API_KEY>`。先保存聊天内容，再发送通知。办公室和会话须已通过办公室快照登记，聊天地址须已注册；`chat.updated` 不修改业务快照，也不需要增加快照 `seq`。请求与返回 Schema 同时包含在初始化能力清单中。
+
+PixOffice 将通知投递到现有浏览器 SSE 连接。页面通过既有 `history` 操作读取最新记录，保持草稿和所选会话。当前会话会自动刷新，未打开的会话标记为待同步并在切换时读取。通知到达时若正在接收回复，继续接收该回复，结束后再同步历史；正在读取历史时收到多次通知，会合并为后续读取。
+
+```json
+{
+  "code": 200,
+  "msg": "Chat update notified",
+  "data": { "teamId": "office-1", "conversationId": "main", "forwarded": 1 }
+}
+```
+
+`forwarded` 是通知已投递的浏览器连接数，不是历史读取完成数，不等待浏览器回执。没有可投递页面时返回 `202`、`forwarded: 0`。通知不缓存聊天正文或积攒离线消息；页面上线、切换会话及 SSE 断线恢复后读取聊天服务的最新历史。重复通知可以安全发送，不会创建新的聊天轮次。建议在一轮消息保存或生成结束后通知，无需逐字通知。
+
+未初始化的办公室返回 `404 OFFICE_NOT_INITIALIZED`，未登记的会话返回 `404 CONVERSATION_NOT_FOUND`，未配置聊天地址返回 `503 CHAT_NOT_CONFIGURED`。
+
+### 读取历史
 
 初次进入会话时读取最近记录，向上滚动或点击“加载更早消息”时读取较早的一页：
 

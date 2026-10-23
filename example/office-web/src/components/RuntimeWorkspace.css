@@ -84,7 +84,7 @@
 .runtime-task-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
 .runtime-task-actions button { padding: 5px 8px; border: 1px solid #dfe5df; border-radius: 6px; background: #fff; font-size: 11px; }
 .runtime-events-heading { margin-top: 24px; }
-.runtime-event-list { margin: 0; padding: 0; list-style: none; }
+.runtime-event-list { margin: 0; padding: 0; list-style: none; overflow-anchor: none; }
 .runtime-event-list li { display: flex; gap: 8px; padding: 6px 0; }
 .runtime-event-dot { flex: 0 0 auto; width: 6px; height: 6px; margin: 7px 2px 0; border-radius: 50%; background: #cbd2cc; }
 .runtime-event-list p { margin: 0; color: #69716a; font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }

@@ -98,6 +98,8 @@ test('backend-owned deletion waits for confirmation, coalesces repeated clicks a
   assert.deepEqual(workspace.getSnapshot().deletingIds, [])
   const success = workspace.remove('a'); await flush(); resolve(); await success
   assert.equal(calls, 2); assert.equal(workspace.getSnapshot().selectedId, 'b')
+  workspace.restorePreviewConversation('a')
+  assert.deepEqual(workspace.getSnapshot().conversations.map(entry => entry.id), ['b'], 'demo replay cannot restore a backend-owned deletion')
 })
 
 test('deleting the last local conversation leaves an empty workspace that can create a fresh conversation', async t => {
@@ -235,7 +237,7 @@ test('published integration examples follow the conversation-aware request schem
     const document = await readFile(new URL(`../integration/docs/${name}.md`, import.meta.url), 'utf8')
     for (const [, body] of document.matchAll(/```json\n([\s\S]*?)\n```/g)) {
       let value; try { value = JSON.parse(body) } catch { continue }
-      if (value.type && ['offices.initialize','office.snapshot','office.read','office.capabilities','decision.request','ui.next','ui.respond'].includes(value.type)) {
+      if (value.type && ['offices.initialize','office.snapshot','office.read','office.capabilities','office.layout.read','office.layout.set','decision.request','ui.next','ui.respond'].includes(value.type)) {
         const parsed = officeMessageSchema.safeParse(value)
         assert(parsed.success, `${name}: ${JSON.stringify(parsed.error?.issues)}`)
       }

@@ -5,23 +5,65 @@ Its twelve-frame authoring source is retained for editing only, not loaded by th
 browser. This is a scene effect, not a character pack or a new backend action.
 It replaces the procedural floating-icon prototype.
 
+## Soft White Clouds (Current)
+
+- Active source: `spritesheet-white-cloud-soft.png`, 1448 x 1086 RGBA,
+  twelve frames in a 4 x 3 grid of 362-pixel cells.
+- Reused from PawOffice without repainting or regenerating pixels.
+- Original ImageGen edits: `exec-57348979-600f-4b73-a8e5-f8eadaf867c0`
+  and `exec-b28c0db7-91f3-419a-90ee-4be548532463` (2026-10-23).
+- Compact connected white puffs, no black outline, stationery or detached plumes.
+- Runtime display envelope: 160 world pixels, visible on both sides of a worker.
+  Steady opacity is 100%; entry/exit fades and behind-worker sorting are retained.
+- Six 160-pixel frames share one 480 x 320 atlas at about 6 FPS. No runtime
+  filter, extra particle system or new backend command is required.
+
+## White Cloud Core (Previous)
+
+- Active authoring source: `spritesheet-white-cloud-core.png`, 1448 x 1086 RGBA,
+  twelve frames in a 4 x 3 grid of 362-pixel cells.
+- Edited with the built-in ImageGen tool on 2026-10-22.
+- Cloud-core output ID: `exec-d8d33ee5-f6f0-44bd-9365-42e4c6dd262f`.
+- Final output ID: `exec-a9a26bb3-79bf-403e-8132-8aff911221a5`.
+- Only the compact inner cluster of rounded white puffs is retained, matching
+  the user-provided detail. Tall outer gray plumes and curling ribbons are
+  removed, along with all stationery and colored sparkles. Subtle pale-gray
+  volume shading and neutral outlines still separate the white puffs.
+- The generated 1446 x 1088 sheet was mechanically registered without painting
+  or removing cloud pixels. Row crops are y=60..421, 450..743, 770..1074;
+  transparent top padding is 0, 68, 57 pixels respectively. Horizontal crop
+  intervals (left inclusive, right exclusive, row-major) are [39,331],
+  [437,705], [773,1072], [1128,1429], [20,363], [384,735], [752,1095],
+  [1137,1443], [30,368], [371,714], [756,1085], [1147,1435]. Each intact
+  cluster is horizontally centered with transparent padding, without scaling.
+  All frames share a 330-pixel cloud baseline and transparent footer.
+- The six runtime keyframes, 480 x 320 atlas, playback, 80% opacity, seat offset
+  and behind-character ordering remain unchanged. No filter or render layer is
+  added. Older sheets below are retained as authoring history only.
+
+Cloud-core edit prompt:
+
+Use case: precise-object-edit. Image 1 is the full edit-target sprite sheet (1447 x 1087 RGBA, exactly 4 columns x 3 rows, twelve equal cells). Image 2 is the USER-APPROVED DETAIL: the compact inner cluster of fluffy rounded WHITE CLOUD PUFFS. Retain exactly that kind of inner white cloud cluster in each frame. DELETE all the OUTER GRAY UPRIGHT SMOKE: every tall hook-shaped gray plume, every large upward gray curling lobe, every long gray swirl/ribbon behind or beside the central white puff cluster. Those are explicitly rejected. Where an outer plume is deleted, leave clean alpha transparency, not a white replacement plume. The only remaining subject in every frame should be the little inner pile of overlapping bright-white rounded puffs, as shown by Image 2. Preserve that approved cloud's soft subtle pale-gray internal shading and thin neutral-gray outlines for separating the small white puffs; do NOT change it into blurry mist, realistic smoke, an oval blur, or a flat white blob. No big gray region behind the cluster. Preserve the twelve existing distinct white-core shapes and mild expansion/contraction phases, their lower-center positions, grid registration and approximate original core sizes. Keep the upper half of every cell empty. Remove any detached puff that belongs to the rejected tall plumes; a few small puffs immediately attached to the compact white core may remain. No tools, colored accents, stars, stationery, text, characters or furniture. Retain genuine transparent background, all cells separate with at least 8 pixels of clear gutter, EXACT 4 by 3 grid and 4:3 overall canvas aspect. Return the complete sprite sheet. The key instruction is: ONLY THE APPROVED INNER WHITE PUFF CLUSTER, NO OUTER GRAY CURLING SMOKE.
+
+Registration follow-up prompt:
+
+Use case: precise-object-edit. This is an approved twelve-frame WHITE CLOUD CORE sheet, 4 columns x 3 rows. Do not redesign, redraw, resize or recolor any cloud. Do not add tall gray plumes or blur the rounded white puffs. Make ONLY a sprite-grid registration cleanup: in EACH cell, translate the EXISTING compact white cloud cluster vertically so its lowest solid cloud outline sits on the SAME local y=320 baseline in an approximately 362 x 362 cell. Leave at least 30 pixels of completely transparent footer below each cloud; the cloud must NOT touch or cross a row boundary. This means moving the first-row clouds UP about 40 pixels and the second-row clouds UP about 30 pixels; bottom-row clouds need only a tiny adjustment. Do not replace a removed area with a different puff. Erase any stray ghost pixels right at a cell's top edge that leaked from the cell above; leave top 40 pixels fully transparent. Preserve all 12 cloud-core shapes, thin neutral gray separating outlines, pure white interiors, subtle pale-gray volume shading and small adjacent white puffs. Every frame must have at least 10 pixels of transparent left/right gutter and 30 pixels of footer, with no opaque mark in any cell edge. Keep the entire 4x3 sheet and its same 4:3 aspect ratio, true RGBA transparency, no extra clouds, no gray swirling extensions, no text, no labels, no visible grid or background. Output the full registered sprite sheet.
+
 ## Source And Registration
 
 - Generated with the built-in ImageGen tool on 2026-10-19.
 - Output ID: `exec-b748fe44-243e-4cb9-8191-bbea1e31972b`.
 - Original output, unchanged: `spritesheet.png`, 1448 x 1086 RGBA.
-- Grid: 4 columns x 3 rows, 362 x 362 pixels per frame, row-major order.
+- Original grid: 4 columns x 3 rows, 362 x 362 pixels per frame, row-major order.
 - Scene attachment: own workstation, seated/back view only. The effect sits
   above the desk depth but behind the seated worker and chair, never in the UI
   overlay layer. Its flight envelope stays below the name label.
 - All six workers share one atlas and six frame textures, with independent clocks
   and staggered playback phases. Demo and connected offices use the same rules;
   only running work emits the effect, not idle, blocked or queued tasks.
-- Ordered phases: compact cloud; first impact; upward tool arc; tumble; open
-  notebook at apex; descent; second impact; outward burst; turnover; inward
-  descent; contraction; compact cloud.
-- Tools: yellow pencil, teal spiral notebook, wooden ruler. No keyboard or
-  document UI icon.
+- Current phases: compact white puffs, gentle swelling and outward puffs,
+  followed by contraction back to the compact cloud. The historical sources
+  contain stationery and tall curls; the active sheet contains white cores only.
 - Runtime selection: source frames 1, 3, 5, 7, 9, 12, downscaled to 160 x 160.
 - Runtime atlas: 3 columns x 2 rows, 480 x 320 RGBA, about 0.59 MiB decoded.
 - Timing: 170, 170, 170, 170, 170, 200 milliseconds, about 5.7 FPS.
@@ -29,9 +71,9 @@ It replaces the procedural floating-icon prototype.
   scale and anchor. No per-frame bounds fitting or tool transform animation.
 - Scene offset: 32 world pixels above the seat anchor, while depth sorting stays
   tied to the seat so smoke remains behind the worker.
-- Render opacity: 80% for the combined smoke/tool sprite, multiplied by its
-  existing fade-in, interruption and completion envelope. No filter, extra layer
-  or bitmap change is required; frame count and playback timing are unchanged.
+- Render opacity: 80% for the smoke sprite, multiplied by its
+  existing fade-in, interruption and completion envelope. No filter or extra layer
+  is required; frame count and playback timing are unchanged.
 - Office render cadence: 20 FPS while idle or working seated, 60 FPS while
   walking or transitioning into/out of a seat. Simulation speed is unchanged.
 - Characters: each appearance's existing `work.typing-back` whole-image frames, with
@@ -41,7 +83,7 @@ It replaces the procedural floating-icon prototype.
   the effect. A completed task plays the short contracting tail and fades.
 
 `scripts/build-office-assets.mjs` selects and downsizes the keyframes from
-`spritesheet-small-tools-white-smoke.png`, then builds
+`spritesheet-white-cloud-core.png`, then builds
 `effects/work-crafting-lite-v1.png` and its lossless WebP in the generated public
 directory. Both public copies are ignored. The original and this prompt record
 remain tracked. The browser never requests the original high-resolution sheet.
@@ -72,7 +114,7 @@ Use case: precise-object-edit. Edit target: this transparent 1448 x 1086 sprites
 
 ## White Smoke
 
-- Active authoring variant: `spritesheet-small-tools-white-smoke.png`,
+- Historical white-smoke variant: `spritesheet-small-tools-white-smoke.png`,
   1448 x 1086 RGBA with the original 4 x 3 grid and 362-pixel cells.
 - Edited with built-in ImageGen on 2026-10-19.
 - Initial recolor output ID: `exec-6e88757b-1757-4b70-abd7-d616da2ee451`.

@@ -13,9 +13,10 @@ export type OfficeSnapshot = {
   }[]
 }
 export type UserAction = { id: string; teamId: string; conversationId: string; action: string; actorId?: string; employeeId?: string; taskId?: string; interactionId?: string; optionId?: string }
-export type Capabilities = { scene: { actors: { id: string; name: string; position: { x: number; y: number } }[];
+export type Capabilities = { scene: { actors: { id: string; name: string; templateId: string }[];
   capabilities: { id: string }[] }; ui: object; requests: object; responses: object }
-export type OfficeRead = { snapshot: OfficeSnapshot; scene: Capabilities['scene']; pendingDecisions: string[] }
+export type OfficeRead = { snapshot: OfficeSnapshot; runtime: { available: boolean; selectedConversationId: string;
+  actors: { id: string; name: string; position: { x: number; y: number } }[]; objects: object[]; pendingDecisions: string[] } }
 
 function validateJson(value: unknown) {
   assert.notEqual(value, null, 'Protocol contains null')

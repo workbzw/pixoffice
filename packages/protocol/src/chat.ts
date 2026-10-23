@@ -1,10 +1,13 @@
 import { z } from 'zod'
-import { parseProtocolObject } from './schema.ts'
+import { jsonObjectSchema, parseProtocolObject } from './schema.ts'
 // Optional chat domain, independent of the scene runtime and transport.
 
 export const chatPath = '/api/pixoffice/chat'
 export const maxChatReplyCharacters = 50000
 export const chatTimeoutMs = 180000
+export const maxChatRequestBytes = 524288
+export const maxChatHistoryBytes = 8 * 1024 * 1024
+export const chatControlTimeoutMs = 15000
 export const officeChatConfigSchema = z.strictObject({ url: z.union([z.literal(''), z.url({ protocol: /^https?$/ }).refine(value => {
   try {
     const url = new URL(value)
@@ -47,6 +50,42 @@ export const chatEventSchema = z.discriminatedUnion('type', [
   z.strictObject({ type: z.literal('snapshot'), text: z.string().max(maxChatReplyCharacters), state: z.enum(['pending', 'complete', 'stopped', 'error']), message: z.string().max(1000).default('') }),
 ])
 export type ChatEvent = z.infer<typeof chatEventSchema>
+
+export const chatProtocolSchema = z.strictObject({
+  version: z.literal('1.0'), browserPath: z.literal(chatPath), method: z.literal('POST'),
+  upstream: z.strictObject({ configuredBy: z.literal('offices.initialize.chat.url'), direction: z.literal('pixoffice-server-to-chat-service') }),
+  identity: z.array(z.string()), requests: jsonObjectSchema,
+  operations: z.array(z.strictObject({ type: z.enum(['send', 'history', 'resume', 'cancel']), requestSchema: jsonObjectSchema,
+    responseContentType: z.enum(['application/json', 'application/x-ndjson']), responseSchema: jsonObjectSchema, timeoutMs: z.number().int().positive() })),
+  stream: z.strictObject({ eventSchema: jsonObjectSchema, resumeFirstEvents: z.array(z.string()), terminalEvents: z.array(z.string()), terminalSnapshotStates: z.array(z.string()) }),
+  limits: z.strictObject({ requestBytes: z.number().int().positive(), historyResponseBytes: z.number().int().positive(), replyCharacters: z.number().int().positive() }),
+  rules: z.array(z.string()),
+})
+
+export function describeChatProtocol(timeoutMs = chatTimeoutMs) {
+  const jsonResponse = (data: typeof chatHistoryPageSchema | typeof chatCancelResultSchema) => z.toJSONSchema(z.strictObject({ code: z.literal(200), msg: z.string(), data }), { io: 'output' })
+  return chatProtocolSchema.parse({
+    version: '1.0', browserPath: chatPath, method: 'POST', upstream: { configuredBy: 'offices.initialize.chat.url', direction: 'pixoffice-server-to-chat-service' },
+    identity: ['teamId', 'conversationId', 'turnId'], requests: z.toJSONSchema(chatOperationSchema, { io: 'input' }),
+    operations: [
+      { type: 'send', requestSchema: z.toJSONSchema(chatRequestSchema, { io: 'input' }), responseContentType: 'application/x-ndjson', responseSchema: z.toJSONSchema(chatEventSchema, { io: 'output' }), timeoutMs },
+      { type: 'history', requestSchema: z.toJSONSchema(chatHistoryRequestSchema, { io: 'input' }), responseContentType: 'application/json', responseSchema: jsonResponse(chatHistoryPageSchema), timeoutMs: Math.min(timeoutMs, chatControlTimeoutMs) },
+      { type: 'resume', requestSchema: z.toJSONSchema(chatResumeRequestSchema, { io: 'input' }), responseContentType: 'application/x-ndjson', responseSchema: z.toJSONSchema(chatEventSchema, { io: 'output' }), timeoutMs },
+      { type: 'cancel', requestSchema: z.toJSONSchema(chatCancelRequestSchema, { io: 'input' }), responseContentType: 'application/json', responseSchema: jsonResponse(chatCancelResultSchema), timeoutMs: Math.min(timeoutMs, chatControlTimeoutMs) },
+    ],
+    stream: { eventSchema: z.toJSONSchema(chatEventSchema, { io: 'output' }), resumeFirstEvents: ['snapshot', 'error'], terminalEvents: ['done', 'error'], terminalSnapshotStates: ['complete', 'stopped', 'error'] },
+    limits: { requestBytes: maxChatRequestBytes, historyResponseBytes: maxChatHistoryBytes, replyCharacters: maxChatReplyCharacters },
+    rules: [
+      '聊天服务保存完整历史与生成状态；PixOffice 服务端转发请求，浏览器保存本地缓存和草稿。',
+      '同一 teamId、conversationId、turnId 的重复 send 应复用已有轮次；不同输入不得复用同一轮次 ID。',
+      'history 的轮次按从旧到新排列；空 cursor 读取最近页，nextCursor 读取更早页。',
+      'resume 订阅已有轮次，首条事件必须为 snapshot 或 error；不重新启动生成。',
+      '断开流连接不等于 cancel；显式 cancel 保存最终状态，重复停止返回 stopped: true。',
+      '浏览器新建会话发送首条消息后，业务后端须将同一 conversationId 加入办公室快照目录。',
+      '聊天服务保存新内容后，外部后端可通过业务入口发送 chat.updated，携带 teamId、conversationId；页面重新读取历史，通知本身不携带聊天正文。',
+    ],
+  })
+}
 
 export interface OfficeChatSource {
   readonly kind: string

@@ -29,6 +29,7 @@ export class ChatSession {
   private activeTurnId = ''
   private historyCursor = ''
   private synchronized = false
+  private historyInvalidated = false
   private syncFlight?: Promise<void>
   private syncController?: AbortController
   private olderController?: AbortController
@@ -78,6 +79,24 @@ export class ChatSession {
     else if (this.activeTurnId && this.source.resume) void this.resume(this.activeTurnId)
   }
   setDraft(draft: string) { if (this.snapshot.ready) this.update({ ...this.snapshot, draft: draft.slice(0, 4000) }) }
+  previewExchange(id: string, question: string, answer: string): Promise<void> {
+    if (!this.snapshot.ready) return this.ready.then(() => this.previewExchange(id, question, answer))
+    if (this.source.kind !== 'preview') throw new Error('真实聊天不能写入演示记录')
+    const prefix = `commerce-demo:${id}`
+    const messages = this.snapshot.messages.filter(message => !message.id.startsWith(`${prefix}:`))
+    const index = messages.findIndex(message => message.state === 'pending')
+    const pair: ChatMessage[] = [{ id: `${prefix}:user`, role: 'user', content: question, state: 'complete' },
+      { id: `${prefix}:assistant`, role: 'assistant', content: answer, state: 'complete' }]
+    messages.splice(index >= 0 ? index - 1 : messages.length, 0, ...pair)
+    this.update({ ...this.snapshot, messages })
+    return Promise.resolve()
+  }
+  clearPreviewExchanges(): Promise<void> {
+    if (!this.snapshot.ready) return this.ready.then(() => this.clearPreviewExchanges())
+    if (this.source.kind !== 'preview') return Promise.resolve()
+    this.update({ ...this.snapshot, messages: this.snapshot.messages.filter(message => !message.id.startsWith('commerce-demo:')) })
+    return Promise.resolve()
+  }
   flush = (): Promise<void> => {
     clearTimeout(this.saveTimer); this.saveTimer = undefined
     if (this.saving) return this.saving
@@ -110,12 +129,24 @@ export class ChatSession {
     this.update({ ...this.snapshot, phase: 'idle', error, messages: this.snapshot.messages.map(message => message.state === 'pending' ? { ...message, state } : message) })
   }
 
+  invalidateHistory(refresh = true): Promise<void> {
+    this.historyInvalidated = true; this.synchronized = false
+    return refresh ? this.synchronize() : Promise.resolve()
+  }
   synchronize(force = false): Promise<void> {
     if (!this.snapshot.ready) return this.ready.then(() => this.synchronize(force))
     if (this.syncFlight) return this.syncFlight
     if (!this.source.history || this.active || this.snapshot.canceling || this.synchronized && !force) return Promise.resolve()
-    this.synchronized = true
-    this.syncFlight = this.readHistory().finally(() => { this.syncFlight = undefined })
+    const refresh = async () => {
+      do {
+        this.historyInvalidated = false; this.synchronized = true
+        await this.readHistory()
+      } while (this.historyInvalidated && !this.active && !this.snapshot.canceling)
+    }
+    this.syncFlight = refresh().finally(() => {
+      this.syncFlight = undefined
+      if (this.historyInvalidated && !this.active && !this.snapshot.canceling) void this.synchronize()
+    })
     return this.syncFlight
   }
   private async readHistory() {
@@ -215,6 +246,7 @@ export class ChatSession {
       clearTimeout(timer)
       if (this.active === controller) { this.active = null; this.timeout = undefined }
       await this.flush()
+      if (this.historyInvalidated) void this.synchronize()
     }
   }
 
@@ -242,6 +274,7 @@ export class ChatSession {
         .finally(() => {
           if (this.cancelFlight === cancellation) this.cancelFlight = undefined
           if (this.cancelController === controller) { this.cancelController = undefined; if (this.conversationId === conversationId) this.update({ ...this.snapshot, canceling: false }, false) }
+          if (this.historyInvalidated) void this.synchronize()
         })
       this.cancelFlight = cancellation
       return cancellation
@@ -250,7 +283,7 @@ export class ChatSession {
   }
   clear() { this.stop(); this.syncController?.abort(); this.olderController?.abort(); this.synchronized = false; this.historyCursor = ''; this.conversationId = crypto.randomUUID(); this.update({ ...this.snapshot, draft: '', messages: [], phase: 'idle', error: null, historyError: null, syncing: false, loadingOlder: false, hasMoreHistory: false, olderError: null, canceling: false }); void this.flush() }
   detach() {
-    this.synchronized = false
+    this.synchronized = false; this.historyInvalidated = false
     this.syncController?.abort(); this.olderController?.abort(); this.cancelController?.abort()
     const active = this.active; this.active = null; clearTimeout(this.timeout); this.timeout = undefined; active?.abort()
     if (active || this.snapshot.syncing || this.snapshot.loadingOlder || this.snapshot.canceling) this.update({ ...this.snapshot, phase: 'idle', syncing: false, loadingOlder: false, canceling: false })

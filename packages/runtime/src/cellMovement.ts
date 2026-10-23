@@ -4,7 +4,7 @@ import { sameCell, cellDistance } from './map/furnitureGrid.ts'
 import type { NavigationAdapter, NavigationQuery } from './navigationAdapter.ts'
 import { SceneFault } from '@pixoffice/protocol'
 
-export const CELL_STEP_MS = 480
+export const CELL_STEP_MS = 320
 export function occupiedCells(world: World, exceptId: string): Point[] {
   return world.actors.filter(a => a.id !== exceptId).flatMap(a => [a.position, ...(a.step ? [a.step.to] : []),
     ...(a.seatTransition?.reserved ? a.seatTransition.passage : [])])

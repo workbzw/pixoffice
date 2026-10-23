@@ -1,0 +1,11 @@
+.office-layout-switch { position: relative; flex: 0 0 auto; }
+.office-layout-trigger { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #61716a; cursor: pointer; }
+.office-layout-trigger:hover, .office-layout-trigger[aria-expanded=true] { background: #e9efec; }
+.office-layout-options { position: absolute; z-index: 60; top: 40px; right: 0; width: 174px; padding: 5px; border: 1px solid #dfe7e3; border-radius: 8px; background: #fff; box-shadow: 0 8px 28px #263c2e14; }
+.office-layout-options button { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 38px; padding: 8px 9px; border: 0; border-radius: 5px; background: transparent; color: #46584d; text-align: left; font: 13px/1.4 system-ui, sans-serif; cursor: pointer; }
+.office-layout-options button span { flex: 1; }
+.office-layout-options button:hover, .office-layout-options button[aria-pressed=true] { background: #edf5f0; color: #3e7659; }
+.runtime-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.runtime-brand-row .runtime-brand { flex: 1; min-width: 0; }
+.runtime-brand-row .runtime-brand-title { width: 146px; }
+@media (max-width: 620px) { .runtime-brand-row { justify-content: flex-end; } .runtime-brand-row .runtime-brand { display: none; } }

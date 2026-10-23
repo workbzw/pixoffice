@@ -11,9 +11,12 @@ export class OfficeDemoSource {
   private delay = 0
   private round = 0
   private commandIds: string[] = []
+  private checkedRevision = -1
+  private commandsPending = false
+  private readonly options: { automatic?: boolean }
   error: string | null = null
 
-  constructor(runtime: SceneRuntime) { this.runtime = runtime }
+  constructor(runtime: SceneRuntime, options: { automatic?: boolean } = {}) { this.runtime = runtime; this.options = options }
   get isRunning() { return this.enabled }
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => { this.listeners.delete(listener) } }
 
@@ -22,17 +25,23 @@ export class OfficeDemoSource {
       if (this.runtime.snapshot().persistenceError) throw new SceneFault('PERSISTENCE_FAILED', '存档尚未恢复，请先点击“备份并恢复布局”')
       if (this.runtime.isEditing) throw new SceneFault('EDITING', '请先完成布局编辑')
     }
-    this.enabled = enabled; this.delay = 0; this.commandIds = []; this.error = null
+    this.enabled = enabled; this.delay = 0; this.commandIds = []; this.error = null; this.checkedRevision = -1
     notifySubscribers(this.listeners, 'OfficeDemoSource')
   }
 
   tick(elapsedMs: number) {
-    if (!this.enabled || this.runtime.isEditing) return
+    if (!this.enabled || this.runtime.isEditing || this.options.automatic === false) return
     try {
-      const snapshot = this.runtime.snapshot()
-      const failed = snapshot.records.find(record => this.commandIds.includes(record.command.commandId) && record.error)
-      if (failed?.error) throw new SceneFault(failed.error.code, failed.error.message, failed.error)
-      if (snapshot.activities.some(activity => activity.status === 'active') || snapshot.records.some(record => record.status === 'queued') || snapshot.world.actors.some(actor => actor.motion || actor.step || actor.seatTransition)) return
+      const revision = this.runtime.getRevision()
+      // Command/phase changes publish revisions; interpolated positions do not.
+      if (revision !== this.checkedRevision) {
+        const snapshot = this.runtime.snapshot()
+        const failed = snapshot.records.find(record => this.commandIds.includes(record.command.commandId) && record.error)
+        if (failed?.error) throw new SceneFault(failed.error.code, failed.error.message, failed.error)
+        this.commandsPending = snapshot.activities.some(activity => activity.status === 'active') || snapshot.records.some(record => record.status === 'queued')
+        this.checkedRevision = revision
+      }
+      if (this.commandsPending || this.runtime.readActors().some(actor => actor.motion || actor.step || actor.seatTransition)) return
       this.delay -= elapsedMs
       if (this.delay > 0) return
       const returning = demoReturnCommands(this.runtime)

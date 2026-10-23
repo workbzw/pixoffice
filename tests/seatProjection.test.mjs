@@ -2,11 +2,12 @@ import assert from 'node:assert/strict'
 import { before, after, test } from 'node:test'
 import { createTestServer } from './helpers/vite.mjs'
 
-let server, createOfficeRuntime, SeatInteractions, actorPixels, seatStepPixels, seatStepDurationMs, projectAgents, computeAgentDepthZ
+let server, createOfficeRuntime, SeatInteractions, actorPixels, seatStepPixels, seatStepDurationMs, projectAgents, computeAgentDepthZ, advanceCell, CELL_STEP_MS
 before(async () => {
   server = await createTestServer()
   ;({ createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts'))
   ;({ SeatInteractions } = await server.ssrLoadModule('/packages/runtime/src/seatInteraction.ts'))
+  ;({ advanceCell, CELL_STEP_MS } = await server.ssrLoadModule('/packages/runtime/src/cellMovement.ts'))
   ;({ actorPixels, seatStepPixels, seatStepDurationMs } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/projection'))
   ;({ projectAgents } = await server.ssrLoadModule('@pixoffice/scene-office/adapters/office'))
   ;({ computeAgentDepthZ } = await server.ssrLoadModule('@pixoffice/scene-office/pixi/depth'))
@@ -19,6 +20,19 @@ function setup(actorIndex = 0) {
   const seated = actorPixels(actor)
   return { runtime, world, actor, seats, seated }
 }
+
+test('floor walking is 1.5 times faster and commits a cell after 320 milliseconds', () => {
+  assert.equal(480 / CELL_STEP_MS, 1.5)
+  const actor = { id: 'walker', position: { x: 0, y: 0 }, posture: 'standing' }
+  const world = { actors: [actor] }, navigation = { segmentClear: () => true }, target = { x: 1, y: 0 }
+  assert.equal(advanceCell(world, actor, target, 160, navigation), 'moving')
+  assert.equal(actor.step.durationMs, 320)
+  assert.deepEqual(actor.position, { x: 0, y: 0 }, 'logical positions still commit only at the cell boundary')
+  assert.deepEqual(actorPixels(actor), { x: 50, y: 25 }, 'the renderer interpolates halfway without teleporting')
+  assert.equal(advanceCell(world, actor, target, 160, navigation), 'arrived')
+  assert.deepEqual(actor.position, target)
+  assert.equal(actor.step, undefined)
+})
 
 test('all six actors walk into aligned seats at the same speed as normal floor movement', () => {
   for (let actorIndex = 0; actorIndex < 6; actorIndex++) for (let entrance = 0; entrance < 2; entrance++) {
@@ -47,7 +61,7 @@ test('all six actors walk into aligned seats at the same speed as normal floor m
             const dx = next.x - previous.x, dy = next.y - previous.y
             if (previousStage === actor.seatTransition.stage) {
               const distance = Math.abs(dx) + Math.abs(dy)
-              if (distance > .001) assert(Math.abs(distance - 50 / 480 * 16) < .001, `${direction} entrance ${entrance} changed walking speed`)
+              if (distance > .001) assert(Math.abs(distance - 50 / CELL_STEP_MS * 16) < .001, `${direction} entrance ${entrance} changed walking speed`)
               if (Math.abs(dx) > .001 && Math.abs(dy) < .001) assert.equal(projected.viewFacing, dx < 0 ? 'left' : 'right')
               if (Math.abs(dy) > .001 && Math.abs(dx) < .001) assert.equal(projected.viewFacing, dy < 0 ? 'back' : 'front')
             }

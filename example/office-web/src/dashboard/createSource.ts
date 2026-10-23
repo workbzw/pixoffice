@@ -1,7 +1,6 @@
 import type { OfficeDataSource } from '@pixoffice/protocol/dashboard'
-import { ExampleOfficeDataSource } from './demoSource.ts'
-import { codingOfficeExample } from './codingExample.ts'
+import { CommerceOfficeDataSource } from './CommerceOfficeDataSource.ts'
 
 export function createOfficeDataSource(): OfficeDataSource {
-  return new ExampleOfficeDataSource(new Date(), codingOfficeExample)
+  return new CommerceOfficeDataSource('operations')
 }

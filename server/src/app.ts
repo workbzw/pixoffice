@@ -8,12 +8,15 @@ import { idSchema, commandSchema, batchSchema } from '@pixoffice/protocol'
 import { assertProtocolObject, parseProtocolObject, ProtocolValueFault, responseEnvelopeSchema, stringifyProtocolObject } from '@pixoffice/protocol/schema'
 import { maxRelayEventBytes, maxRelayMessageBytes, maxRelayTeams, relayMessageSchema, relayPaths } from '@pixoffice/protocol/relay'
 import { MessageRelay } from './relay.ts'
-import { officeIntegrationPaths, officeMessageSchema, officeReplySchema, officeWorkspaceTopic, officeCapabilities, officeUiActionSchema, describeOfficeUi, officeSupportedMessages, officeErrorResultSchema, officeWorkspaceResultSchema } from '@pixoffice/protocol/office-integration'
+import { officeIntegrationPaths, officeMessageSchema, officeReplySchema, officeWorkspaceTopic, officeCapabilities, officeUiActionSchema, officeErrorResultSchema, officeWorkspaceReceiptSchema, officeRuntimeReceiptSchema, unavailableOfficeRuntime, officeLayoutSetSchema } from '@pixoffice/protocol/office-integration'
+import type { OfficeSnapshot } from '@pixoffice/protocol/office-integration'
+import type { z } from 'zod'
 import { createSceneRuntime } from '@pixoffice/runtime/createSceneRuntime'
 import { referenceOfficeScenePack, describeOfficeScene } from '@pixoffice/scene-office/core'
 import { OFFICE_ROSTER } from '@pixoffice/scene-office/core/roster'
 import { OfficeRequests } from './officeRequests.ts'
-import { OfficeState, OfficeStateFault } from './officeState.ts'
+import { OfficeState, OfficeStateFault, maxOfficeStateBytes } from './officeState.ts'
+import { OfficeLayouts } from './officeLayouts.ts'
 import { OfficeUi } from './officeUi.ts'
 import { registerOfficeChat } from './officeChat.ts'
 import { chatPath } from '@pixoffice/protocol/chat'
@@ -53,14 +56,16 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
     return payload
   })
   const relay = new MessageRelay()
-  const state = new OfficeState(), ui = new OfficeUi(), stateId = randomUUID()
+  const state = new OfficeState(), ui = new OfficeUi(), stateId = randomUUID(), layouts = new OfficeLayouts()
   const discovery = createSceneRuntime(referenceOfficeScenePack)
-  const capabilities = officeCapabilities(describeOfficeScene(discovery)); discovery.dispose()
-  const workspace = (ready: { id: string; seq: number; runtimeReady: boolean }[] = []) => ({ offices: state.list().map(snapshot => ({ id: snapshot.workspace.id, name: snapshot.workspace.name, seq: snapshot.seq,
-    runtimeReady: ready.some(office => office.id === snapshot.workspace.id && office.seq === snapshot.seq && office.runtimeReady), taskCount: snapshot.conversations.reduce((sum, conversation) => sum + conversation.tasks.length, 0) })), actors: OFFICE_ROSTER.map(({ id, name }) => ({ id, name })),
-    supportedMessages: [...officeSupportedMessages], sceneCommandProtocol: '2.0', ui: describeOfficeUi() })
+  const capabilities = officeCapabilities(describeOfficeScene(discovery), { businessTimeoutMs: options.officeRequestMs, chatTimeoutMs: options.chatTimeoutMs }); discovery.dispose()
+  const officeView = (snapshot: OfficeSnapshot, receipt?: z.infer<typeof officeRuntimeReceiptSchema>) => ({ snapshot,
+    runtime: receipt?.id === snapshot.workspace.id && receipt.seq === snapshot.seq ? receipt.runtime : unavailableOfficeRuntime() })
+  const workspace = (receipts: z.infer<typeof officeWorkspaceReceiptSchema>['offices'] = []) => ({ capabilities,
+    state: { layout: layouts.read(), chat: { configured: chat.isConfigured() }, offices: state.list().map(snapshot => officeView(snapshot, receipts.find(item => item.id === snapshot.workspace.id))) } })
   const publishSnapshot = (snapshot: ReturnType<OfficeState['list']>[number]) => relay.publish(officeWorkspaceTopic,
     eventFrame({ type: 'office.sync', snapshot }))
+  const publishLayout = () => relay.publish(officeWorkspaceTopic, eventFrame({ type: 'office.layout.sync', layout: layouts.read() }))
   const officeRequests = new OfficeRequests((message, responseToken) => {
     if (message.type !== 'decision.request') return
     relay.publish(officeWorkspaceTopic, eventFrame({ type: 'office.request.closed', responseToken }))
@@ -106,8 +111,25 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
       const message = business.data
       let data = message
       if (data.type === 'office.capabilities') return envelope(200, 'OK', capabilities)
+      if (data.type === 'office.layout.read') return envelope(200, 'OK', layouts.describe())
+      if (data.type === 'office.layout.set') {
+        layouts.select(data.layoutId); publishLayout()
+        if (!relay.hasReceiver(officeWorkspaceTopic)) return reply.code(202).send(envelope(202, 'Layout cached; no online page can confirm application', layouts.describe()))
+      }
       if (data.type === 'office.read' && !data.teamId && (!state.list().length || !relay.hasReceiver(officeWorkspaceTopic))) return envelope(200, 'OK', workspace())
       if (data.type === 'office.read' && data.teamId && !state.get(data.teamId)) throw new OfficeStateFault(404, 'OFFICE_NOT_INITIALIZED', '办公室未初始化')
+      if (data.type === 'office.read' && data.teamId && !relay.hasReceiver(officeWorkspaceTopic)) return envelope(200, 'OK', officeView(state.get(data.teamId)!))
+      if (data.type === 'chat.updated') {
+        const { teamId, conversationId } = data
+        const office = state.get(teamId)
+        if (!office) throw new OfficeStateFault(404, 'OFFICE_NOT_INITIALIZED', '办公室未初始化')
+        if (!office.conversations.some(item => item.id === conversationId)) throw new OfficeStateFault(404, 'CONVERSATION_NOT_FOUND', '聊天所属会话不存在')
+        if (!chat.isConfigured()) throw new OfficeStateFault(503, 'CHAT_NOT_CONFIGURED', '外部后端尚未配置聊天服务')
+        const { forwarded } = relay.publish(officeWorkspaceTopic, eventFrame(data))
+        const code = forwarded ? 200 : 202
+        return reply.code(code).send(envelope(code, forwarded ? 'Chat update notified' : 'No online page notified; history remains at the chat service',
+          { teamId, conversationId, forwarded }))
+      }
       if (data.type === 'decision.request') {
         const { teamId, conversationId } = data
         if (!state.get(teamId)?.conversations.some(item => item.id === conversationId)) throw new OfficeStateFault(404, 'CONVERSATION_NOT_FOUND', '审批所属会话不存在')
@@ -141,6 +163,7 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
         const update = state.apply(data.type === 'offices.initialize' ? data.offices : [data.snapshot], data.type === 'office.snapshot')
         if (data.type === 'offices.initialize') {
           if (data.chat) chat.configure(data.chat)
+          if (data.layoutId) { layouts.select(data.layoutId); publishLayout() }
           data = { type: 'offices.initialize', offices: data.offices }
         }
         if (data.type === 'office.snapshot' && update.results[0].reasonCode === 'STALE_SEQ') return envelope(200, 'Snapshot ignored', update.results[0])
@@ -151,6 +174,7 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
       }
       const pending = officeRequests.open(message)
       if (!pending) {
+        if (data.type === 'office.layout.set') return reply.code(202).send(envelope(202, 'Layout cached and published; browser result was not awaited', layouts.describe()))
         if (data.type === 'offices.initialize' || data.type === 'office.snapshot') {
           const snapshots = data.type === 'offices.initialize' ? data.offices : [data.snapshot]
           snapshots.forEach(publishSnapshot)
@@ -170,7 +194,9 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
       reply.raw.off('close', abort)
       if (reply.raw.destroyed) return reply
       const result = response.code === 200 && (data.type === 'offices.initialize' || data.type === 'office.read' && !data.teamId)
-        ? workspace(officeWorkspaceResultSchema.parse(response.data).offices) : response.data
+        ? workspace(officeWorkspaceReceiptSchema.parse(response.data).offices)
+        : response.code === 200 && data.type === 'office.read' && data.teamId ? officeView(state.get(data.teamId)!, officeRuntimeReceiptSchema.parse(response.data))
+        : response.code === 200 && data.type === 'office.layout.set' ? layouts.describe() : response.data
       return reply.code(response.code).send(envelope(response.code, response.msg, result))
     }
     const message = parsed.data
@@ -206,8 +232,17 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
     return reply.code(result.code).send(envelope(result.code, result.code === 200 ? 'OK' : 'UI request ended', result.presentation ?? { reasonCode: result.reasonCode }))
   })
 
+  app.post(officeIntegrationPaths.layout, async (request, reply) => {
+    if (!sameOrigin(request)) return reply.code(403).send(envelope(403, 'Use a same-origin browser connection'))
+    const parsed = officeLayoutSetSchema.safeParse(request.body)
+    if (!parsed.success) return reply.code(400).send(envelope(400, 'Invalid page layout', { reasonCode: 'INVALID_MESSAGE', issues: parsed.error.issues }))
+    layouts.select(parsed.data.layoutId); publishLayout()
+    return envelope(200, 'Layout selected', layouts.describe())
+  })
+
   // Browsers return business results using a one-use token, never the backend API key.
-  app.post(officeIntegrationPaths.reply, { bodyLimit: 524_288 }, async (request, reply) => {
+  // A workspace receipt can include the selected whiteboard from every cached office.
+  app.post(officeIntegrationPaths.reply, { bodyLimit: maxOfficeStateBytes + maxRelayEventBytes }, async (request, reply) => {
     if (!sameOrigin(request)) return reply.code(403).send(envelope(403, 'Use a same-origin browser connection'))
     const parsed = officeReplySchema.safeParse(request.body)
     if (!parsed.success) return reply.code(400).send(envelope(400, 'Invalid business reply'))
@@ -243,7 +278,7 @@ export async function createPixOfficeServer(options: ServerOptions = {}) {
     heartbeat.unref()
     stream.on('close', () => { detach(); clearInterval(heartbeat) })
     if (workspace) {
-      send(eventFrame({ type: 'office.sync.start', stateId }))
+      send(eventFrame({ type: 'office.sync.start', stateId, layout: layouts.read() }))
       const snapshots = state.list()
       for (const snapshot of snapshots) {
         if (!send(eventFrame({ type: 'office.sync', snapshot }))) break

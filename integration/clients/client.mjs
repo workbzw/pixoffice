@@ -42,13 +42,13 @@ const research = {
 try {
   console.log('请先打开服务器模式的 /office/ 页面。')
   const directory = await post({ type: 'office.read' })
-  development.seq = (directory.data.offices.find(office => office.id === development.workspace.id)?.seq ?? 0) + 1
-  research.seq = (directory.data.offices.find(office => office.id === research.workspace.id)?.seq ?? 0) + 1
+  development.seq = (directory.data.state.offices.find(office => office.snapshot.workspace.id === development.workspace.id)?.snapshot.seq ?? 0) + 1
+  research.seq = (directory.data.state.offices.find(office => office.snapshot.workspace.id === research.workspace.id)?.snapshot.seq ?? 0) + 1
   const chatUrl = process.env.CHAT_SERVICE_URL?.trim()
   const initialized = await post({ type: 'offices.initialize', offices: [development, research], ...(chatUrl ? { chat: { url: chatUrl } } : {}) })
   if (initialized.code === 202) { console.log('快照已缓存，本次未取得浏览器初始化确认。请检查服务器模式的 /office/ 页面及连接状态，再运行示例继续菜单联调。'); process.exit(0) }
-  console.log('办公室已初始化：', initialized.data.offices)
-  console.log('可绑定人物：', initialized.data.actors)
+  console.log('办公室已初始化：', initialized.data.state.offices)
+  console.log('可绑定人物：', initialized.data.capabilities.scene.actors)
   await post({ teamId: 'office-1', command: {
     protocolVersion: '2.0', sceneId: 'office-1', commandId: randomUUID(), type: 'activity.start', capability: 'scene.say',
     participants: [{ entityId: 'office-lead', role: 'actor' }], params: { text: '登录模块已准备好，请确认是否提交。', durationMs: 3000 },

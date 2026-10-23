@@ -1,15 +1,19 @@
 import { advanceOfficeTeamSessions } from './OfficeTeamSession.ts'
 import type { OfficeTeamSession } from './OfficeTeamSession.ts'
 import type { DecisionRequest } from './decisions/DecisionSession.ts'
+import { CommerceDemoRun } from './CommerceDemoRun.ts'
+import { CommerceOfficeDataSource } from '../dashboard/CommerceOfficeDataSource.ts'
 
 export class OfficeTeamHost {
   private sessions = new Set<OfficeTeamSession>()
   private demoSubscriptions = new Map<OfficeTeamSession, () => void>()
   private previewRun?: { owner: OfficeTeamSession; timers: Map<OfficeTeamSession, ReturnType<typeof setTimeout>> }
+  private commerceRun?: CommerceDemoRun
 
   update(sessions: readonly OfficeTeamSession[]) {
     const next = new Set(sessions)
     for (const session of this.sessions) if (!next.has(session)) {
+      if (this.commerceRun?.has(session)) this.stopCommerce()
       this.demoSubscriptions.get(session)?.(); this.demoSubscriptions.delete(session)
       this.cancelDecisionPreview(session)
       clearTimeout(this.previewRun?.timers.get(session)); this.previewRun?.timers.delete(session)
@@ -18,12 +22,20 @@ export class OfficeTeamHost {
     }
     for (const session of next) if (!this.sessions.has(session) || session.isStarted === false) void session.start()
     this.sessions = next
-    for (const session of next) if (session.decisionPreviewEnabled && !this.demoSubscriptions.has(session)) {
+    for (const session of next) if ((session.decisionPreviewEnabled || session.source instanceof CommerceOfficeDataSource) && !this.demoSubscriptions.has(session)) {
       let running = session.simulation.isDemoRunning
       this.demoSubscriptions.set(session, session.simulation.subscribe(() => {
         const next = session.simulation.isDemoRunning
         if (next === running) return
         running = next
+        if (session.source instanceof CommerceOfficeDataSource) {
+          if (running) {
+            this.cancelDecisionPreview(); this.stopCommerce()
+            this.commerceRun = new CommerceDemoRun([...this.sessions], session)
+            this.commerceRun.start()
+          } else if (this.commerceRun?.owner === session) this.stopCommerce()
+          return
+        }
         if (running) this.scheduleDecisionPreview(session)
         else this.cancelDecisionPreview(session)
       }))
@@ -61,9 +73,11 @@ export class OfficeTeamHost {
     this.previewRun = undefined
   }
 
-  advance(elapsedMs: number) { advanceOfficeTeamSessions(this.sessions, elapsedMs) }
+  private stopCommerce() { const run = this.commerceRun; this.commerceRun = undefined; run?.stop() }
+  advance(elapsedMs: number) { advanceOfficeTeamSessions(this.sessions, elapsedMs); this.commerceRun?.tick() }
 
   stop() {
+    this.stopCommerce()
     this.cancelDecisionPreview()
     for (const unsubscribe of this.demoSubscriptions.values()) unsubscribe()
     this.demoSubscriptions.clear()

@@ -8,6 +8,7 @@
 integration/
   README.md
   clients/
+    discovery-client.mjs       只读获取完整能力契约与当前状态
     client.mjs                 初始化、任务更新和用户确认示例
     ui-client.mjs              领取用户操作并返回展示结果
   docs/
@@ -39,13 +40,21 @@ npm run dev
 npm run integration-example
 ```
 
+只查看服务端提供的完整能力与状态，不修改办公室：
+
+```sh
+node integration/clients/discovery-client.mjs
+```
+
+返回 `data.capabilities`（布局、动画、业务、UI、聊天契约）与 `data.state`（当前布局、聊天配置状态、所有办公室完整快照和可用的运行状态），与初始化结果使用同一数据结构。无在线页面时也可查询，运行状态明确标记为不可用。
+
 办公室初始化后，可在另一个终端启动用户操作处理示例，然后在页面点击人物或任务按钮：
 
 ```sh
 npm run integration-ui-example
 ```
 
-这两个客户端模拟外部业务后端，不是 PixOffice 服务端。默认服务地址为 `http://127.0.0.1:8765`，默认密钥为公开演示值 `pixoffice-demo-key`。连接其他服务时，通过进程环境变量配置：
+这些客户端模拟外部业务后端，不是 PixOffice 服务端。默认服务地址为 `http://127.0.0.1:8765`，默认密钥为公开演示值 `pixoffice-demo-key`。连接其他服务时，通过进程环境变量配置：
 
 ```sh
 PIXOFFICE_URL=http://127.0.0.1:3000 PIXOFFICE_API_KEY=your-private-key npm run integration-example

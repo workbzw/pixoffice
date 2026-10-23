@@ -12,7 +12,7 @@ import './OfficeChat.css'
 
 type Props = {
   session: ChatWorkspace; expanded: boolean; onExpandedChange: (expanded: boolean) => void; hidden: boolean; leaderAppearanceId?: string; leaderName: string
-  decisionSession: DecisionSession; decisionPreview?: boolean; decisionOpenToken?: number
+  decisionSession: DecisionSession; decisionPreview?: boolean; decisionOpenToken?: number; onReplayDemo?: () => void
 }
 export const OfficeChat = memo(function OfficeChat(props: Props) {
   const state = useSyncExternalStore(props.session.subscribe, props.session.getSnapshot)
@@ -22,7 +22,7 @@ export const OfficeChat = memo(function OfficeChat(props: Props) {
   return <ActiveConversation key={entry.id} {...props} workspace={props.session} workspaceState={state} entry={entry} session={entry.session} allDecisions={decisions} />
 })
 
-function ActiveConversation({ session, workspace, workspaceState, entry, allDecisions, expanded, onExpandedChange, hidden, leaderName, decisionSession, decisionPreview = false, decisionOpenToken = 0 }: Omit<Props, 'session'> & {
+function ActiveConversation({ session, workspace, workspaceState, entry, allDecisions, expanded, onExpandedChange, hidden, leaderName, decisionSession, decisionPreview = false, decisionOpenToken = 0, onReplayDemo }: Omit<Props, 'session'> & {
   session: ChatSession; workspace: ChatWorkspace; workspaceState: ChatWorkspaceSnapshot; entry: ConversationEntry; allDecisions: DecisionSnapshot
 }) {
   const chat = useSyncExternalStore(session.subscribe, session.getSnapshot)
@@ -78,7 +78,7 @@ function ActiveConversation({ session, workspace, workspaceState, entry, allDeci
       {!atBottom && <button type="button" className="office-chat-latest" title="回到最新消息" aria-label="回到最新消息" onClick={bottom}><ArrowDown size={17} /></button>}
     </section>
     <OfficeDecisionPanel preview={decisionPreview} hidden={expanded} openToken={decisionOpenToken} snapshot={decisions} onResolve={(decisionId, choiceId) => { void decisionSession.choose(decisionSession.teamId, decisionId, choiceId) }}
-      onShowRecords={() => { setAtBottom(true); onExpandedChange(true) }} onReset={() => decisionSession.reset()} />
+      onShowRecords={() => { setAtBottom(true); onExpandedChange(true) }} onReset={onReplayDemo ?? (() => decisionSession.reset())} />
     <form ref={composer} className="office-chat-composer" data-busy={busy} aria-label="发送消息" onSubmit={event => { event.preventDefault(); submit() }}>
       <button type="button" className="office-chat-history is-session" aria-label={expanded ? `切换会话：${entry.title}` : '展开对话'} title={entry.title} aria-expanded={expanded && conversationMenuOpen} aria-controls={expanded ? conversationMenuId : panelId} onClick={() => { if (expanded) setConversationMenuOpen(true); else onExpandedChange(true) }}><MessageCircle size={15} /><span>{entry.title}</span></button>
       <textarea ref={textarea} value={draft} rows={1} maxLength={4000} disabled={!chat.ready} aria-label="给办公室发送消息" placeholder={expanded ? '继续当前会话，或安排办公室成员执行任务…' : '和办公室聊一聊…'} onClick={() => onExpandedChange(true)} onChange={event => setDraft(event.target.value)} onCompositionStart={() => { composing.current = true }} onCompositionEnd={() => { composing.current = false }} onKeyDown={event => {

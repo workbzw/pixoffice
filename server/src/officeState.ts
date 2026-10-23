@@ -3,6 +3,8 @@ import type { OfficeSnapshot } from '@pixoffice/protocol/office-integration'
 import { OFFICE_ROSTER } from '@pixoffice/scene-office/core/roster'
 import { maxRelayEventBytes, maxRelayTeams } from '@pixoffice/protocol/relay'
 
+export const maxOfficeStateBytes = 8 * 1024 * 1024
+
 export class OfficeStateFault extends Error {
   constructor(readonly code: number, readonly reasonCode: string, message: string) { super(message) }
 }
@@ -10,7 +12,7 @@ export class OfficeStateFault extends Error {
 /** Latest business state only. No animation history or offline command queue. */
 export class OfficeState {
   private snapshots = new Map<string, OfficeSnapshot>()
-  constructor(private readonly maxBytes = 8 * 1024 * 1024) {}
+  constructor(private readonly maxBytes = maxOfficeStateBytes) {}
   list() { return structuredClone([...this.snapshots.values()]) }
   get(id: string) { const snapshot = this.snapshots.get(id); return snapshot && structuredClone(snapshot) }
   apply(snapshots: OfficeSnapshot[], requireExisting = false) {

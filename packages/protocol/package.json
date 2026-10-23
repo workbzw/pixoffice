@@ -7,6 +7,7 @@
     "./map": { "types": "./dist/map.d.ts", "import": "./dist/map.js" },
     "./spatial": { "types": "./dist/spatial.d.ts", "import": "./dist/spatial.js" },
     "./dashboard": { "types": "./dist/dashboard.d.ts", "import": "./dist/dashboard.js" },
+    "./agent-insights": { "types": "./dist/agent-insights.d.ts", "import": "./dist/agent-insights.js" },
     "./chat": { "types": "./dist/chat.d.ts", "import": "./dist/chat.js" },
     "./relay": { "types": "./dist/relay.d.ts", "import": "./dist/relay.js" },
     "./office-integration": { "types": "./dist/office-integration.d.ts", "import": "./dist/office-integration.js" },

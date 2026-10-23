@@ -38,7 +38,7 @@ export function CharacterArtwork({ pack, clip, elapsedMs = 0, height = 160, guid
   </span>
 }
 
-export function CharacterAvatar({ appearanceId }: { appearanceId?: string }) {
+export function CharacterAvatar({ appearanceId, height = 32, crop = 'full' }: { appearanceId?: string; height?: number; crop?: 'full' | 'head' }) {
   const [entry, setEntry] = useState<CharacterRegistry['characters'][number]>()
   useEffect(() => {
     let active = true
@@ -49,8 +49,11 @@ export function CharacterAvatar({ appearanceId }: { appearanceId?: string }) {
     return () => { active = false }
   }, [appearanceId])
   const portrait = entry?.id === appearanceId ? entry?.portrait : undefined
-  return <span className="runtime-avatar">{portrait ? <img alt={entry!.label} draggable={false} decoding="async"
+  // Crop the head from the registered front portrait without publishing another image.
+  const scale = portrait ? height / (portrait.referenceHeight * (crop === 'head' ? .6 : 1)) : 1
+  return <span className="runtime-avatar" style={crop === 'head' ? { position: 'relative', width: height, height, flexShrink: 0 } : undefined}>{portrait ? <img alt={entry!.label} draggable={false} decoding="async"
     src={characterResourceUrl(`${appearanceId}/${portrait.image}`)}
-    style={{ width: portrait.canvas.width * 32 / portrait.referenceHeight, height: portrait.canvas.height * 32 / portrait.referenceHeight }} />
+    style={{ width: portrait.canvas.width * scale, height: portrait.canvas.height * scale,
+      ...(crop === 'head' ? { position: 'absolute', maxHeight: 'none', left: '50%', top: -portrait.canvas.height * scale * .15, transform: 'translateX(-50%)' } : {}) }} />
     : null}</span>
 }

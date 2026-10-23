@@ -1,6 +1,7 @@
 import { chatCancelResultSchema, chatHistoryPageSchema, chatOperationSchema, readChatEvents } from '@pixoffice/protocol/chat'
 import { responseEnvelopeSchema, stringifyProtocolObject } from '@pixoffice/protocol/schema'
 import type { ChatCancelRequest, ChatEvent, ChatHistoryRequest, ChatOperation, ChatRequest, ChatResumeRequest, OfficeChatSource } from '@pixoffice/protocol/chat'
+import { commerceInitialHistory } from '../dashboard/commerceScenario.ts'
 
 function delay(ms: number, signal: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
@@ -14,19 +15,14 @@ function delay(ms: number, signal: AbortSignal) {
 /** An explicit interaction preview, not an AI model or task executor. */
 export class PreviewChatSource implements OfficeChatSource {
   readonly kind = 'preview'
-  initialHistory(conversationId: string) {
-    const histories: Record<string, string[]> = {
-      main: ['请完成登录模块开发，拆解需求、实现功能并通过测试。', '已将任务分配给办公室成员。\n\n登录模块的需求方案已确认，接口与页面开发正在进行，联调测试等待上游交付。', '请继续完善方案，并整理需要我确认的事项。', '方案已更新，包含输入校验、错误提示和登录态保持。\n\n后续会继续进行接口联调与安全审查。'],
-      requirements: ['我们先评审产品需求，明确这次的交付范围。', '正在梳理登录流程和验收标准。\n\n本次先完成邮箱密码登录、退出登录与登录态保持。'],
-      integration: ['核对登录接口，完成联调验证。', '接口协议已核对，正在等待测试环境访问权限。授权后继续验证登录流程。'],
-      weekly: ['本周项目周报先记录在这个会话里。', '好的，后续可以在这里汇总进展、风险与下一步计划。'],
-    }
-    return (histories[conversationId] ?? []).map((content, index) => ({ role: index % 2 ? 'assistant' as const : 'user' as const, content }))
-  }
-  async *stream(_request: ChatRequest, signal: AbortSignal): AsyncIterable<ChatEvent> {
+  readonly historyKey = 'commerce-demo-v1'
+  private readonly previewReply?: (request: ChatRequest) => string
+  constructor(previewReply?: (request: ChatRequest) => string) { this.previewReply = previewReply }
+  initialHistory(conversationId: string, teamId = 'office-1') { return commerceInitialHistory(teamId, conversationId) }
+  async *stream(request: ChatRequest, signal: AbortSignal): AsyncIterable<ChatEvent> {
     yield { type: 'status', phase: 'thinking' }
     await delay(1000, signal)
-    const response = '收到你的消息。\n\n这里目前是对话交互预览，尚未连接 AI 服务，因此不会分析或执行这条请求。接入聊天服务后，真实回复会在这里逐步显示。'
+    const response = this.previewReply?.(request) ?? '收到。当前为本地电商案例预览，没有连接真实店铺或 AI 服务，不会执行真实上架、投放或付款。'
     for (let index = 0; index < response.length; index += 3) {
       await delay(35, signal)
       yield { type: 'delta', text: response.slice(index, index + 3) }

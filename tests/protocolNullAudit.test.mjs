@@ -8,7 +8,8 @@ import { relayMessageSchema } from '@pixoffice/protocol/relay'
 import { mapDocumentSchema, mapEditSchema, mapOperationSchema } from '@pixoffice/protocol/map'
 import { chatEventSchema, chatRequestSchema, chatOperationSchema, chatHistoryPageSchema, chatCancelResultSchema } from '@pixoffice/protocol/chat'
 import { officeRequestSchema, officeSnapshotSchema, officeReplySchema, officeDeliverySchema, officeSyncSchema, officeSyncStartSchema, officeSyncCompleteSchema,
-  officeClosedSchema, officeUiActionSchema, officeUiPresentationSchema, officeErrorResultSchema, officeSuccessResultSchema } from '@pixoffice/protocol/office-integration'
+  officeClosedSchema, officeUiActionSchema, officeUiPresentationSchema, officeErrorResultSchema, officeSuccessResultSchema,
+  defaultOfficeLayout, describeOfficeLayouts, officeLayoutStateSchema, officeLayoutInfoSchema, officeLayoutSetSchema, officeLayoutSyncSchema, officeCapabilities, describeOfficeRuntime } from '@pixoffice/protocol/office-integration'
 import { whiteboardTaskBoardSchema } from '@pixoffice/protocol/office-ui'
 import { createSceneRuntime } from '@pixoffice/runtime/createSceneRuntime'
 import { SseMessageTransport } from '@pixoffice/runtime/adapters/sse'
@@ -53,6 +54,8 @@ test('every value position in all request, response and event variants rejects a
   add(officeRequestSchema,
     { type: 'offices.initialize', offices: [state], chat: { url: 'https://backend.example/chat' } }, { type: 'office.snapshot', teamId: 'audit', snapshot: state },
     { type: 'office.read', teamId: 'audit' }, { type: 'office.capabilities' }, { type: 'ui.next', timeoutMs: 1000 },
+    { type: 'chat.updated', teamId: 'audit', conversationId: 'main' },
+    { type: 'office.layout.read' }, { type: 'office.layout.set', layoutId: 'members' },
     { type: 'ui.respond', interactionId: 'interaction', presentation: dialog },
     { type: 'ui.respond', interactionId: 'interaction', presentation: { target: 'whiteboard', snapshot: state } },
     { type: 'ui.respond', interactionId: 'interaction', presentation: { target: 'result', success: true, message: '' } },
@@ -83,24 +86,34 @@ test('every value position in all request, response and event variants rejects a
   add(officeUiActionSchema, ...actions)
   add(officeSuccessResultSchema, { actions: [actions[0]] }, { actions: [] }, { interactionId: 'interaction', delivered: true },
     { teamId: 'audit', seq: 1, status: 'ignored', reasonCode: 'STALE_SEQ' },
-    { conversationId: 'main', teamId: 'audit', decisionId: 'menu', choiceId: 'ok', label: '确认' })
+    { conversationId: 'main', teamId: 'audit', decisionId: 'menu', choiceId: 'ok', label: '确认' },
+    { teamId: 'audit', conversationId: 'main', forwarded: 0 })
   const scene = { protocolVersion: '2.0', sceneId: 'audit', command: { type: 'object' }, batch: { type: 'object' },
     actors: [{ id: 'actor', name: '人物', templateId: 'person', position: { x: 0, y: 0 }, presentation: { status: 'idle', title: '', sourceRevision: 0 } }],
-    objects: [{ id: 'prop', name: '物品', templateId: 'object', state: { value: '' }, stateRevision: 0, stateSchema: { type: 'object' } }],
+    objects: [{ id: 'prop', name: '物品', templateId: 'object', state: { value: '' }, stateRevision: 0, stateSchema: { type: 'object' },
+      interactions: [{ id: 'use', name: '使用', requiresHome: false, actorIds: ['actor'] }] }],
     capabilities: [{ id: 'audit.custom', name: '行为', params: { type: 'object' }, participants: { min: 0, max: -1,
       roles: [{ role: 'actor', min: 0, max: 1 }], rules: ['示例'] } }] }
-  const ui = { slots: [{ id: 'dialog', content: 'detail-v1', persistent: false, update: 'ui.respond' }], actions: ['actor.inspect'],
-    actionSchema: { type: 'object' }, presentationSchema: { type: 'object' }, whiteboardSchema: { type: 'object' } }
+  const capabilities = officeCapabilities(scene)
+  assertWire(capabilities)
+  // Exercise manifest fields without injecting null into every repeated generated schema.
+  const compactSchemas = value => value && typeof value === 'object' && '$schema' in value ? { type: 'object' }
+    : Array.isArray(value) ? value.map(compactSchemas) : value && typeof value === 'object'
+      ? Object.fromEntries(Object.entries(value).map(([key, child]) => [key, compactSchemas(child)])) : value
+  const manifest = compactSchemas(capabilities), runtime = describeOfficeRuntime(scene, 'main', ['menu'])
   add(officeSuccessResultSchema,
-    { offices: [{ id: 'audit', name: '办公室', seq: 1, runtimeReady: false, taskCount: 0 }], actors: [{ id: 'actor', name: '人物' }], supportedMessages: ['office.read'], sceneCommandProtocol: '2.0', ui },
-    { snapshot: state, scene, pendingDecisions: ['menu'] },
-    { scene, ui, requests: { type: 'object' }, responses: { success: { type: 'object' }, error: { type: 'object' } } })
+    { capabilities: manifest, state: { layout: defaultOfficeLayout, chat: { configured: false }, offices: [{ snapshot: state, runtime }] } },
+    { snapshot: state, runtime }, manifest)
   const fault = { reasonCode: 'INVALID_MESSAGE', details: { expected: '', values: [{ label: '', count: -1 }] }, issues: [{ path: ['tasks', 0], message: '' }] }
   add(officeErrorResultSchema, fault)
-  add(officeReplySchema, { responseToken: 'token', result: { code: 400, msg: '', data: fault } }, { responseToken: 'token', result: { code: 200, msg: '', data: { actions: [] } } })
+  add(officeReplySchema, { responseToken: 'token', result: { code: 400, msg: '', data: fault } }, { responseToken: 'token', result: { code: 200, msg: '', data: { offices: [{ id: 'audit', seq: 1, runtime }] } } })
   add(officeDeliverySchema, { type: 'office.request', responseToken: 'token', remainingMs: 10000, request: { type: 'offices.initialize', offices: [state] } })
   add(officeSyncSchema, { type: 'office.sync', snapshot: state })
-  add(officeSyncStartSchema, { type: 'office.sync.start', stateId: 'server-instance' })
+  add(officeSyncStartSchema, { type: 'office.sync.start', stateId: 'server-instance', layout: defaultOfficeLayout })
+  add(officeLayoutStateSchema, defaultOfficeLayout)
+  add(officeLayoutInfoSchema, describeOfficeLayouts())
+  add(officeLayoutSetSchema, { type: 'office.layout.set', layoutId: 'members' })
+  add(officeLayoutSyncSchema, { type: 'office.layout.sync', layout: defaultOfficeLayout })
   add(officeSyncCompleteSchema, { type: 'office.sync.complete', offices: [{ teamId: 'audit', seq: 1 }] })
   add(officeClosedSchema, { type: 'office.request.closed', responseToken: 'token' })
   add(chatRequestSchema, { version: '1.0', type: 'send', turnId: 'turn', teamId: 'audit', conversationId: 'conversation', messages: [{ role: 'user', content: '' }, { role: 'assistant', content: '' }] })

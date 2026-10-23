@@ -12,7 +12,8 @@ export const referenceOfficeObjects: ScenePlugin = {
   id: 'office.reference-objects', name: '明亮办公室家具', version: '1.0.0', apiVersion: 1, dependencies: ['office.objects'],
   templates: [
     { id: 'office.reference-workstation', name: '宽桌办公工位', view: 'reference-workstation',
-      footprint: { left: 0, top: 0, right: 4, bottom: 3 },
+      // The open floor row behind each desk connects the two office aisles.
+      footprint: { left: 0, top: 1, right: 4, bottom: 3 },
       interactions: { seat: { name: '入座工作', anchor: 'seat', approaches: ['seatLeft', 'seatRight'],
         cells: [0, 1, 2, 3].map(x => ({ x, y: 2 })), facing: 'back', posture: 'seated', requiresHome: true } },
       anchors: { seat: { x: 1, y: 2 }, seatStand: { x: 1, y: 2 }, seatEntry: { x: -1, y: 2 }, seatLeft: { x: -1, y: 2 }, seatRight: { x: 4, y: 2 },

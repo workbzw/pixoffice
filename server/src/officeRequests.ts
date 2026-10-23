@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto'
 import type { OfficeMessage, OfficeReply } from '@pixoffice/protocol/office-integration'
-import { officeDecisionResultSchema, officeResultSchema, officeErrorResultSchema } from '@pixoffice/protocol/office-integration'
+import { officeDecisionResultSchema, officeBrowserResultSchema, officeErrorResultSchema } from '@pixoffice/protocol/office-integration'
 
 export type OfficeResponse = { code: number; msg: string; data: unknown }
 type Pending = { request: OfficeMessage; finish: (result: OfficeResponse) => void; timer: ReturnType<typeof setTimeout>; receivers: number; failure?: OfficeResponse }
@@ -34,7 +34,7 @@ export class OfficeRequests {
     const entry = this.pending.get(reply.responseToken)
     if (!entry) return 'expired'
     const request = entry.request, response = reply.result
-    if (!(response.code === 200 ? officeResultSchema(request.type, request.type === 'office.read' && Boolean(request.teamId)) : officeErrorResultSchema).safeParse(response.data).success) return 'invalid'
+    if (!(response.code === 200 ? officeBrowserResultSchema(request.type, request.type === 'office.read' && Boolean(request.teamId)) : officeErrorResultSchema).safeParse(response.data).success) return 'invalid'
     if (response.code === 200 && request.type === 'decision.request') {
       const result = officeDecisionResultSchema.parse(response.data)
       if (result.teamId !== request.teamId || result.conversationId !== request.conversationId || result.decisionId !== request.decision.id) return 'invalid'

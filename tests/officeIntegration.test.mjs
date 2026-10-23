@@ -14,6 +14,11 @@ before(async () => {
 })
 after(() => server?.close())
 const flush = async () => { for (let i = 0; i < 80; i++) await Promise.resolve() }
+async function waitFor(predicate, message) {
+  for (let i = 0; i < 200; i++) { if (predicate()) return; await delay(1) }
+  assert.fail(message)
+}
+const syncStart = stateId => ({ type: 'office.sync.start', stateId, layout: { currentLayoutId: 'classic', revision: 0 } })
 const snapshot = (id = 'team-a') => ({ schemaVersion: '1.0', seq: 1, workspace: { id, name: id }, conversations: [{ id: 'main', title: '主会话', whiteboard: { template: 'task-board-v1', title: '', status: 'queued', steps: [] }, employees: [
   { id: 'coding', sceneActorId: 'office-lead', name: '开发功能' }, { id: 'testing', sceneActorId: 'office-lead', name: '测试功能' },
 ], tasks: [{ id: 'task-one', title: '登录开发', assigneeId: 'coding', status: 'running', progress: 25, summary: '实现接口', updatedAt: '2026-10-18T10:00:00Z' }], events: [] }] })
@@ -66,6 +71,195 @@ async function connectedBrowser(t, app, base, overrides = {}) {
   return { ...linked, receipts, close }
 }
 
+test('chat notifications refresh only the addressed conversation and reconnection recovers missed history', { timeout: 10000 }, async t => {
+  const app = await createPixOfficeServer(), base = await app.listen({ host: '127.0.0.1', port: 0 })
+  t.after(() => app.close())
+  const replies = new Map(), reads = []
+  const source = { kind: 'remote-test', async *stream() {}, history: async ({ teamId, conversationId }) => {
+    const key = `${teamId}/${conversationId}`; reads.push(key)
+    return { turns: replies.has(key) ? [{ id: 'turn', user: '问题', assistant: replies.get(key), state: 'complete', error: '' }] : [], nextCursor: '', hasMore: false, activeTurnId: '' }
+  } }
+  const runtimes = []
+  t.after(() => runtimes.forEach(runtime => runtime.dispose()))
+  const browser = await connectedBrowser(t, app, base, { createSession: (data, sceneId) => {
+    const runtime = createOfficeRuntime({ sceneId, referenceLayout: true }); runtimes.push(runtime)
+    return new OfficeTeamSession(runtime, data, { chatSource: source })
+  } })
+  const value = snapshot(), other = structuredClone(value.conversations[0]); other.id = 'other'; other.title = '另一会话'; value.conversations.push(other)
+  const post = payload => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers: { authorization: `Bearer ${DEMO_API_KEY}` }, payload })
+  assert.equal((await post({ type: 'offices.initialize', offices: [value, snapshot('team-b')], chat: { url: 'https://chat.example/api' } })).statusCode, 200)
+  const offices = browser.integration.getSnapshot().offices, chat = offices[0].session.chat
+  await chat.selected.synchronize(true)
+  await offices[1].session.chat.selected.synchronize(true)
+  chat.selected.setDraft('不能丢失的草稿')
+  const unrelatedReads = reads.filter(key => key === 'team-b/main').length
+  replies.set('team-a/main', '新的主动汇报')
+  assert.equal((await post({ type: 'chat.updated', teamId: 'team-a', conversationId: 'main' })).statusCode, 200)
+  await waitFor(() => chat.selected.getSnapshot().messages.at(-1)?.content === '新的主动汇报', 'chat did not refresh from the notification')
+  assert.equal(chat.selected.getSnapshot().draft, '不能丢失的草稿')
+  assert.equal(reads.filter(key => key === 'team-b/main').length, unrelatedReads)
+  replies.set('team-a/other', '后台会话的汇报')
+  await post({ type: 'chat.updated', teamId: 'team-a', conversationId: 'other' }); await flush()
+  assert(!reads.includes('team-a/other'), 'an unopened conversation must not trigger an unnecessary history request')
+  chat.select('other')
+  await waitFor(() => chat.selected.getSnapshot().messages.at(-1)?.content === '后台会话的汇报', 'background conversation did not refresh on selection')
+  browser.connections[0].onStatus('重连中')
+  replies.set('team-a/other', '断线期间已经更新')
+  browser.connections[0].onStatus('已连接')
+  browser.integration.receive({ type: 'office.sync.complete', offices: [{ teamId: 'team-a', seq: 1 }, { teamId: 'team-b', seq: 1 }] })
+  await waitFor(() => chat.selected.getSnapshot().messages.at(-1)?.content === '断线期间已经更新', 'reconnection did not resync missed chat updates')
+  assert.deepEqual(browser.receipts, [200], 'chat updates must not produce business reply acknowledgements')
+})
+
+test('member statistics survive HTTP delivery, conversation switching and a late browser joining', { timeout: 5000 }, async t => {
+  const app = await createPixOfficeServer(), base = await app.listen({ host: '127.0.0.1', port: 0 })
+  t.after(() => app.close())
+  const first = await connectedBrowser(t, app, base)
+  const value = snapshot()
+  const history = completed => ({ scope: 'conversation', updatedAt: '2026-10-22T02:00:00Z', periods: [{
+    id: 'last7Days', label: '近 7 天', metrics: [{ id: 'completed', label: '完成', value: completed, unit: '项' }], blocks: [],
+  }] })
+  value.conversations[0].employees[0].insights = history(7)
+  value.conversations.push({ ...structuredClone(value.conversations[0]), id: 'other', title: '另一会话' })
+  value.conversations[1].employees[0].insights = history(30)
+  const post = payload => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers: { authorization: `Bearer ${DEMO_API_KEY}` }, payload })
+  assert.equal((await post({ type: 'offices.initialize', offices: [value] })).statusCode, 200)
+  const source = first.integration.getSnapshot().offices[0].source
+  assert.equal((await source.getSnapshot()).employees[0].insights.periods[0].metrics[0].value, 7)
+  source.selectConversation('other')
+  assert.equal((await source.getSnapshot()).employees[0].insights.periods[0].metrics[0].value, 30)
+  const late = await connectedBrowser(t, app, base)
+  const recovered = late.integration.getSnapshot().offices[0].source.readSnapshot()
+  assert.equal(recovered.conversations[0].employees[0].insights.periods[0].metrics[0].value, 7)
+  assert.equal(recovered.conversations[1].employees[0].insights.periods[0].metrics[0].value, 30)
+  assert.equal(recovered.conversations[0].employees[1].insights, undefined, 'no statistics are invented for an unreported member')
+})
+
+test('full discovery accepts live runtime receipts larger than one scene event without echoing capability schemas', { timeout: 10000 }, async t => {
+  const app = await createPixOfficeServer(), base = await app.listen({ host: '127.0.0.1', port: 0 })
+  t.after(() => app.close())
+  const post = payload => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers: { authorization: `Bearer ${DEMO_API_KEY}` }, payload })
+  for (let i = 0; i < 20; i++) {
+    const value = snapshot(`team-${i}`)
+    value.conversations[0].whiteboard = { title: '完整业务内容', link: { label: '资料', url: `https://example.com/${'a'.repeat(30000)}` } }
+    assert.equal((await post({ type: 'offices.initialize', offices: [value] })).statusCode, 202)
+  }
+  const browser = await connectedBrowser(t, app, base)
+  const response = await post({ type: 'office.read' })
+  assert.equal(response.statusCode, 200)
+  const offices = response.json().data.state.offices
+  assert.equal(offices.length, 20); assert(offices.every(office => office.runtime.available))
+  assert(Buffer.byteLength(JSON.stringify(offices.map(office => office.runtime))) > 524288)
+  assert.deepEqual(browser.receipts, [200])
+})
+
+test('backend layout selection initializes and switches connected pages without recreating business sessions', { timeout: 10000 }, async t => {
+  const app = await createPixOfficeServer(), base = await app.listen({ host: '127.0.0.1', port: 0 })
+  t.after(() => app.close())
+  const first = await connectedBrowser(t, app, base), second = await connectedBrowser(t, app, base)
+  const post = payload => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers: { authorization: `Bearer ${DEMO_API_KEY}` }, payload })
+  const initialized = await post({ type: 'offices.initialize', offices: [snapshot()], layoutId: 'members' })
+  assert.equal(initialized.statusCode, 200)
+  assert.equal(initialized.json().data.state.layout.currentLayoutId, 'members')
+  await waitFor(() => second.integration.getSnapshot().offices.length === 1, 'second page did not initialize')
+  const office = first.integration.getSnapshot().offices[0], runtime = office.session.runtime, chat = office.session.chat
+  await chat.ready; await chat.selected.ready
+  chat.selected.setDraft('保留中的草稿')
+  const chatSession = chat.selected, sceneId = runtime.sceneId
+  runtime.submit({ protocolVersion: '2.0', sceneId, commandId: 'layout-does-not-interrupt', type: 'activity.start', capability: 'scene.say',
+    participants: [{ entityId: 'office-lead', role: 'actor' }], params: { text: '继续执行', durationMs: 30000 } })
+  const changed = await post({ type: 'office.layout.set', layoutId: 'classic' })
+  assert.equal(changed.statusCode, 200)
+  assert.equal(changed.json().data.currentLayoutId, 'classic')
+  await waitFor(() => second.integration.getSnapshot().layout.currentLayoutId === 'classic', 'other page did not switch')
+  assert.equal(first.integration.getSnapshot().offices[0].session, office.session)
+  assert.equal(first.integration.getSnapshot().offices[0].session.runtime, runtime)
+  assert.equal(runtime.getRecord('layout-does-not-interrupt').status, 'running')
+  assert.equal(chat.selected, chatSession); assert.equal(chatSession.getSnapshot().draft, '保留中的草稿')
+  const next = snapshot(); next.seq = 2; next.conversations[0].tasks[0].status = 'completed'
+  assert.equal((await post({ type: 'office.snapshot', teamId: 'team-a', snapshot: next })).statusCode, 200)
+  assert.equal(first.integration.getSnapshot().layout.currentLayoutId, 'classic')
+  const switchedInBrowser = await app.inject({ method: 'POST', url: '/api/pixoffice/layout', payload: { type: 'office.layout.set', layoutId: 'members' } })
+  assert.equal(switchedInBrowser.statusCode, 200)
+  await waitFor(() => first.integration.getSnapshot().layout.currentLayoutId === 'members' && second.integration.getSnapshot().layout.currentLayoutId === 'members', 'browser choice was not shared')
+  assert.equal((await post({ type: 'office.layout.read' })).json().data.currentLayoutId, 'members')
+  assert.equal(first.integration.getSnapshot().offices[0].source.readSnapshot().seq, 2)
+})
+
+test('a late joining page restores an offline layout selection without an office initialization request', { timeout: 5000 }, async t => {
+  const app = await createPixOfficeServer(), base = await app.listen({ host: '127.0.0.1', port: 0 })
+  t.after(() => app.close())
+  const post = payload => app.inject({ method: 'POST', url: '/api/pixoffice/messages', headers: { authorization: `Bearer ${DEMO_API_KEY}` }, payload })
+  assert.equal((await post({ type: 'office.layout.set', layoutId: 'members' })).statusCode, 202)
+  const browser = await connectedBrowser(t, app, base)
+  assert.deepEqual(browser.integration.getSnapshot().layout, { currentLayoutId: 'members', revision: 1 })
+  assert.equal(browser.integration.getSnapshot().offices.length, 0)
+  assert.equal((await post({ type: 'office.layout.set', layoutId: 'classic' })).statusCode, 200)
+  assert.equal(browser.integration.getSnapshot().layout.currentLayoutId, 'classic')
+})
+
+test('layout ordering, cache recovery and server replacement use server-owned revisions', async t => {
+  const values = new Map(), storage = { getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value) }
+  const { integration } = await setup(t, { storage })
+  integration.receive(syncStart('server-a')); await flush()
+  integration.receive({ type: 'office.layout.sync', layout: { currentLayoutId: 'members', revision: 3 } })
+  integration.receive({ type: 'office.layout.sync', layout: { currentLayoutId: 'classic', revision: 2 } })
+  await flush()
+  assert.deepEqual(integration.getSnapshot().layout, { currentLayoutId: 'members', revision: 3 })
+  integration.stop()
+  const restored = await setup(t, { storage })
+  assert.deepEqual(restored.integration.getSnapshot().layout, { currentLayoutId: 'members', revision: 3 })
+  restored.integration.receive(syncStart('server-b')); await flush()
+  assert.deepEqual(restored.integration.getSnapshot().layout, { currentLayoutId: 'classic', revision: 0 })
+})
+
+test('a delayed browser selection response cannot overwrite a newer backend selection', async t => {
+  let finish, calls = 0
+  const { integration } = await setup(t, { changeLayout: () => { calls++; return new Promise(resolve => { finish = resolve }) } })
+  const pending = integration.selectLayout('members')
+  assert.equal(integration.getSnapshot().layoutBusy, true)
+  await integration.selectLayout('classic'); assert.equal(calls, 1)
+  integration.receive({ type: 'office.layout.sync', layout: { currentLayoutId: 'classic', revision: 2 } }); await flush()
+  finish({ currentLayoutId: 'members', revision: 1 }); await pending
+  assert.deepEqual(integration.getSnapshot().layout, { currentLayoutId: 'classic', revision: 2 })
+  assert.equal(integration.getSnapshot().layoutBusy, false)
+  assert.equal(integration.getSnapshot().error, null)
+})
+
+test('failed layout changes keep the previous selection and release the busy state', async t => {
+  const { integration } = await setup(t, { changeLayout: async () => { throw new Error('network unavailable') } })
+  await integration.selectLayout('members')
+  assert.equal(integration.getSnapshot().layout.currentLayoutId, 'classic')
+  assert.equal(integration.getSnapshot().layoutBusy, false)
+  assert.match(integration.getSnapshot().error, /network unavailable/)
+})
+
+test('a layout response from a replaced server cannot overwrite the new server selection', async t => {
+  const finishes = []
+  const { integration } = await setup(t, { changeLayout: () => new Promise(resolve => { finishes.push(resolve) }) })
+  integration.receive(syncStart('old-server')); await flush()
+  const pending = integration.selectLayout('members')
+  integration.receive(syncStart('new-server')); await flush()
+  const next = integration.selectLayout('members')
+  finishes[0]({ currentLayoutId: 'members', revision: 10 }); await pending
+  assert.deepEqual(integration.getSnapshot().layout, { currentLayoutId: 'classic', revision: 0 })
+  assert.equal(integration.getSnapshot().layoutBusy, true, 'an old completion must not clear a new request busy state')
+  finishes[1]({ currentLayoutId: 'members', revision: 1 }); await next
+  assert.deepEqual(integration.getSnapshot().layout, { currentLayoutId: 'members', revision: 1 })
+  assert.equal(integration.getSnapshot().layoutBusy, false)
+})
+
+test('conflicting layout versions trigger recovery and accept the authoritative reconnect selection', async t => {
+  const { integration, connections } = await setup(t)
+  integration.receive(syncStart('same-server')); await flush()
+  integration.receive({ type: 'office.layout.sync', layout: { currentLayoutId: 'members', revision: 1 } }); await flush()
+  integration.receive({ type: 'office.layout.sync', layout: { currentLayoutId: 'classic', revision: 1 } }); await flush()
+  assert.equal(connections.length, 2)
+  connections[1].onMessage({ ...syncStart('same-server'), layout: { currentLayoutId: 'classic', revision: 1 } }); await flush()
+  assert.deepEqual(integration.getSnapshot().layout, { currentLayoutId: 'classic', revision: 1 })
+  assert.equal(integration.getSnapshot().error, null)
+})
+
 test('parallel office pages apply state without treating a closed duplicate reply as a page error', { timeout: 5000 }, async t => {
   const app = await createPixOfficeServer(), base = await app.listen({ host: '127.0.0.1', port: 0 })
   t.after(() => app.close())
@@ -95,12 +289,12 @@ test('server restart replaces cached office ownership and accepts a fresh sequen
   t.after(() => app.close())
   const current = await connectedBrowser(t, app, base, { storage })
   assert.equal(current.integration.getSnapshot().offices.length, 0)
-  assert.deepEqual((await post(app, { type: 'office.read' })).json().data.offices, [])
+  assert.deepEqual((await post(app, { type: 'office.read' })).json().data.state.offices, [])
   assert.equal((await post(app, { type: 'office.read', teamId: 'team-a' })).statusCode, 404)
   const fresh = snapshot(); fresh.conversations[0].tasks[0].title = '服务重启后的任务'
   const initialized = await post(app, { type: 'offices.initialize', offices: [fresh] })
   assert.equal(initialized.statusCode, 200)
-  assert.deepEqual(initialized.json().data.offices.map(office => office.id), ['team-a'])
+  assert.deepEqual(initialized.json().data.state.offices.map(office => office.snapshot.workspace.id), ['team-a'])
   assert.equal(current.integration.getSnapshot().offices[0].source.readSnapshot().seq, 1)
   assert.equal(current.integration.getSnapshot().offices[0].source.readSnapshot().conversations[0].tasks[0].title, '服务重启后的任务')
   const cached = JSON.parse([...values.values()][0])
@@ -110,12 +304,12 @@ test('server restart replaces cached office ownership and accepts a fresh sequen
 test('normal reconnection preserves live runtimes while server directory reconciliation removes absent cache entries', async t => {
   const { integration, connections, send } = await setup(t)
   connections[0].onStatus('已连接')
-  integration.receive({ type: 'office.sync.start', stateId: 'same-server' }); await flush()
+  integration.receive(syncStart('same-server')); await flush()
   await send('init', { type: 'offices.initialize', offices: [snapshot(), snapshot('extra')] })
   const runtime = integration.getSnapshot().offices[0].session.runtime
   runtime.submit({ protocolVersion: '2.0', sceneId: 'team-a', commandId: 'during-reconnect', type: 'activity.start', capability: 'scene.say',
     participants: [{ entityId: 'office-lead', role: 'actor' }], params: { text: '继续工作', durationMs: 30000 } })
-  integration.receive({ type: 'office.sync.start', stateId: 'same-server' })
+  integration.receive(syncStart('same-server'))
   integration.receive({ type: 'office.sync', snapshot: schemas.officeSnapshotSchema.parse(snapshot()) })
   integration.receive({ type: 'office.sync.complete', offices: [{ teamId: 'team-a', seq: 1 }] })
   await flush()
@@ -172,7 +366,7 @@ test('an empty workspace listens before office IDs exist and initializes fixed a
   assert.equal(connections[0].workspace, true)
   const result = await send('init', { type: 'offices.initialize', offices: [snapshot()] })
   assert.equal(result.result.code, 200)
-  assert.equal(result.result.data.offices[0].runtimeReady, true)
+  assert.equal(result.result.data.offices[0].runtime.available, true)
   const office = integration.getSnapshot().offices[0]
   assert.equal(office.session.runtime.readActors().length, 6)
   assert.equal(office.session.getSnapshot().dashboard.employees.length, 2)
@@ -271,7 +465,8 @@ test('task snapshots drive completed state without removing the actor and read r
   const office = integration.getSnapshot().offices[0]
   assert.equal(office.session.runtime.readActors()[0].presentation.status, 'idle')
   const result = await send('read', { type: 'office.read', teamId: 'team-a' })
-  assert.equal(result.result.data.snapshot.conversations[0].tasks[0].status, 'completed')
+  assert.equal(result.result.data.seq, 2)
+  assert.equal(result.result.data.runtime.available, true)
   assert.equal(office.session.runtime.readActors().length, 6)
   assert.equal((await send('missing', { type: 'office.read', teamId: 'missing' })).result.code, 404)
 })
@@ -412,6 +607,9 @@ for (const type of ['office.snapshot', 'offices.initialize']) test(`${type} retr
   const request = type === 'office.snapshot' ? { type, teamId: 'team-a', snapshot: next } : { type, offices: [next] }
   const failed = await send('failed', request)
   assert.equal(failed.result.code, 422); assert.equal(failed.result.data.reasonCode, 'SCENE_SYNC_FAILED')
+  const failedRead = await send('failed-read', { type: 'office.read', teamId: 'team-a' })
+  assert.equal(failedRead.result.data.runtime.available, false)
+  assert.deepEqual(failedRead.result.data.runtime.objects, [])
   const board = () => runtime.readWorld().props.find(prop => prop.id === 'whiteboard-1')
   assert.notEqual(board().state.taskBoard?.title, next.conversations[0].whiteboard.title)
   const previousVisits = visits
@@ -422,6 +620,7 @@ for (const type of ['office.snapshot', 'offices.initialize']) test(`${type} retr
   assert.equal(board().state.taskBoard.title, next.conversations[0].whiteboard.title)
   assert.equal(integration.getSnapshot().offices[0].session.runtime, runtime)
   assert.equal(runtime.getRecord('keep-speech').status, 'running')
+  assert.equal((await send('recovered-read', { type: 'office.read', teamId: 'team-a' })).result.data.runtime.available, true)
   assert.equal(visits, previousVisits, 'state retries must not replay task handoffs')
   const revision = board().stateRevision
   assert.equal((await send('again', request)).result.code, 200)

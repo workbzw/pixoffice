@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream'
 import type { FastifyInstance, FastifyRequest } from 'fastify'
-import { chatCancelResultSchema, chatHistoryPageSchema, chatOperationSchema, chatPath, chatTimeoutMs, readChatEvents } from '@pixoffice/protocol/chat'
+import { chatCancelResultSchema, chatHistoryPageSchema, chatOperationSchema, chatPath, chatTimeoutMs, chatControlTimeoutMs, maxChatRequestBytes, maxChatHistoryBytes, readChatEvents } from '@pixoffice/protocol/chat'
 import type { OfficeChatConfig } from '@pixoffice/protocol/chat'
 import { parseProtocolObject, responseEnvelopeSchema, stringifyProtocolObject } from '@pixoffice/protocol/schema'
 import { OfficeStateFault } from './officeState.ts'
@@ -12,7 +12,7 @@ export function registerOfficeChat(app: FastifyInstance, options: {
 }) {
   let url = ''
   const active = new Set<AbortController>()
-  app.post(chatPath, { bodyLimit: 524288 }, async (request, reply) => {
+  app.post(chatPath, { bodyLimit: maxChatRequestBytes }, async (request, reply) => {
     if (!options.sameOrigin(request)) throw new OfficeStateFault(403, 'FORBIDDEN', 'Use a same-origin browser connection')
     const parsed = chatOperationSchema.safeParse(request.body)
     if (!parsed.success) throw new OfficeStateFault(400, 'INVALID_MESSAGE', '聊天请求格式错误')
@@ -22,7 +22,7 @@ export function registerOfficeChat(app: FastifyInstance, options: {
     const controller = new AbortController()
     let timedOut = false
     const abort = () => controller.abort()
-    const timer = setTimeout(() => { timedOut = true; controller.abort() }, streaming ? options.timeoutMs ?? chatTimeoutMs : Math.min(options.timeoutMs ?? chatTimeoutMs, 15000))
+    const timer = setTimeout(() => { timedOut = true; controller.abort() }, streaming ? options.timeoutMs ?? chatTimeoutMs : Math.min(options.timeoutMs ?? chatTimeoutMs, chatControlTimeoutMs))
     timer.unref(); active.add(controller)
     reply.raw.on('close', abort)
     const cleanup = () => { clearTimeout(timer); active.delete(controller); reply.raw.off('close', abort) }
@@ -49,7 +49,7 @@ export function registerOfficeChat(app: FastifyInstance, options: {
             const chunk = await reader.read()
             if (chunk.done) break
             bytes += chunk.value.byteLength
-            if (bytes > 8 * 1024 * 1024) throw new Error('History response too large')
+            if (bytes > maxChatHistoryBytes) throw new Error('History response too large')
             text += decoder.decode(chunk.value, { stream: true })
           }
           text += decoder.decode()
@@ -79,6 +79,7 @@ export function registerOfficeChat(app: FastifyInstance, options: {
       .header('X-Accel-Buffering', 'no').send(stream)
   })
   return {
+    isConfigured: () => Boolean(url),
     configure: (config: OfficeChatConfig) => { url = config.url },
     close: () => { for (const controller of active) controller.abort() },
   }
