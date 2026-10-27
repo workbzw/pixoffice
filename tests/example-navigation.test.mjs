@@ -8,7 +8,7 @@ import path from 'node:path'
 import { createServer } from 'vite'
 
 for (const base of ['/', '/preview/']) {
-  test(`website and both examples have independent entries under ${base}`, async () => {
+  test(`website and scene examples have independent entries under ${base}`, async () => {
     const cacheDir = await mkdtemp(path.join(tmpdir(), 'pixoffice-navigation-'))
     const server = await createServer({
       configFile: fileURLToPath(new URL('../example/office-web/vite.config.ts', import.meta.url)),
@@ -48,6 +48,20 @@ for (const base of ['/', '/preview/']) {
         assert.match(html, /id="visit-form"/)
         assert.ok(html.includes(`href="${base}brand/logo.png"`))
       }
+
+      for (const entry of ['classroom/', 'classroom/index.html']) {
+        const response = await fetch(`${origin}${base}${entry}`)
+        assert.equal(response.status, 200)
+        const html = await response.text()
+        assert.match(html, /PixOffice · 教室/)
+        assert.match(html, /src\/classroom\.tsx/)
+        assert.ok(html.includes(`<link rel="icon" type="image/png" href="${base}brand/logo.png"`), html)
+        assert.doesNotMatch(html, /favicon\.svg|vite\.svg/)
+      }
+      const icon = await fetch(`${origin}${base}brand/logo.png`)
+      assert.equal(icon.status, 200)
+      assert.match(icon.headers.get('content-type'), /image\/png/)
+      assert.deepEqual(Buffer.from(await icon.arrayBuffer()), await readFile(new URL('../public/brand/logo.png', import.meta.url)))
 
       for (const entry of ['farm/', 'farm/index.html']) {
         const response = await fetch(`${origin}${base}${entry}`)

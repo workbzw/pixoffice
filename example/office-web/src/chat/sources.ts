@@ -15,10 +15,14 @@ function delay(ms: number, signal: AbortSignal) {
 /** An explicit interaction preview, not an AI model or task executor. */
 export class PreviewChatSource implements OfficeChatSource {
   readonly kind = 'preview'
-  readonly historyKey = 'commerce-demo-v1'
+  readonly historyKey: string
   private readonly previewReply?: (request: ChatRequest) => string
-  constructor(previewReply?: (request: ChatRequest) => string) { this.previewReply = previewReply }
-  initialHistory(conversationId: string, teamId = 'office-1') { return commerceInitialHistory(teamId, conversationId) }
+  private readonly seedHistory: (conversationId: string, teamId: string) => ReturnType<typeof commerceInitialHistory>
+  constructor(previewReply?: (request: ChatRequest) => string, options: { historyKey?: string; initialHistory?: PreviewChatSource['seedHistory'] } = {}) {
+    this.previewReply = previewReply; this.historyKey = options.historyKey ?? 'commerce-demo-v1'
+    this.seedHistory = options.initialHistory ?? ((conversationId, teamId) => commerceInitialHistory(teamId, conversationId))
+  }
+  initialHistory(conversationId: string, teamId = 'office-1') { return this.seedHistory(conversationId, teamId) }
   async *stream(request: ChatRequest, signal: AbortSignal): AsyncIterable<ChatEvent> {
     yield { type: 'status', phase: 'thinking' }
     await delay(1000, signal)

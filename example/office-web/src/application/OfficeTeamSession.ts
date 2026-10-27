@@ -15,7 +15,7 @@ import type { ChatWorkspacePersistence } from '../chat/persistence.ts'
 import { OfficeUiSession } from './OfficeUiSession.ts'
 import type { OfficeUiAction, OfficeUiPresentation } from '@pixoffice/protocol/office-integration'
 import { whiteboardTaskBoard, WhiteboardProgress } from '@pixoffice/scene-office/whiteboard'
-import { CommerceOfficeDataSource } from '../dashboard/CommerceOfficeDataSource.ts'
+import { localOfficeScenario } from './localOfficeScenario.ts'
 import type { OfficeMemberInput } from '@pixoffice/protocol/dashboard'
 import { maxOfficeMembers, officeMemberInputSchema, officeMemberLimitMessage, officeMemberOccupancy } from '@pixoffice/protocol/dashboard'
 
@@ -67,7 +67,8 @@ export class OfficeTeamSession {
         .map(request => ({ ...request, conversationId: this.chat.getSnapshot().selectedId }))
     })
     const suppliedChatSource = options.chatSource ?? new PreviewChatSource()
-    const chatSource = source instanceof CommerceOfficeDataSource && suppliedChatSource instanceof PreviewChatSource ? new PreviewChatSource(request => source.reply(request)) : suppliedChatSource
+    const scenario = localOfficeScenario(source)
+    const chatSource = scenario && suppliedChatSource instanceof PreviewChatSource ? scenario.createChatSource() : suppliedChatSource
     this.chat = new ChatWorkspace(runtime.sceneId, chatSource, {
       persistence: options.chatPersistence,
       onRemoved: id => this.decisions.removeConversation(id),
@@ -78,8 +79,8 @@ export class OfficeTeamSession {
       },
     })
     this.ui = new OfficeUiSession(runtime.sceneId, options.requestUi, () => this.chat.getSnapshot().selectedId)
-    this.simulation = options.simulation ?? new OfficeSimulation(runtime, source.kind === 'example' ? new OfficeDemoSource(runtime, { automatic: !(source instanceof CommerceOfficeDataSource) }) : undefined,
-      source instanceof CommerceOfficeDataSource ? '电商流程' : '工位协作')
+    this.simulation = options.simulation ?? new OfficeSimulation(runtime, source.kind === 'example' ? new OfficeDemoSource(runtime, { automatic: !scenario }) : undefined,
+      scenario?.label ?? '工位协作')
     if (this.simulation.runtime !== runtime) throw new Error('团队会话与动画必须使用同一个运行时')
     this.bridge = new DashboardSceneBridge(runtime, { whiteboard: source.kind === 'example' ? 'demo-summary' : 'external' })
     this.state = { dashboard: null, dashboardError: null, sceneLinkError: null, connection: options.transport ? '连接中' : source.kind === 'example' ? '本地示例' : '未配置', pendingTaskIds: [], actionError: null }

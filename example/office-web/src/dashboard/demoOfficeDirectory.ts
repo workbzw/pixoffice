@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { OfficeDataSource } from '@pixoffice/protocol/dashboard'
 import { createDemoOfficeTeams } from './demoTeams.ts'
-import type { DemoOfficeTeam } from './demoTeams.ts'
+import type { DemoOfficeScenario, DemoOfficeTeam } from './demoTeams.ts'
 import { ExampleOfficeDataSource } from './demoSource.ts'
 import type { OfficeTeamCreator } from './officeDirectory.ts'
 import { assertOfficeDirectory } from './officeDirectory.ts'
@@ -27,11 +27,13 @@ export class DemoOfficeDirectory {
   private saved: StoredOffice[] = []
   private storageError = false
   private readonly storage?: Pick<Storage, 'getItem' | 'setItem'>
+  private readonly scenario?: DemoOfficeScenario
 
-  constructor(source: OfficeDataSource, storage?: Pick<Storage, 'getItem' | 'setItem'>) {
+  constructor(source: OfficeDataSource, storage?: Pick<Storage, 'getItem' | 'setItem'>, scenario?: DemoOfficeScenario) {
     if (source.kind !== 'example') throw new Error('真实数据模式不能创建本地示例办公室')
     this.storage = storage
-    this.defaults = createDemoOfficeTeams(source)
+    this.scenario = scenario
+    this.defaults = scenario?.createTeams(source) ?? createDemoOfficeTeams(source)
     this.teams = [...this.defaults]
     try { this.applySaved(this.readSaved()) } catch { this.storageError = true }
   }
@@ -55,7 +57,7 @@ export class DemoOfficeDirectory {
     this.saved = offices
     this.teams = [...this.defaults, ...offices.map(office => {
       const team = existing.get(office.id)
-      return team?.name === office.name ? team : materialize(office)
+      return team?.name === office.name ? team : this.scenario?.createOffice(office) ?? materialize(office)
     })]
   }
 

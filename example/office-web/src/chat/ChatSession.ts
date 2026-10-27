@@ -79,10 +79,10 @@ export class ChatSession {
     else if (this.activeTurnId && this.source.resume) void this.resume(this.activeTurnId)
   }
   setDraft(draft: string) { if (this.snapshot.ready) this.update({ ...this.snapshot, draft: draft.slice(0, 4000) }) }
-  previewExchange(id: string, question: string, answer: string): Promise<void> {
-    if (!this.snapshot.ready) return this.ready.then(() => this.previewExchange(id, question, answer))
+  previewExchange(id: string, question: string, answer: string, namespace = 'commerce-demo'): Promise<void> {
+    if (!this.snapshot.ready) return this.ready.then(() => this.previewExchange(id, question, answer, namespace))
     if (this.source.kind !== 'preview') throw new Error('真实聊天不能写入演示记录')
-    const prefix = `commerce-demo:${id}`
+    const prefix = `${namespace}:${id}`
     const messages = this.snapshot.messages.filter(message => !message.id.startsWith(`${prefix}:`))
     const index = messages.findIndex(message => message.state === 'pending')
     const pair: ChatMessage[] = [{ id: `${prefix}:user`, role: 'user', content: question, state: 'complete' },
@@ -91,10 +91,10 @@ export class ChatSession {
     this.update({ ...this.snapshot, messages })
     return Promise.resolve()
   }
-  clearPreviewExchanges(): Promise<void> {
-    if (!this.snapshot.ready) return this.ready.then(() => this.clearPreviewExchanges())
+  clearPreviewExchanges(namespace = 'commerce-demo'): Promise<void> {
+    if (!this.snapshot.ready) return this.ready.then(() => this.clearPreviewExchanges(namespace))
     if (this.source.kind !== 'preview') return Promise.resolve()
-    this.update({ ...this.snapshot, messages: this.snapshot.messages.filter(message => !message.id.startsWith('commerce-demo:')) })
+    this.update({ ...this.snapshot, messages: this.snapshot.messages.filter(message => !message.id.startsWith(`${namespace}:`)) })
     return Promise.resolve()
   }
   flush = (): Promise<void> => {

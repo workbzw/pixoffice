@@ -1,19 +1,19 @@
 import { advanceOfficeTeamSessions } from './OfficeTeamSession.ts'
 import type { OfficeTeamSession } from './OfficeTeamSession.ts'
 import type { DecisionRequest } from './decisions/DecisionSession.ts'
-import { CommerceDemoRun } from './CommerceDemoRun.ts'
-import { CommerceOfficeDataSource } from '../dashboard/CommerceOfficeDataSource.ts'
+import { localOfficeScenario } from './localOfficeScenario.ts'
+import type { LocalOfficeDemoRun } from './localOfficeScenario.ts'
 
 export class OfficeTeamHost {
   private sessions = new Set<OfficeTeamSession>()
   private demoSubscriptions = new Map<OfficeTeamSession, () => void>()
   private previewRun?: { owner: OfficeTeamSession; timers: Map<OfficeTeamSession, ReturnType<typeof setTimeout>> }
-  private commerceRun?: CommerceDemoRun
+  private scenarioRun?: LocalOfficeDemoRun
 
   update(sessions: readonly OfficeTeamSession[]) {
     const next = new Set(sessions)
     for (const session of this.sessions) if (!next.has(session)) {
-      if (this.commerceRun?.has(session)) this.stopCommerce()
+      if (this.scenarioRun?.has(session)) this.stopScenario()
       this.demoSubscriptions.get(session)?.(); this.demoSubscriptions.delete(session)
       this.cancelDecisionPreview(session)
       clearTimeout(this.previewRun?.timers.get(session)); this.previewRun?.timers.delete(session)
@@ -22,7 +22,8 @@ export class OfficeTeamHost {
     }
     for (const session of next) if (!this.sessions.has(session) || session.isStarted === false) void session.start()
     this.sessions = next
-    for (const session of next) if ((session.decisionPreviewEnabled || session.source instanceof CommerceOfficeDataSource) && !this.demoSubscriptions.has(session)) {
+    for (const session of next) if ((session.decisionPreviewEnabled || localOfficeScenario(session.source)) && !this.demoSubscriptions.has(session)) {
+      const scenario = localOfficeScenario(session.source)
       let running = session.simulation.isScenarioRunning
       let actionsRunning = session.simulation.demoMode === 'actions' && session.simulation.isDemoRunning
       this.demoSubscriptions.set(session, session.simulation.subscribe(() => {
@@ -30,16 +31,16 @@ export class OfficeTeamHost {
         const nextActions = session.simulation.demoMode === 'actions' && session.simulation.isDemoRunning
         const startingActions = nextActions && !actionsRunning
         actionsRunning = nextActions
-        if (startingActions) { this.cancelDecisionPreview(); this.stopCommerce() }
+        if (startingActions) { this.cancelDecisionPreview(); this.stopScenario() }
         if (next === running) return
         running = next
-        if (session.source instanceof CommerceOfficeDataSource) {
+        if (scenario) {
           if (running) {
-            this.cancelDecisionPreview(); this.stopCommerce()
-            for (const target of this.sessions) if (target.source instanceof CommerceOfficeDataSource && target.simulation.demoMode === 'actions') target.simulation.setDemo(false)
-            this.commerceRun = new CommerceDemoRun([...this.sessions], session)
-            this.commerceRun.start()
-          } else if (this.commerceRun?.owner === session) this.stopCommerce()
+            this.cancelDecisionPreview(); this.stopScenario()
+            for (const target of this.sessions) if (localOfficeScenario(target.source) && target.simulation.demoMode === 'actions') target.simulation.setDemo(false)
+            this.scenarioRun = scenario.createRun([...this.sessions], session)
+            this.scenarioRun.start()
+          } else if (this.scenarioRun?.owner === session) this.stopScenario()
           return
         }
         if (running) this.scheduleDecisionPreview(session)
@@ -79,11 +80,11 @@ export class OfficeTeamHost {
     this.previewRun = undefined
   }
 
-  private stopCommerce() { const run = this.commerceRun; this.commerceRun = undefined; run?.stop() }
-  advance(elapsedMs: number) { advanceOfficeTeamSessions(this.sessions, elapsedMs); this.commerceRun?.tick() }
+  private stopScenario() { const run = this.scenarioRun; this.scenarioRun = undefined; run?.stop() }
+  advance(elapsedMs: number) { advanceOfficeTeamSessions(this.sessions, elapsedMs); this.scenarioRun?.tick() }
 
   stop() {
-    this.stopCommerce()
+    this.stopScenario()
     this.cancelDecisionPreview()
     for (const unsubscribe of this.demoSubscriptions.values()) unsubscribe()
     this.demoSubscriptions.clear()

@@ -2,8 +2,400 @@
   "schemaVersion": 1,
   "tool": "built-in image_gen",
   "scope": "Only artwork used by the current civic build, plus its canonical pose reference.",
-  "historicalReferencePolicy": "Historical reference names record inputs used at generation time. Their discarded intermediate binaries are intentionally not retained and are not build dependencies.",
+  "historicalReferencePolicy": "Exact v13 pose and identity input sheets are retained. Superseded v8/v12 parent images are removed; their hashes, output IDs and prompts remain in retiredSources and historicalReferences and are not build dependencies.",
   "records": [
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent-sidewalk-v13.png",
+      "outputId": "exec-53884bf0-c9d4-4045-8ca2-1e7bd3999bb3.png",
+      "tool": "image_gen.imagegen",
+      "scope": "All four lateral walking frames. Approved pose reference office-lead; own identity retained. Left walking uses the explicit mirror alias.",
+      "prompt": "Use case: identity-preserve. IMAGE 1 is the EDIT TARGET: an approved four-frame right-facing male walk cycle. Preserve the BODY and LIMB POSES of image 1 cell-for-cell. IMAGE 2 supplies the replacement IDENTITY: the man with black glasses and dark tousled hair. Change only the four heads/hair/faces in IMAGE 1 to this exact bespectacled man, preserving his glasses, dark hair shape, eye shape and character identity. Do not retain Wang Ming's light brown hair or face. Keep the approved uniformed body, shoulders, arms, hands, trouser legs, shoes and poses from IMAGE 1, matching the original arm angles precisely in every cell. In particular B top-right and D bottom-right have the NEAR arm hanging almost STRAIGHT VERTICALLY at the side, not bent or held forward; D far hand remains slightly in front as in image 1. Do NOT reuse the bad forward-reaching D arm from IMAGE 2. No extra hands, no forcing both hands visible where the far hand is naturally occluded. Preserve the calm small stride and head/body scale, complete shoes, full 2x2 positions. Four unique phases: A top-left, B top-right, C bottom-left, D bottom-right. Preserve all body pose geometry in image 1, exactly two arms. Match the replacement head's natural proportions to his original identity, with a stable same-size head in all cells. The faces remain mouthless for a separate mouth layer. Same 1024x1536 RGBA sheet, real transparent background without glow, haze, shadows, props or text.",
+      "references": [
+        "sources/office-lead-gait-reference-v13.png",
+        "sources/file-agent-gait-reference-v13.png"
+      ],
+      "referenceRoles": {
+        "editTarget": "office-lead: approved A/B/C/D whole-body and arm poses",
+        "identity": "file-agent: own hair, face and accessories only"
+      },
+      "sha256": "573b482f1a8261ae7c1b4dd7a5804e868d9011129db12808843418efbe3ae69d",
+      "rejectedEdits": [
+        {
+          "outputId": "exec-eeec976b-c9a0-413e-bd96-d1620f8209ce.png",
+          "prompt": "Use case: identity-preserve. Rebuild the RIGHT-facing four-frame walk cycle of the bespectacled dark-haired man in IMAGE 1. IMAGE 1 supplies ONLY the exact character identity: preserve his face, glasses, hair silhouette, uniform, head dimensions and natural head/body proportions. IMAGE 2 is the APPROVED MALE WALKING POSE GUIDE (Wang Ming), and supplies the corresponding whole-body limb positions in all four cells. Never copy the guide's face/hair. Output the SAME 1024x1536 transparent 2x2 layout: A top-left, B top-right, C bottom-left, D bottom-right. Closely match the guide's calm small indoor stride AND especially its exact ARM SWING in each matching cell. A near arm back/far arm forward; C near arm forward/far arm back. B and D arms pass down close to the thighs almost vertically, as in the guide, NOT both arms swinging far behind and NOT a second large forward swing. The far hand may be naturally occluded in passing poses just as in the guide; do not force an extra visible hand. Exactly two anatomically connected arms and hands, never three. Keep hands low below belt with relaxed elbows; no raised fists, reaching, marching or swinging both arms together. Match the guide's straight weight-bearing leg and modest knee bend, no high knee or crouch. Preserve each head's size, shape and identity in image 1, keep uniform body scale and shoe baseline across the sheet. Full isolated mouthless figures and complete shoes, no mouth changes. True transparent RGBA, no shadows, haze, glow, text or props.",
+          "reason": "D retained the forward near arm from the old target. Replaced using the approved pose sheet as edit target."
+        },
+        {
+          "outputId": "exec-e4f12004-befa-4062-ab5d-741ad7455165.png",
+          "prompt": "Use case: precise-object-edit. Correct ONLY the head-size continuity in this exact 2x2 sprite sheet. Keep the top row unchanged. In the two BOTTOM-row characters C and D, the complete head/hair/face/glasses is slightly larger than in the two top-row characters. Reduce each bottom head including hair/face/glasses by approximately 1.5 percent uniformly around its neck attachment, matching the top-row skull/hair size and face proportions. Do not change identity, hair shape, face, glasses, colors or style. Keep the neck anchored to its existing collar and make the contour seamless. Do NOT change ANY body, shoulder, arm, hand, sleeve, belt, leg or shoe pose. Keep the approved arm swing exactly as it is, especially vertical near arm in bottom-right D. Do not scale the whole figure; only redraw the slightly oversized bottom heads to match the top heads. All full-body cell positions and foot baselines remain unchanged. Same 1024x1536 transparent RGBA sheet. Pure transparent outside silhouettes, no halos, shadows, glow, labels or props.",
+          "reason": "Not imported. Selected original uses reviewed chin/hair head bands and whole-frame registration; no per-frame head scaling."
+        }
+      ]
+    },
+    {
+      "id": "review-agent",
+      "source": "sources/review-agent-sidewalk-v13.png",
+      "outputId": "exec-1916c0dc-a7d0-4e0d-9675-eda34a2af81a.png",
+      "tool": "image_gen.imagegen",
+      "scope": "All four lateral walking frames. Approved pose reference office-lead; own identity retained. Left walking uses the explicit mirror alias.",
+      "prompt": "Use case: identity-preserve. IMAGE 1 is the EDIT TARGET: an approved four-frame right-facing male walk cycle. Preserve the BODY and LIMB POSES of image 1 cell-for-cell. IMAGE 2 supplies the replacement IDENTITY: the short brown-haired man without glasses. Change only the four heads/hair/faces in IMAGE 1 to this exact short brown-haired man, preserving his tousled hair silhouette, face, eye shape and character identity. Do not retain Wang Ming's light brown hair or face. No glasses; the replacement character does not wear glasses. Keep the approved uniformed body, shoulders, arms, hands, trouser legs, shoes and poses from IMAGE 1, matching the original arm angles precisely in every cell. In particular B top-right and D bottom-right have the NEAR arm hanging almost STRAIGHT VERTICALLY at the side, not bent or held forward; D far hand remains slightly in front as in image 1. Do NOT reuse the bad forward-reaching D arm from IMAGE 2. No extra hands, no forcing both hands visible where the far hand is naturally occluded. Preserve the calm small stride and head/body scale, complete shoes, full 2x2 positions. Four unique phases: A top-left, B top-right, C bottom-left, D bottom-right. Preserve all body pose geometry in image 1, exactly two arms. Match the replacement head's natural proportions to his original identity, with a stable same-size head in all cells. The faces remain mouthless for a separate mouth layer. Same 1024x1536 RGBA sheet, real transparent background without glow, haze, shadows, props or text.",
+      "references": [
+        "sources/office-lead-gait-reference-v13.png",
+        "sources/review-agent-gait-reference-v13.png"
+      ],
+      "referenceRoles": {
+        "editTarget": "office-lead: approved A/B/C/D whole-body and arm poses",
+        "identity": "review-agent: own hair, face and accessories only"
+      },
+      "sha256": "b8d7ede93b87cc31b51ab581c3cbe06317c51a1ba69ac1cc9e3f135400bb2a25"
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent-sidewalk-v13.png",
+      "outputId": "exec-d3d18cac-4683-4cda-ab38-f77d1e2121b5.png",
+      "tool": "image_gen.imagegen",
+      "scope": "All four lateral walking frames. Approved pose reference code-agent; own identity retained. Left walking uses the explicit mirror alias.",
+      "prompt": "Use case: identity-preserve. IMAGE 1 is the EDIT TARGET: Li Yan's approved four-frame right-facing female walk cycle. Preserve the BODY and LIMB POSES of IMAGE 1 cell-for-cell. IMAGE 2 supplies ONLY replacement character IDENTITY: Chen Shu, the auburn long wavy-haired woman. Replace all four heads/hair/faces in IMAGE 1 with Chen Shu's exact auburn waves, rounded face and eye shape from IMAGE 2. No ponytail, do not retain Li Yan's head or hairstyle. Keep the approved uniformed body, shoulder position, arms, hands, legs, shoes and poses from IMAGE 1. Especially match the APPROVED ARM ANGLES: A near arm backward/far arm forward; C near arm forward/far arm back; B and D NEAR arm hangs nearly STRAIGHT VERTICALLY down beside thigh, exactly as in IMAGE 1, NOT bent forward and NOT held behind the body. The far arm/hand may be naturally hidden by the body in B/D like the guide, do not add an extra visible hand. Exactly two connected arms and hands, low relaxed swing, never both swinging together. Keep the small steps, straight support knee and modest passing leg from IMAGE 1, not the exaggerated D bend from IMAGE 2. Preserve Chen Shu's long hair volume, identity, natural proportions and same stable head size across all four cells. Full mouthless figures, complete shoes, same 1024x1536 transparent 2x2 layout A top-left, B top-right, C bottom-left, D bottom-right. True transparent RGBA background without glow, shadow, haze, props or text.",
+      "references": [
+        "sources/code-agent-gait-reference-v13.png",
+        "sources/app-agent-gait-reference-v13.png"
+      ],
+      "referenceRoles": {
+        "editTarget": "code-agent: approved A/B/C/D whole-body and arm poses",
+        "identity": "app-agent: own hair, face and accessories only"
+      },
+      "sha256": "12b2c6f329400a0d4db4d1d1bb1075133ec03ac389270a08f08edf133cf19177",
+      "rejectedEdits": [
+        {
+          "outputId": "exec-4c43a1b6-840c-4a9f-af4d-eab75f942540.png",
+          "prompt": "Use case: precise-object-edit. Fix ONLY head-size continuity in this exact auburn-haired woman's 2x2 walking sheet. TOP-LEFT A and TOP-RIGHT B must stay unchanged. In BOTTOM-LEFT C and BOTTOM-RIGHT D, the complete head with all long hair, face and ears is about 3 percent too large compared with the top row. Redraw each bottom-row complete head uniformly 3 percent smaller, anchored at the same neck/collar attachment, to match the top-row head width, skull height, face size and hair volume. Preserve the identical auburn hair style, curls, colors, facial identity and natural silhouette. Do NOT change the BODY or walking POSES: shoulders, sleeves, arms, hands, belt, legs, knees and shoes stay exactly unchanged. Especially the bottom-right near arm must still hang vertically beside the thigh, not bend forward. Do not scale the full character, change foot baselines or move the cell positions. No unrelated edits. Four complete sprites in the same 1024x1536 transparent RGBA 2x2 sheet, no glow, haze, shadows, extra figures, text or props.",
+          "reason": "Not imported: head reduction introduced inconsistent size. Original selected with reviewed row-specific long-hair bands excluding the extra sleeve/hand region."
+        }
+      ]
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent-sidewalk-v13.png",
+      "outputId": "exec-e49233d5-fb7d-4da2-91b4-0e23e596ece5.png",
+      "tool": "image_gen.imagegen",
+      "scope": "All four lateral walking frames. Approved pose reference code-agent; own identity retained. Left walking uses the explicit mirror alias.",
+      "prompt": "Use case: identity-preserve. IMAGE 1 is the EDIT TARGET: Li Yan's APPROVED right-facing four-frame walk cycle. Preserve the BODY and LIMB POSES of IMAGE 1 cell-for-cell. IMAGE 2 supplies ONLY replacement character IDENTITY: Zhao Shen, the woman with dark blue bob hair. Replace all four heads/hair/faces in IMAGE 1 with Zhao Shen's exact dark blue bob silhouette, face, eye shape and character identity from IMAGE 2; no ponytail and no Li Yan head. Keep the approved uniformed body, shoulder position, arms, hands, legs, shoes and poses from IMAGE 1. Match the exact APPROVED ARM ANGLES: A near arm backward/far arm forward; C near arm forward/far arm back; in B and D the NEAR arm hangs nearly STRAIGHT VERTICALLY down beside the thigh, as in IMAGE 1, NOT bent forward and NOT held behind the body. The far arm/hand may be naturally hidden in B/D just as the guide, do not force a second visible hand or add a third. Exactly two connected arms/hands, low relaxed swing, no both arms swinging together. Keep the small steps and straight support leg from IMAGE 1, NOT the over-bent/high knee D of IMAGE 2. Preserve Zhao Shen's own head size, dark hair volume, face and natural proportions with one stable head size across cells. Complete isolated mouthless figures with complete shoes. Same 1024x1536 transparent 2x2 layout: A top-left B top-right C bottom-left D bottom-right. True transparent RGBA without glow, haze, shadows, props or text.",
+      "references": [
+        "sources/code-agent-gait-reference-v13.png",
+        "sources/data-agent-gait-reference-v13.png"
+      ],
+      "referenceRoles": {
+        "editTarget": "code-agent: approved A/B/C/D whole-body and arm poses",
+        "identity": "data-agent: own hair, face and accessories only"
+      },
+      "sha256": "52cb766c0f5a02902d3b1c57ab512e93c54c0a48c6d26d1caca0b4e5ef9d1cdd"
+    },
+    {
+      "id": "office-lead",
+      "source": "sources/office-lead-gait-reference-v13.png",
+      "tool": "sharp whole-frame reference assembly",
+      "scope": "Exact approved pose-reference input for v13; does not replace the live reference character.",
+      "references": [
+        "sources/office-lead-sidewalk-v8.png",
+        "sources/office-lead-side-repair-v11.png"
+      ],
+      "assembly": "Pre-v13 registered 256x384 complete walk.right frames, uniformly enlarged 2x into a 1024x1536 2x2 A/B/C/D sheet. No body-part compositing or pixel artwork editing.",
+      "sha256": "e3a1e56d2c78cda77b0f13980a517ac1c714cdd8d1f34b63c0e9a863e2464de1"
+    },
+    {
+      "id": "code-agent",
+      "source": "sources/code-agent-gait-reference-v13.png",
+      "tool": "sharp whole-frame reference assembly",
+      "scope": "Exact approved pose-reference input for v13; does not replace the live reference character.",
+      "references": [
+        "sources/code-agent-sidewalk-v8.png",
+        "sources/code-agent-side-repair-v11.png"
+      ],
+      "assembly": "Pre-v13 registered 256x384 complete walk.right frames, uniformly enlarged 2x into a 1024x1536 2x2 A/B/C/D sheet. No body-part compositing or pixel artwork editing.",
+      "sha256": "45eb680971552e09997cbf49dfab155d38ab6961b341816571f25ed34ddcee24"
+    },
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent-gait-reference-v13.png",
+      "tool": "sharp whole-frame reference assembly",
+      "scope": "Exact identity-reference input for v13; prior walk poses are not reused in the rebuilt clip.",
+      "references": [
+        "sources/file-agent-side-repair-v11.png"
+      ],
+      "assembly": "Pre-v13 registered 256x384 complete walk.right frames, uniformly enlarged 2x into a 1024x1536 2x2 A/B/C/D sheet. No body-part compositing or pixel artwork editing.",
+      "sha256": "52d46990a71caaac38ced454df86f4c8c7fcfd7c7e3e2457347d14d9963a5ae9",
+      "historicalReferences": [
+        {
+          "source": "sources/file-agent-sidewalk-v8.png",
+          "sha256": "17893a571f5d0fb3ddcb22430757f5a1199634d3dddc31d2190691e5be784db4",
+          "outputId": "exec-306ba9fa-d807-489e-bda6-b5b6542fe8af"
+        },
+        {
+          "source": "sources/file-agent-side-arms-v12.png",
+          "sha256": "b1ac7c7a57ef98eda92a4443bfa7a76f6c2b7d4788f44bcad568debb9e255317",
+          "outputId": "exec-d0a9b9b1-3f92-4551-a615-351dbd80d152.png"
+        }
+      ]
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent-gait-reference-v13.png",
+      "tool": "sharp whole-frame reference assembly",
+      "scope": "Exact identity-reference input for v13; prior walk poses are not reused in the rebuilt clip.",
+      "references": [
+        "sources/app-agent-side-repair-v11.png"
+      ],
+      "assembly": "Pre-v13 registered 256x384 complete walk.right frames, uniformly enlarged 2x into a 1024x1536 2x2 A/B/C/D sheet. No body-part compositing or pixel artwork editing.",
+      "sha256": "2a74d03d7f5f837f32f0bf5b8aac379d533b3e96051082582eb4cad18f11b38c",
+      "historicalReferences": [
+        {
+          "source": "sources/app-agent-sidewalk-v8.png",
+          "sha256": "2d3229e3dd415b60c5bdd288b459a294628d6355ca0fa51a7449703140f6dea7",
+          "outputId": "exec-b01136e9-e680-418a-aec4-b62c31a46cc7"
+        },
+        {
+          "source": "sources/app-agent-side-arms-v12.png",
+          "sha256": "2fa622ae7bd0f7360649d8fca4613460197da87f27985bfb08650cf13ac5a9b3",
+          "outputId": "exec-e8686afa-9fcb-42b3-a0b3-3d51f34f2ced.png"
+        }
+      ]
+    },
+    {
+      "id": "review-agent",
+      "source": "sources/review-agent-gait-reference-v13.png",
+      "tool": "sharp whole-frame reference assembly",
+      "scope": "Exact identity-reference input for v13; prior walk poses are not reused in the rebuilt clip.",
+      "references": [
+        "sources/review-agent-side-repair-v11.png"
+      ],
+      "assembly": "Pre-v13 registered 256x384 complete walk.right frames, uniformly enlarged 2x into a 1024x1536 2x2 A/B/C/D sheet. No body-part compositing or pixel artwork editing.",
+      "sha256": "1efd2c236b48725794abf0633478ed93d81e4ef982889e583473148e1ab63c0b",
+      "historicalReferences": [
+        {
+          "source": "sources/review-agent-sidewalk-v8.png",
+          "sha256": "23da9e7465a466cb22574fd76513dc34ed585c8e8d5a60afc39f8c9db8f90813",
+          "outputId": "exec-6fee6888-86d2-448d-b2c3-b38b5a029d2f"
+        },
+        {
+          "source": "sources/review-agent-side-arms-v12.png",
+          "sha256": "52417585d9d157b3f23236e51aeb0db8daf829e7f809679f0e669da7e75f8813",
+          "outputId": "exec-f451397b-bd9e-4d45-b861-a718cf4a2d7c.png"
+        }
+      ]
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent-gait-reference-v13.png",
+      "tool": "sharp whole-frame reference assembly",
+      "scope": "Exact identity-reference input for v13; prior walk poses are not reused in the rebuilt clip.",
+      "references": [
+        "sources/data-agent-side-repair-v11.png"
+      ],
+      "assembly": "Pre-v13 registered 256x384 complete walk.right frames, uniformly enlarged 2x into a 1024x1536 2x2 A/B/C/D sheet. No body-part compositing or pixel artwork editing.",
+      "sha256": "681ddba13b4af36390b3c82e7a98e952830112b5e529a7c34a6f0180a95546dc",
+      "historicalReferences": [
+        {
+          "source": "sources/data-agent-sidewalk-v8.png",
+          "sha256": "4a9eb3c6e6733fa9951b85870a476e6034b882daf3bd11e0eb813d6beee1c5ff",
+          "outputId": "exec-1b51d048-55a0-4e6d-b64c-9fc0ae2c4831"
+        },
+        {
+          "source": "sources/data-agent-side-arms-v12.png",
+          "sha256": "a44288b8172f8a3c7030d8b89c76f5cfd7a4b70c59c33bda82dbe4d08a098404",
+          "outputId": "exec-ac62e746-6e06-4ecd-b622-ee9f10adbadd.png"
+        }
+      ]
+    },
+    {
+      "id": "office-lead",
+      "source": "sources/office-lead-side-repair-v11.png",
+      "outputId": "exec-56942d10-41a5-410e-b1cc-df1fe57b1a14.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Only top-right neutral standing and bottom-right passing D are imported. Original side-walk A/B/C remain sourced from v8.",
+      "prompt": "Use case: precise-object-edit. Repair this exact game sprite sheet, preserving the character identity, light brown hair silhouette, face, uniform, proportions, colors and crisp linework. Output the SAME 1024x1536 two-column two-row arrangement with each head, belt and baseline at the SAME position and scale as its input cell. The top-left and bottom-left sprites are reference poses: leave them unchanged. Make ONLY these two edits: (1) TOP-RIGHT sprite becomes a neutral upright RIGHT-facing standing pose: both shoes resting side by side directly under hips, nearly straight knees, relaxed downward arms with hands beside thighs. Preserve its exact head/hair pixels and body length. (2) BOTTOM-RIGHT sprite becomes the second passing phase of a calm indoor walk: FAR leg is the straight weight-bearing leg planted vertically beneath the pelvis; NEAR leg passes close to it with the near foot only slightly lifted, toe underneath the body, NOT stretched forward. Near knee only softly bends, NO crouch and NO kicking. Hips, shoulders and head keep the same height as the top-right sprite. Hands close to sides, low restrained counter-swing. Keep the two knees and shoes close: this is the narrowest mid-step, not a second contact stride. Full figures and complete shoes, ample gutters, no mouth. True transparent RGBA: every pixel outside the tight character silhouettes alpha zero. No shadow, glow, haze, background, labels or text. Do not redraw the other poses. Do not shrink or enlarge any head or body.",
+      "references": [
+        "sources/office-lead-sidewalk-v8.png"
+      ],
+      "referenceRoles": {
+        "identity": "sources/office-lead-sidewalk-v8.png",
+        "pose": "This character's original contact phases; office-lead's repaired D is the support/passing leg guide where supplied."
+      },
+      "steps": [
+        {
+          "outputId": "exec-56942d10-41a5-410e-b1cc-df1fe57b1a14.png",
+          "prompt": "Use case: precise-object-edit. Repair this exact game sprite sheet, preserving the character identity, light brown hair silhouette, face, uniform, proportions, colors and crisp linework. Output the SAME 1024x1536 two-column two-row arrangement with each head, belt and baseline at the SAME position and scale as its input cell. The top-left and bottom-left sprites are reference poses: leave them unchanged. Make ONLY these two edits: (1) TOP-RIGHT sprite becomes a neutral upright RIGHT-facing standing pose: both shoes resting side by side directly under hips, nearly straight knees, relaxed downward arms with hands beside thighs. Preserve its exact head/hair pixels and body length. (2) BOTTOM-RIGHT sprite becomes the second passing phase of a calm indoor walk: FAR leg is the straight weight-bearing leg planted vertically beneath the pelvis; NEAR leg passes close to it with the near foot only slightly lifted, toe underneath the body, NOT stretched forward. Near knee only softly bends, NO crouch and NO kicking. Hips, shoulders and head keep the same height as the top-right sprite. Hands close to sides, low restrained counter-swing. Keep the two knees and shoes close: this is the narrowest mid-step, not a second contact stride. Full figures and complete shoes, ample gutters, no mouth. True transparent RGBA: every pixel outside the tight character silhouettes alpha zero. No shadow, glow, haze, background, labels or text. Do not redraw the other poses. Do not shrink or enlarge any head or body."
+        }
+      ],
+      "sha256": "3b81a0c9902d1d37b23fb0bff4dbcbc60e93e53cad2b2a6da0e01c7029a4af38"
+    },
+    {
+      "id": "code-agent",
+      "source": "sources/code-agent-side-repair-v11.png",
+      "outputId": "exec-f5ed470e-0e3c-4fc8-9420-1851e43225af.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Only top-right neutral standing and bottom-right passing D are imported. Original side-walk A/B/C remain sourced from v8.",
+      "prompt": "Use case: precise-object-edit. Image 1 is the EDIT TARGET, preserve its ponytailed female identity, exact hair/head pixels, uniform and every sprite position/size. Image 2 is ONLY a lower-right-cell leg pose reference, never copy its male identity. Edit ONLY the LOWER-RIGHT sprite of image 1: its visible NEAR trouser leg must be the gently bending PASSING leg, and the partially hidden FAR leg must be straight, vertical, weight-bearing behind it. Match the restrained lower-right leg arrangement in image 2: far shoe flat under the hip, near shoe slightly off ground close to far shoe, near knee softly forward but not high. The near shoe must overlap in front of the far shin, NOT a bent hidden leg peeking out to the right behind a straight foreground leg. This is opposite to the near-leg support used in first passing phase. Keep pelvis height and torso upright; do not crouch or kick. Hands low near thighs, with near hand close to vertical. Preserve heads exactly and all other cells unchanged. Same 1024x1536 RGBA 2x2 sheet. Outside character outlines pure transparent alpha 0, no glow, shadows, background or text.",
+      "references": [
+        "sources/code-agent-sidewalk-v8.png",
+        "sources/office-lead-side-repair-v11.png"
+      ],
+      "referenceRoles": {
+        "identity": "sources/code-agent-sidewalk-v8.png",
+        "pose": "This character's original contact phases; office-lead's repaired D is the support/passing leg guide where supplied."
+      },
+      "steps": [
+        {
+          "outputId": "exec-26f89b87-2bf7-4c21-9ada-7562c694c709.png",
+          "prompt": "Use case: precise-object-edit. Repair this exact game sprite sheet, preserving the character identity, dark brown ponytail silhouette, face, uniform, proportions, colors and crisp linework. Output the SAME 1024x1536 two-column two-row arrangement with each head, belt and baseline at the SAME position and scale as its input cell. The top-left and bottom-left sprites are reference poses: leave them unchanged. Make ONLY these two edits: (1) TOP-RIGHT sprite becomes a neutral upright RIGHT-facing standing pose: both shoes resting side by side directly under hips, nearly straight knees, relaxed downward arms with hands beside thighs. Preserve its exact head/hair pixels and body length. (2) BOTTOM-RIGHT sprite becomes the second passing phase of a calm indoor walk: FAR leg is the straight weight-bearing leg planted vertically beneath the pelvis; NEAR leg passes close to it with the near foot only slightly lifted, toe underneath the body, NOT stretched forward. Near knee only softly bends, NO crouch and NO kicking. Hips, shoulders and head keep the same height as the top-right sprite. Hands close to sides, low restrained counter-swing. Keep the two knees and shoes close: this is the narrowest mid-step, not a second contact stride. Full figures and complete shoes, ample gutters, no mouth. True transparent RGBA: every pixel outside the tight character silhouettes alpha zero. No shadow, glow, haze, background, labels or text. Do not redraw the other poses. Do not shrink or enlarge any head or body."
+        },
+        {
+          "outputId": "exec-f5ed470e-0e3c-4fc8-9420-1851e43225af.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the EDIT TARGET, preserve its ponytailed female identity, exact hair/head pixels, uniform and every sprite position/size. Image 2 is ONLY a lower-right-cell leg pose reference, never copy its male identity. Edit ONLY the LOWER-RIGHT sprite of image 1: its visible NEAR trouser leg must be the gently bending PASSING leg, and the partially hidden FAR leg must be straight, vertical, weight-bearing behind it. Match the restrained lower-right leg arrangement in image 2: far shoe flat under the hip, near shoe slightly off ground close to far shoe, near knee softly forward but not high. The near shoe must overlap in front of the far shin, NOT a bent hidden leg peeking out to the right behind a straight foreground leg. This is opposite to the near-leg support used in first passing phase. Keep pelvis height and torso upright; do not crouch or kick. Hands low near thighs, with near hand close to vertical. Preserve heads exactly and all other cells unchanged. Same 1024x1536 RGBA 2x2 sheet. Outside character outlines pure transparent alpha 0, no glow, shadows, background or text."
+        }
+      ],
+      "sha256": "ecbde934e8e5f683d08950d3e450ca851fae3339508ec9ed6808daea7454c837"
+    },
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent-side-repair-v11.png",
+      "outputId": "exec-0744bb75-aa12-425e-a694-724789710ae4.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Top-right neutral standing remains active; bottom-right D supplies the retained clip-scale reference and was replaced by the v12 arm correction. Original A/B/C remain sourced from v8.",
+      "prompt": "Use case: precise-object-edit. Image 1 is the EDIT TARGET, preserve its short dark-haired bespectacled male identity, exact hair/head pixels, uniform and every sprite position/size. Image 2 is ONLY a lower-right-cell leg pose reference, never copy its male identity. Edit ONLY the LOWER-RIGHT sprite of image 1: its visible NEAR trouser leg must be the gently bending PASSING leg, and the partially hidden FAR leg must be straight, vertical, weight-bearing behind it. Match the restrained lower-right leg arrangement in image 2: far shoe flat under the hip, near shoe slightly off ground close to far shoe, near knee softly forward but not high. The near shoe must overlap in front of the far shin, NOT a bent hidden leg peeking out to the right behind a straight foreground leg. This is opposite to the near-leg support used in first passing phase. Keep pelvis height and torso upright; do not crouch or kick. Hands low near thighs, with near hand close to vertical. Preserve heads exactly and all other cells unchanged. Same 1024x1536 RGBA 2x2 sheet. Outside character outlines pure transparent alpha 0, no glow, shadows, background or text.",
+      "references": [
+        "sources/office-lead-side-repair-v11.png"
+      ],
+      "referenceRoles": {
+        "identity": "sources/file-agent-sidewalk-v8.png",
+        "pose": "This character's original contact phases; office-lead's repaired D is the support/passing leg guide where supplied."
+      },
+      "steps": [
+        {
+          "outputId": "exec-107071ec-cfee-4d04-8307-76a649d23ce9.png",
+          "prompt": "Use case: precise-object-edit. Repair this exact game sprite sheet, preserving the character identity, black glasses and dark tousled hair silhouette, face, uniform, proportions, colors and crisp linework. Output the SAME 1024x1536 two-column two-row arrangement with each head, belt and baseline at the SAME position and scale as its input cell. The top-left and bottom-left sprites are reference poses: leave them unchanged. Make ONLY these two edits: (1) TOP-RIGHT sprite becomes a neutral upright RIGHT-facing standing pose: both shoes resting side by side directly under hips, nearly straight knees, relaxed downward arms with hands beside thighs. Preserve its exact head/hair pixels and body length. (2) BOTTOM-RIGHT sprite becomes the second passing phase of a calm indoor walk: FAR leg is the straight weight-bearing leg planted vertically beneath the pelvis; NEAR leg passes close to it with the near foot only slightly lifted, toe underneath the body, NOT stretched forward. Near knee only softly bends, NO crouch and NO kicking. Hips, shoulders and head keep the same height as the top-right sprite. Hands close to sides, low restrained counter-swing. Keep the two knees and shoes close: this is the narrowest mid-step, not a second contact stride. Full figures and complete shoes, ample gutters, no mouth. True transparent RGBA: every pixel outside the tight character silhouettes alpha zero. No shadow, glow, haze, background, labels or text. Do not redraw the other poses. Do not shrink or enlarge any head or body."
+        },
+        {
+          "outputId": "exec-0744bb75-aa12-425e-a694-724789710ae4.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the EDIT TARGET, preserve its short dark-haired bespectacled male identity, exact hair/head pixels, uniform and every sprite position/size. Image 2 is ONLY a lower-right-cell leg pose reference, never copy its male identity. Edit ONLY the LOWER-RIGHT sprite of image 1: its visible NEAR trouser leg must be the gently bending PASSING leg, and the partially hidden FAR leg must be straight, vertical, weight-bearing behind it. Match the restrained lower-right leg arrangement in image 2: far shoe flat under the hip, near shoe slightly off ground close to far shoe, near knee softly forward but not high. The near shoe must overlap in front of the far shin, NOT a bent hidden leg peeking out to the right behind a straight foreground leg. This is opposite to the near-leg support used in first passing phase. Keep pelvis height and torso upright; do not crouch or kick. Hands low near thighs, with near hand close to vertical. Preserve heads exactly and all other cells unchanged. Same 1024x1536 RGBA 2x2 sheet. Outside character outlines pure transparent alpha 0, no glow, shadows, background or text."
+        }
+      ],
+      "sha256": "15d21e7dde98ecdb6e658039d80c88d52e7e9c4bbcef99775222b716c29f28e9",
+      "historicalReferences": [
+        {
+          "source": "sources/file-agent-sidewalk-v8.png",
+          "sha256": "17893a571f5d0fb3ddcb22430757f5a1199634d3dddc31d2190691e5be784db4",
+          "outputId": "exec-306ba9fa-d807-489e-bda6-b5b6542fe8af"
+        }
+      ]
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent-side-repair-v11.png",
+      "outputId": "exec-fc35ead0-f61f-4161-8f50-53494ae90250.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Top-right neutral standing remains active; bottom-right D supplies the retained clip-scale reference and was replaced by the v12 arm correction. Original A/B/C remain sourced from v8.",
+      "prompt": "Use case: background-extraction. Cut out the four sprites in the attached image. Remove ALL pixels outside the actual tight dark outer character outlines, including ALL faint grey ghost shapes around and above the two RIGHT-column heads. Outside silhouette must be alpha=0. Preserve the EXACT characters, hair, eyes, bodies, colors, poses, shoes, sizes and positions. Do not redraw or reshape any part of a character. No anti-aliased halo beyond the single-pixel contour edge. Also remove background blobs between arms/legs without erasing real hair or clothing. Same 1024x1536 2x2 RGBA sheet. No solid background, checkerboard, haze, lighting effects, glow or shadow. This is ONLY an alpha-mask cleanup.",
+      "references": [
+        "sources/office-lead-side-repair-v11.png"
+      ],
+      "referenceRoles": {
+        "identity": "sources/app-agent-sidewalk-v8.png",
+        "pose": "This character's original contact phases; office-lead's repaired D is the support/passing leg guide where supplied."
+      },
+      "steps": [
+        {
+          "outputId": "exec-6ef6a465-ed8a-42ef-8c8b-063f08911bf5.png",
+          "prompt": "Use case: precise-object-edit. Repair this exact game sprite sheet, preserving the character identity, long auburn wavy hair silhouette, face, uniform, proportions, colors and crisp linework. Output the SAME 1024x1536 two-column two-row arrangement with each head, belt and baseline at the SAME position and scale as its input cell. The top-left and bottom-left sprites are reference poses: leave them unchanged. Make ONLY these two edits: (1) TOP-RIGHT sprite becomes a neutral upright RIGHT-facing standing pose: both shoes resting side by side directly under hips, nearly straight knees, relaxed downward arms with hands beside thighs. Preserve its exact head/hair pixels and body length. (2) BOTTOM-RIGHT sprite becomes the second passing phase of a calm indoor walk: FAR leg is the straight weight-bearing leg planted vertically beneath the pelvis; NEAR leg passes close to it with the near foot only slightly lifted, toe underneath the body, NOT stretched forward. Near knee only softly bends, NO crouch and NO kicking. Hips, shoulders and head keep the same height as the top-right sprite. Hands close to sides, low restrained counter-swing. Keep the two knees and shoes close: this is the narrowest mid-step, not a second contact stride. Full figures and complete shoes, ample gutters, no mouth. True transparent RGBA: every pixel outside the tight character silhouettes alpha zero. No shadow, glow, haze, background, labels or text. Do not redraw the other poses. Do not shrink or enlarge any head or body.\nEspecially important for the lower-right figure: unbend the SUPPORT knee. The far thigh and shin form a nearly straight vertical line from hip to planted shoe. Only the passing near leg has a slight bend. Do not lower the hips or squat."
+        },
+        {
+          "outputId": "exec-f55daee8-dd67-45d2-8794-e72a5beb8c76.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the EDIT TARGET, preserve its long wavy auburn-haired female identity, exact hair/head pixels, uniform and every sprite position/size. Image 2 is ONLY a lower-right-cell leg pose reference, never copy its male identity. Edit ONLY the LOWER-RIGHT sprite of image 1: its visible NEAR trouser leg must be the gently bending PASSING leg, and the partially hidden FAR leg must be straight, vertical, weight-bearing behind it. Match the restrained lower-right leg arrangement in image 2: far shoe flat under the hip, near shoe slightly off ground close to far shoe, near knee softly forward but not high. The near shoe must overlap in front of the far shin, NOT a bent hidden leg peeking out to the right behind a straight foreground leg. This is opposite to the near-leg support used in first passing phase. Keep pelvis height and torso upright; do not crouch or kick. Hands low near thighs, with near hand close to vertical. Preserve heads exactly and all other cells unchanged. Same 1024x1536 RGBA 2x2 sheet. Outside character outlines pure transparent alpha 0, no glow, shadows, background or text."
+        },
+        {
+          "outputId": "exec-4022c937-552a-476c-8201-776088ce511c.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the CANONICAL EDIT TARGET. Image 2 supplies ONLY two desired leg poses. In image 1 modify ONLY pixels BELOW THE BELT in the TOP-RIGHT and BOTTOM-RIGHT figures, plus relax the top-right forearm for a neutral stance. All head, face, hair, neck, torso, belt pixels of image 1 must remain IDENTICAL, at their exact original coordinates and sizes. Do NOT copy the larger heads from image 2. Do NOT redraw or restyle image 1. Keep top-left and bottom-left figures completely unchanged. TOP-RIGHT: neutral standing, nearly straight legs, shoes side by side beneath hips, arms hanging relaxed. BOTTOM-RIGHT: match image 2 lower-right leg arrangement only: far supporting leg straight beneath pelvis, near leg softly bent passing in front, near shoe very slightly lifted directly beside supporting shoe. No crouching, no forward kick. Keep original belt at same height. Original image 1 head width/height/silhouette absolutely fixed in each of four cells. Keep original short chibi body length and 1024x1536 canvas, 2x2 positions. All exterior background truly transparent, alpha 0; no halos, glows, shadows, text, captions."
+        },
+        {
+          "outputId": "exec-01180b0c-0343-462f-a656-37df335513f6.png",
+          "prompt": "Use case: precise-object-edit. Precision sprite proportion correction. Edit ONLY the HEADS (hair, face and ears) of the TWO RIGHT-COLUMN figures in image 1. They are slightly too large compared with canonical image 2. Reduce each right-column head's width and height by about 3 percent, anchored at its neck, keeping exactly the same hairstyle, color, eye, face and linework. Top-right head must span about x=586..963 and y=59..429 in the 1024x1536 canvas. Bottom-right head must span about x=585..964 and y=798..1165. Hair ends must naturally join the unchanged collar/neck. The desired visible head area is approximately 103000 pixels, not 110000. Do NOT change body, legs, shoes, arms, pose, clothes, belt, figure position, canvas size, or any left-column figure. These are complete full-body sprites; keep all existing pixels outside these two head regions intact. No mouth. Image 2 provides exact identity and head proportion only, do not copy its broken walking legs. Same 1024x1536 RGBA two-column two-row sheet. Transparent outside all silhouettes, no background glow or shadow."
+        },
+        {
+          "outputId": "exec-c5f71f52-8616-4e71-b58b-c7ba4fa04f89.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is target, image 2 is canonical head identity. ONLY correct the two RIGHT-COLUMN HEADS in image 1: they are too narrow and elongated. Make each hair/head silhouette about 5% wider horizontally and about 2% shorter vertically, preserving the neck attachment, face orientation, auburn hair identity and all facial features. Desired shape is the exact fuller wavy bob/long-hair silhouette in image 2, approximately width 377px and height 369px in each cell, visible head alpha area about 103000px. Keep all body, legs, hands, shoes, uniforms, positions and all left-column sprites of image 1 unchanged. Do not alter the repaired lower-right leg pose. Do not enlarge the whole character. Same1024x1536 2x2 transparent RGBA sheet, no text, no backdrop, no glows or shadows. Heads remain mouthless."
+        },
+        {
+          "outputId": "exec-fdd96fed-eb18-4a3a-8844-b75d82ddfa43.png",
+          "prompt": "Use case: precise-object-edit. Fix ONLY the trouser legs and shoes of the two RIGHT-COLUMN sprites in this exact sheet. Their lower legs became too long. Preserve EVERY head/hair/face pixel, every neck, shirt, arm, hand and belt exactly. Keep pelvis and belt fixed. Shorten the trouser-leg anatomy vertically: top-right shoe soles must end at global y=686 instead of y=706; bottom-right planted shoe sole must end at global y=1406 instead of y=1429. Achieve by drawing both legs slightly shorter, NOT by bending the support knee and NOT by moving or scaling the whole figure. Top-right remains neutral standing with straight knees and side-by-side feet. Bottom-right remains gentle passing: far leg straight support, near leg slightly bent with near shoe slightly raised beside far shoe. Keep widths and shoe sizes unchanged, keep heads unchanged. Left-column sprites entirely unchanged. Same1024x1536 transparent RGBA sheet, no ground, glow, text or shadow."
+        },
+        {
+          "outputId": "exec-fc35ead0-f61f-4161-8f50-53494ae90250.png",
+          "prompt": "Use case: background-extraction. Cut out the four sprites in the attached image. Remove ALL pixels outside the actual tight dark outer character outlines, including ALL faint grey ghost shapes around and above the two RIGHT-column heads. Outside silhouette must be alpha=0. Preserve the EXACT characters, hair, eyes, bodies, colors, poses, shoes, sizes and positions. Do not redraw or reshape any part of a character. No anti-aliased halo beyond the single-pixel contour edge. Also remove background blobs between arms/legs without erasing real hair or clothing. Same 1024x1536 2x2 RGBA sheet. No solid background, checkerboard, haze, lighting effects, glow or shadow. This is ONLY an alpha-mask cleanup."
+        }
+      ],
+      "sha256": "cc3b64c32d59955cd86ac91f101d4b67d8aaf06f8d5fdfb97b92413ab3755d5f",
+      "historicalReferences": [
+        {
+          "source": "sources/app-agent-sidewalk-v8.png",
+          "sha256": "2d3229e3dd415b60c5bdd288b459a294628d6355ca0fa51a7449703140f6dea7",
+          "outputId": "exec-b01136e9-e680-418a-aec4-b62c31a46cc7"
+        }
+      ]
+    },
+    {
+      "id": "review-agent",
+      "source": "sources/review-agent-side-repair-v11.png",
+      "outputId": "exec-fdfde12e-7248-4505-bd55-08ece6136e45.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Top-right neutral standing remains active; bottom-right D supplies the retained clip-scale reference. B/D were replaced by the v12 arm correction; original A/C remain sourced from v8.",
+      "prompt": "Use case: precise-object-edit. Repair this exact game sprite sheet, preserving the character identity, short dark brown hair silhouette, face, uniform, proportions, colors and crisp linework. Output the SAME 1024x1536 two-column two-row arrangement with each head, belt and baseline at the SAME position and scale as its input cell. The top-left and bottom-left sprites are reference poses: leave them unchanged. Make ONLY these two edits: (1) TOP-RIGHT sprite becomes a neutral upright RIGHT-facing standing pose: both shoes resting side by side directly under hips, nearly straight knees, relaxed downward arms with hands beside thighs. Preserve its exact head/hair pixels and body length. (2) BOTTOM-RIGHT sprite becomes the second passing phase of a calm indoor walk: FAR leg is the straight weight-bearing leg planted vertically beneath the pelvis; NEAR leg passes close to it with the near foot only slightly lifted, toe underneath the body, NOT stretched forward. Near knee only softly bends, NO crouch and NO kicking. Hips, shoulders and head keep the same height as the top-right sprite. Hands close to sides, low restrained counter-swing. Keep the two knees and shoes close: this is the narrowest mid-step, not a second contact stride. Full figures and complete shoes, ample gutters, no mouth. True transparent RGBA: every pixel outside the tight character silhouettes alpha zero. No shadow, glow, haze, background, labels or text. Do not redraw the other poses. Do not shrink or enlarge any head or body.",
+      "references": [],
+      "referenceRoles": {
+        "identity": "sources/review-agent-sidewalk-v8.png",
+        "pose": "This character's original contact phases; office-lead's repaired D is the support/passing leg guide where supplied."
+      },
+      "steps": [
+        {
+          "outputId": "exec-fdfde12e-7248-4505-bd55-08ece6136e45.png",
+          "prompt": "Use case: precise-object-edit. Repair this exact game sprite sheet, preserving the character identity, short dark brown hair silhouette, face, uniform, proportions, colors and crisp linework. Output the SAME 1024x1536 two-column two-row arrangement with each head, belt and baseline at the SAME position and scale as its input cell. The top-left and bottom-left sprites are reference poses: leave them unchanged. Make ONLY these two edits: (1) TOP-RIGHT sprite becomes a neutral upright RIGHT-facing standing pose: both shoes resting side by side directly under hips, nearly straight knees, relaxed downward arms with hands beside thighs. Preserve its exact head/hair pixels and body length. (2) BOTTOM-RIGHT sprite becomes the second passing phase of a calm indoor walk: FAR leg is the straight weight-bearing leg planted vertically beneath the pelvis; NEAR leg passes close to it with the near foot only slightly lifted, toe underneath the body, NOT stretched forward. Near knee only softly bends, NO crouch and NO kicking. Hips, shoulders and head keep the same height as the top-right sprite. Hands close to sides, low restrained counter-swing. Keep the two knees and shoes close: this is the narrowest mid-step, not a second contact stride. Full figures and complete shoes, ample gutters, no mouth. True transparent RGBA: every pixel outside the tight character silhouettes alpha zero. No shadow, glow, haze, background, labels or text. Do not redraw the other poses. Do not shrink or enlarge any head or body."
+        }
+      ],
+      "sha256": "d4dd62e5fba671989009d81db90e192289b32376132d6a962ed52b09357960a2",
+      "historicalReferences": [
+        {
+          "source": "sources/review-agent-sidewalk-v8.png",
+          "sha256": "23da9e7465a466cb22574fd76513dc34ed585c8e8d5a60afc39f8c9db8f90813",
+          "outputId": "exec-6fee6888-86d2-448d-b2c3-b38b5a029d2f"
+        }
+      ]
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent-side-repair-v11.png",
+      "outputId": "exec-350d3b04-dd0c-40c6-9d88-da01be4ba1ab.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Top-right neutral standing remains active; bottom-right D supplies the retained clip-scale reference and was replaced by the v12 arm correction. Original A/B/C remain sourced from v8.",
+      "prompt": "Use case: precise-object-edit. Repair this exact game sprite sheet, preserving the character identity, chin-length dark blue-black bob hairstyle silhouette, face, uniform, proportions, colors and crisp linework. Output the SAME 1024x1536 two-column two-row arrangement with each head, belt and baseline at the SAME position and scale as its input cell. The top-left and bottom-left sprites are reference poses: leave them unchanged. Make ONLY these two edits: (1) TOP-RIGHT sprite becomes a neutral upright RIGHT-facing standing pose: both shoes resting side by side directly under hips, nearly straight knees, relaxed downward arms with hands beside thighs. Preserve its exact head/hair pixels and body length. (2) BOTTOM-RIGHT sprite becomes the second passing phase of a calm indoor walk: FAR leg is the straight weight-bearing leg planted vertically beneath the pelvis; NEAR leg passes close to it with the near foot only slightly lifted, toe underneath the body, NOT stretched forward. Near knee only softly bends, NO crouch and NO kicking. Hips, shoulders and head keep the same height as the top-right sprite. Hands close to sides, low restrained counter-swing. Keep the two knees and shoes close: this is the narrowest mid-step, not a second contact stride. Full figures and complete shoes, ample gutters, no mouth. True transparent RGBA: every pixel outside the tight character silhouettes alpha zero. No shadow, glow, haze, background, labels or text. Do not redraw the other poses. Do not shrink or enlarge any head or body.\nEspecially important for the lower-right figure: unbend the SUPPORT knee. The far thigh and shin form a nearly straight vertical line from hip to planted shoe. Only the passing near leg has a slight bend. Do not lower the hips or squat.",
+      "references": [],
+      "referenceRoles": {
+        "identity": "sources/data-agent-sidewalk-v8.png",
+        "pose": "This character's original contact phases; office-lead's repaired D is the support/passing leg guide where supplied."
+      },
+      "steps": [
+        {
+          "outputId": "exec-350d3b04-dd0c-40c6-9d88-da01be4ba1ab.png",
+          "prompt": "Use case: precise-object-edit. Repair this exact game sprite sheet, preserving the character identity, chin-length dark blue-black bob hairstyle silhouette, face, uniform, proportions, colors and crisp linework. Output the SAME 1024x1536 two-column two-row arrangement with each head, belt and baseline at the SAME position and scale as its input cell. The top-left and bottom-left sprites are reference poses: leave them unchanged. Make ONLY these two edits: (1) TOP-RIGHT sprite becomes a neutral upright RIGHT-facing standing pose: both shoes resting side by side directly under hips, nearly straight knees, relaxed downward arms with hands beside thighs. Preserve its exact head/hair pixels and body length. (2) BOTTOM-RIGHT sprite becomes the second passing phase of a calm indoor walk: FAR leg is the straight weight-bearing leg planted vertically beneath the pelvis; NEAR leg passes close to it with the near foot only slightly lifted, toe underneath the body, NOT stretched forward. Near knee only softly bends, NO crouch and NO kicking. Hips, shoulders and head keep the same height as the top-right sprite. Hands close to sides, low restrained counter-swing. Keep the two knees and shoes close: this is the narrowest mid-step, not a second contact stride. Full figures and complete shoes, ample gutters, no mouth. True transparent RGBA: every pixel outside the tight character silhouettes alpha zero. No shadow, glow, haze, background, labels or text. Do not redraw the other poses. Do not shrink or enlarge any head or body.\nEspecially important for the lower-right figure: unbend the SUPPORT knee. The far thigh and shin form a nearly straight vertical line from hip to planted shoe. Only the passing near leg has a slight bend. Do not lower the hips or squat."
+        }
+      ],
+      "sha256": "39782812d02e44648d98bd9be0e2dae80a1a993f4a4f4a393b36dea6af1663c3",
+      "historicalReferences": [
+        {
+          "source": "sources/data-agent-sidewalk-v8.png",
+          "sha256": "4a9eb3c6e6733fa9951b85870a476e6034b882daf3bd11e0eb813d6beee1c5ff",
+          "outputId": "exec-1b51d048-55a0-4e6d-b64c-9fc0ae2c4831"
+        }
+      ]
+    },
     {
       "id": "office-lead",
       "source": "sources/office-lead.png",
@@ -164,54 +556,6 @@
     },
     {
       "id": "data-agent",
-      "source": "sources/data-agent-sidewalk-v8.png",
-      "outputId": "exec-1b51d048-55a0-4e6d-b64c-9fc0ae2c4831",
-      "prompt": "Use case: identity-preserve. Edit the attached FOUR-frame sprite sheet (image 1). Image 2 is the exact neutral standing identity and body-proportion reference. Create a replacement transparent RGBA 1024x1536 sheet, two columns x two rows, four COMPLETE right-facing profile walking sprites. Reading order A B C D.\nRepair ONLY the exaggerated marching stride: compact calm indoor walking, each contact step width about 65% of image 1. Do NOT shrink the character or shorten its legs. Preserve the exact head, hair, face, uniform, proportions, full-body scale and cell layout. Keep shoulders steady and the original leg length. Upper thighs only tilt about 18-22 degrees from vertical, feet land underneath/near the hips instead of reaching far. Toe nearly horizontal, gentle heel contact. Knee lift is tiny, the passing shoe barely clears the floor. Not running, not goose stepping.\nA (top left): near-camera brighter leg slightly forward/right, far darker leg slightly back/left; near arm slightly back/left and far arm slightly forward/right.\nB (top right): near leg supporting below hip, far leg passing close to the support ankle, no high knee.\nC (bottom left): near-camera brighter leg slightly back/left, far darker leg slightly forward/right; near arm slightly forward/right, far arm slightly back/left. This must be the genuine opposite leg phase of A, NOT a duplicate or mirror of the whole person.\nD (bottom right): far leg supporting, near leg passing close to the ankle; opposite B.\nHands stay LOW around the top of the thighs with a small but clearly visible opposite swing; do not eliminate arm swing. Keep the faces closed/mouthless. All four complete characters wholly inside their separate equal cells with generous gutters, same head size, whole shoes visible. True transparent background, no shadow, no new props, no labels, no grid. Do not use large stride or strongly bent raised knees from image 1.\nImage 3 is a POSE AMPLITUDE REFERENCE ONLY: it shows the desired compact stride and lower knees. Follow its quiet leg angles and opposite arm swing, but NEVER copy its brown-haired identity, head or body proportions. Keep the identity and body proportions of image 1 and image 2. In the D passing pose, the forward-passing foot should stay very close to the supporting foot, not form another wide contact step.",
-      "references": [
-        "sources/office-lead-sidewalk-v8.png"
-      ],
-      "historicalReferenceNames": [
-        "sources/data-agent-sidewalk-v6.png",
-        ".character-staging/police-uniform-v7-final/data-agent/frames/idle-right-1.png"
-      ],
-      "sha256": "4a9eb3c6e6733fa9951b85870a476e6034b882daf3bd11e0eb813d6beee1c5ff"
-    },
-    {
-      "id": "review-agent",
-      "source": "sources/review-agent-sidewalk-v8.png",
-      "outputId": "exec-6fee6888-86d2-448d-b2c3-b38b5a029d2f",
-      "prompt": "Use case: precise-object-edit. Edit ONLY the bottom-right full-body sprite (phase D) in this transparent 2x2 animation sheet. Keep the other three sprites unchanged. Preserve this exact dark-brown-haired male police officer identity, head silhouette, face, uniform, full-body height, hand placement and drawing style.\nThe bottom-right currently repeats the top-right leg phase. Correct it to the opposite passing leg: the FAR darker leg is vertical and supporting weight, with its black shoe flat on the floor. The NEAR brighter navy leg gently bends and passes just in front of it toward image-right, near shoe a little higher than the far shoe, toe almost horizontal, only a tiny indoor step and small knee bend, NOT a high marching knee. Show the brighter near shin diagonally over the darker vertical far shin so the two support phases are unmistakably different. Keep both complete feet close together beneath the pelvis. Preserve the same standing head size and shoe baseline as the other three figures. Keep original 1024x1536 dimensions and 2x2 cell layout, true transparent background, no shadow, no text. Do not change the accepted other three poses.",
-      "references": [],
-      "historicalReferenceNames": [
-        "sources/review-agent-sidewalk-v8-rejected.png"
-      ],
-      "sha256": "23da9e7465a466cb22574fd76513dc34ed585c8e8d5a60afc39f8c9db8f90813"
-    },
-    {
-      "id": "app-agent",
-      "source": "sources/app-agent-sidewalk-v8.png",
-      "outputId": "exec-b01136e9-e680-418a-aec4-b62c31a46cc7",
-      "prompt": "Use case: identity-preserve, precise anatomy correction. Image 1 is the four small-stride sprites to fix. Image 2 is the SAME auburn long-haired woman's correct neutral standing proportions. Keep her head, hair, face, uniform, head size, compact leg phases and arm swings from image 1. Her walking BODY BELOW THE BELT is too tall relative to her head.\nFor ALL FOUR sprites in image 1, REDRAW the lower body with slightly SHORTER ANATOMICAL LEGS: move the entire black shoes UP by about 20 pixels toward the hips, reducing total hip-to-sole distance by about 8%. Keep hip and head where they are. Trousers must fully cover legs down to the shoes: NO bare ankles, NO rolled-up trousers, NO cropped pants. Do not merely shorten the fabric hem; shorten the underlying legs and bring the FEET UP. Keep shoe width/size and small horizontal step width. This should make the full-body figure shorter without changing the head, not rescale the whole character. Exact original four phases A near leg forward, B far leg passing, C near leg back, D near leg passing. Preserve the same 1024x1536 transparent 2x2 grid, keep all complete figures and the original head silhouettes. No shadows or ground.",
-      "references": [],
-      "historicalReferenceNames": [
-        "sources/app-agent-sidewalk-v8-first.png",
-        ".character-staging/police-uniform-v7-final/app-agent/frames/idle-right-1.png"
-      ],
-      "sha256": "2d3229e3dd415b60c5bdd288b459a294628d6355ca0fa51a7449703140f6dea7"
-    },
-    {
-      "id": "file-agent",
-      "source": "sources/file-agent-sidewalk-v8.png",
-      "outputId": "exec-306ba9fa-d807-489e-bda6-b5b6542fe8af",
-      "prompt": "Use case: background-extraction. Clean the transparent background of this exact 1024x1536 four-character sprite sheet. Preserve ALL four character figures exactly: same pixels/colors/anatomy/head sizes/poses/proportions/clothes/shoes/positions. Remove ONLY the dirty dark gray haze/halo/shadow extending OUTSIDE the true illustrated outlines around hair, shoulders, arms, trousers and shoes. The final sprites need crisp clean antialiased silhouette edges with fully transparent empty space immediately beyond those edges. No cast shadows, no fuzzy shadow, no glow, no gradient backdrop. Keep the original black drawn outline itself; remove only the external semi-transparent gray haze. True transparent RGBA. Do not redraw or reposition the characters, no body modifications.",
-      "references": [],
-      "historicalReferenceNames": [
-        "sources/file-agent-sidewalk-v8-halo.png"
-      ],
-      "sha256": "17893a571f5d0fb3ddcb22430757f5a1199634d3dddc31d2190691e5be784db4"
-    },
-    {
-      "id": "data-agent",
       "source": "sources/data-agent-work-v7.png",
       "outputId": "exec-891a47b7-bb3a-431b-b475-eff13ff85cf6.png",
       "prompt": "Use case: precise-object-edit.\nEdit target: the attached 1024x1536 transparent sprite sheet, 2 columns by 2 rows. It shows four identical full-body BACK-view seated poses of one female police officer, with blue-black bobbed hair, pale blue police shirt, navy trousers, black shoes. This is a frame animation, not an illustration.\nKeep ALL four heads, hair outlines and strands, shoulders, sleeves, torso, hips, legs and shoes exactly fixed in position, shape, scale, color and shading. Do not redraw the whole character. Preserve her identity and the soft original linework. Full characters stay inside their existing 512x768 cells.\nChange ONLY the tiny exposed FINGERTIPS above the two sleeve cuffs for a quiet typing loop. A top-left: existing resting fingertips. B top-right: left fingertips bend down slightly to press, right fingertips relax. C bottom-left: both hands neutral. D bottom-right: right fingertips bend down slightly, left fingertips relax. Movement is 3 to 6 source pixels maximum, no forearm lift, no hair motion, no head bob, no changing hands into fists. Keep continuous natural skin contours and the existing sleeves underneath.\nEvery full-body frame must be anatomically seamless: no rectangular patch borders, hair cuts, duplicated sleeve contours, double wrists, seams or transparency holes. This sheet is imported as FOUR COMPLETE IMAGES, never patch-composited.\nExactly the same image dimensions and grid positions. True transparent RGBA with alpha zero outside clean character outlines, no colored haze, glow, backdrop, chair, desk, keyboard, text or shadows.",
@@ -269,6 +613,152 @@
       "outputId": "exec-0bfaba07-6912-4548-98f4-30818ef8419f.png",
       "prompt": "Use case: precise-object-edit. IMAGE 1 IS THE EDIT TARGET. Keep its exact 3-column x 2-row grid and preserve ALL SIX original heads, hair, faces/ears, necks, shirts, shoulders, sleeves and arms at their existing sizes and positions. Do not redraw or resize anything above the belt. Image 2 supplies ONLY the CORRECT LOWER-BODY ANATOMY. Repair the trousers and shoes of the TOP LEFT seated and TOP MIDDLE leaning figures: they are kneeling, with legs tucked behind/under the buttocks. Instead put their hips back on an invisible chair, thighs pointing forward away from camera, knees bent about 90 degrees and CLEAR VERTICAL LOWER LEGS descending beneath the hips to FLAT planted feet. Show BACKS OF HEELS, absolutely NO SHOE SOLES facing the viewer. No knees on ground, no sitting on heels. Use the natural lower legs in Image 2, without copying its head or body scale. Correct the third and fourth figures only as needed for a smooth rise to standing. The fifth and sixth standing figures must stay unchanged. Keep all original head silhouettes PIXEL-CONSISTENT and SAME SCALE; do not make seated heads bigger than standing. True transparent background, no glow/shadow/floor/chair/desk/text. Output the repaired original SIX-sprite sheet only. This character is the long dark blue/black-haired woman from IMAGE 1, not the blond reference. Keep her original upper body and hair completely unchanged. Reduce the very spread seated hips to a natural chair-seat width, similar to her shoulders; feet must sit BELOW the hips with visible vertical calves, never at the sides of the buttocks. Keep the last standing figure unchanged.",
       "sha256": "d3ec9f82273cd468b022394311a6af7310e7ff315b33d33050ed43e0df9aaf88"
+    }
+  ],
+  "retiredSources": [
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent-side-arms-v12.png",
+      "outputId": "exec-d0a9b9b1-3f92-4551-a615-351dbd80d152.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Only bottom-right passing D arm correction is imported.",
+      "prompt": "Use case: precise-object-edit. Edit this exact 1024x1536 transparent 2x2 right-facing walk-cycle sprite sheet. Change ONLY the arms/sleeves/hands of the BOTTOM-RIGHT character (phase D). That character currently has THREE HANDS: remove the erroneous extra hand at the far right/front of the belt. It must have exactly TWO arms and TWO hands: the visible near arm swings gently FORWARD (screen right), relaxed elbow, near hand slightly ahead of the shoulder and near the upper front thigh, well below the belt; the far arm swings BACK (screen left), its one hand visible behind the hip. Keep the swing modest, a passing pose between the strong forward near-arm of bottom-left C and backward near-arm of top-left A. Do not put both hands behind the hip. The far arm must connect to the far shoulder, no floating hands. Preserve ALL pixels and geometry of the head, glasses, face, hair, neck, torso other than necessary arm occlusion, belt, both legs and shoes, full-body size, feet placement, camera, colors and linework. Do NOT alter the leg pose or head size. Top-left A, top-right B and bottom-left C must remain unchanged. Same 2x2 positions and transparent margins, no text, no shadows, true transparent RGBA background.",
+      "references": [
+        "sources/file-agent-sidewalk-v8.png",
+        "sources/file-agent-side-repair-v11.png"
+      ],
+      "referenceRoles": {
+        "editTarget": "2x2 full-frame assembly: A/B/C from sidewalk-v8; D from side-repair-v11. Original resolution and cell positions retained.",
+        "identity": "The same character only; no cross-character pose or appearance transfer."
+      },
+      "steps": [
+        {
+          "outputId": "exec-d0a9b9b1-3f92-4551-a615-351dbd80d152.png",
+          "prompt": "Use case: precise-object-edit. Edit this exact 1024x1536 transparent 2x2 right-facing walk-cycle sprite sheet. Change ONLY the arms/sleeves/hands of the BOTTOM-RIGHT character (phase D). That character currently has THREE HANDS: remove the erroneous extra hand at the far right/front of the belt. It must have exactly TWO arms and TWO hands: the visible near arm swings gently FORWARD (screen right), relaxed elbow, near hand slightly ahead of the shoulder and near the upper front thigh, well below the belt; the far arm swings BACK (screen left), its one hand visible behind the hip. Keep the swing modest, a passing pose between the strong forward near-arm of bottom-left C and backward near-arm of top-left A. Do not put both hands behind the hip. The far arm must connect to the far shoulder, no floating hands. Preserve ALL pixels and geometry of the head, glasses, face, hair, neck, torso other than necessary arm occlusion, belt, both legs and shoes, full-body size, feet placement, camera, colors and linework. Do NOT alter the leg pose or head size. Top-left A, top-right B and bottom-left C must remain unchanged. Same 2x2 positions and transparent margins, no text, no shadows, true transparent RGBA background."
+        }
+      ],
+      "sha256": "b1ac7c7a57ef98eda92a4443bfa7a76f6c2b7d4788f44bcad568debb9e255317"
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent-side-arms-v12.png",
+      "outputId": "exec-e8686afa-9fcb-42b3-a0b3-3d51f34f2ced.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Only bottom-right passing D arm correction is imported.",
+      "prompt": "Use case: precise-object-edit. Edit this exact 1024x1536 transparent 2x2 sprite sheet of the auburn-haired woman facing right. Change ONLY the arms/sleeves/hands of the BOTTOM-RIGHT character, walking passing phase D. Currently both hands bunch behind the body. Give her exactly TWO arms and hands: visible NEAR arm swings slightly FORWARD (screen right), elbow relaxed, hand just ahead of the shoulder near the front upper thigh below the belt; FAR arm swings slightly BACK (screen left), its hand visible behind the hip. Restrained swing, about half the forward swing of the near arm in bottom-left phase C, not reaching or running. Clearly separate fore/aft hand positions, with each hand naturally attached to its own sleeve and shoulder. Preserve the exact bottom-right HEAD, face, hair silhouette, hair color and head size; do not copy a different head from another cell. Preserve the torso except necessary arm occlusion, belt, legs, knees, shoes, foot positions, body size, camera, rendering and all other pixels. Do not fix or change her leg pose. Top-left A, top-right B and bottom-left C must remain unchanged. Keep the 2x2 composition and full-body sprites. True transparent RGBA background, no text, no new props, no glow or shadow.",
+      "references": [
+        "sources/app-agent-sidewalk-v8.png",
+        "sources/app-agent-side-repair-v11.png"
+      ],
+      "referenceRoles": {
+        "editTarget": "2x2 full-frame assembly: A/B/C from sidewalk-v8; D from side-repair-v11. Original resolution and cell positions retained.",
+        "identity": "The same character only; no cross-character pose or appearance transfer."
+      },
+      "steps": [
+        {
+          "outputId": "exec-e8686afa-9fcb-42b3-a0b3-3d51f34f2ced.png",
+          "prompt": "Use case: precise-object-edit. Edit this exact 1024x1536 transparent 2x2 sprite sheet of the auburn-haired woman facing right. Change ONLY the arms/sleeves/hands of the BOTTOM-RIGHT character, walking passing phase D. Currently both hands bunch behind the body. Give her exactly TWO arms and hands: visible NEAR arm swings slightly FORWARD (screen right), elbow relaxed, hand just ahead of the shoulder near the front upper thigh below the belt; FAR arm swings slightly BACK (screen left), its hand visible behind the hip. Restrained swing, about half the forward swing of the near arm in bottom-left phase C, not reaching or running. Clearly separate fore/aft hand positions, with each hand naturally attached to its own sleeve and shoulder. Preserve the exact bottom-right HEAD, face, hair silhouette, hair color and head size; do not copy a different head from another cell. Preserve the torso except necessary arm occlusion, belt, legs, knees, shoes, foot positions, body size, camera, rendering and all other pixels. Do not fix or change her leg pose. Top-left A, top-right B and bottom-left C must remain unchanged. Keep the 2x2 composition and full-body sprites. True transparent RGBA background, no text, no new props, no glow or shadow."
+        }
+      ],
+      "sha256": "2fa622ae7bd0f7360649d8fca4613460197da87f27985bfb08650cf13ac5a9b3"
+    },
+    {
+      "id": "review-agent",
+      "source": "sources/review-agent-side-arms-v12.png",
+      "outputId": "exec-f451397b-bd9e-4d45-b861-a718cf4a2d7c.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Only right-column passing B and D arm corrections are imported.",
+      "prompt": "Use case: precise-object-edit. Edit this exact 1024x1536 transparent 2x2 right-facing walk cycle of the short brown-haired male character. Change ONLY arms/sleeves/hands in the RIGHT COLUMN: top-right passing B and bottom-right passing D. Both now have their hands bunched behind the hip; correct their opposite alternating swing. TOP-RIGHT B: visible NEAR arm slightly BACK (screen left) with relaxed hand below belt near the rear upper thigh; FAR arm slightly FORWARD (screen right), far hand visible just ahead of belt/front hip. B has less swing than top-left A. BOTTOM-RIGHT D: reverse B, visible NEAR arm slightly FORWARD (screen right), near hand just ahead of shoulder near front upper thigh below belt, FAR arm slightly BACK (screen left), far hand visible behind hip. D has less swing than bottom-left C. Exactly two arms and two hands in each pose, hands naturally joined to sleeves, no third hand, no raised fists or exaggerated reach. Preserve each cell's exact head, face, hair, body size, torso except necessary arm occlusion, belt, BOTH LEGS, knees, shoes and foot positions. Do NOT change walking legs or head proportions. Top-left A and bottom-left C are completely unchanged. Preserve original layout, colors, clean linework, complete sprites and transparent margins. Real transparent RGBA background; no glow, shadows, text or props.",
+      "references": [
+        "sources/review-agent-sidewalk-v8.png",
+        "sources/review-agent-side-repair-v11.png"
+      ],
+      "referenceRoles": {
+        "editTarget": "2x2 full-frame assembly: A/B/C from sidewalk-v8; D from side-repair-v11. Original resolution and cell positions retained.",
+        "identity": "The same character only; no cross-character pose or appearance transfer."
+      },
+      "steps": [
+        {
+          "outputId": "exec-0ee579e1-c2ad-49fb-8cfb-d752a6e7d471.png",
+          "prompt": "Use case: precise-object-edit. Edit this exact 1024x1536 transparent 2x2 right-facing walk cycle of the short brown-haired male character. Change ONLY arms/sleeves/hands in the RIGHT COLUMN: top-right passing B and bottom-right passing D. Both now have their hands bunched behind the hip; correct their opposite alternating swing. TOP-RIGHT B: visible NEAR arm slightly BACK (screen left) with relaxed hand below belt near the rear upper thigh; FAR arm slightly FORWARD (screen right), far hand visible just ahead of belt/front hip. B has less swing than top-left A. BOTTOM-RIGHT D: reverse B, visible NEAR arm slightly FORWARD (screen right), near hand just ahead of shoulder near front upper thigh below belt, FAR arm slightly BACK (screen left), far hand visible behind hip. D has less swing than bottom-left C. Exactly two arms and two hands in each pose, hands naturally joined to sleeves, no third hand, no raised fists or exaggerated reach. Preserve each cell's exact head, face, hair, body size, torso except necessary arm occlusion, belt, BOTH LEGS, knees, shoes and foot positions. Do NOT change walking legs or head proportions. Top-left A and bottom-left C are completely unchanged. Preserve original layout, colors, clean linework, complete sprites and transparent margins. Real transparent RGBA background; no glow, shadows, text or props."
+        },
+        {
+          "outputId": "exec-f451397b-bd9e-4d45-b861-a718cf4a2d7c.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the edited sprite sheet. Image 2 is the ORIGINAL leg-geometry reference. Correct ONLY the two trouser legs and shoes of the TOP-RIGHT sprite B in image 1: restore their exact shape and placement from TOP-RIGHT B of image 2. In original B the visible near leg is STRAIGHT VERTICAL and weight bearing with shoe planted to the right; the far leg passes behind close to it with the other shoe slightly raised. The edited image accidentally bent/tilted the weight-bearing leg and widened the feet, which is wrong. Restore the original narrow foot span, straight near shin, knee positions, trouser cuffs and shoe positions exactly. Keep the newly corrected top-right ARMS and HANDS from image 1 unchanged (near hand behind, far hand in front). Do not alter hips, belt, torso, head, hair, face, size or position. Preserve all other cells of image 1 completely, especially the corrected bottom-right arms. This is only a leg restoration so the requested arm-only edit does not change the existing gait. Same 1024x1536 2x2 sheet with true transparent background and no glow or shadows."
+        }
+      ],
+      "sha256": "52417585d9d157b3f23236e51aeb0db8daf829e7f809679f0e669da7e75f8813"
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent-side-arms-v12.png",
+      "outputId": "exec-ac62e746-6e06-4ecd-b622-ee9f10adbadd.png",
+      "tool": "image_gen.imagegen",
+      "scope": "Only bottom-right passing D arm correction is imported.",
+      "prompt": "Use case: precise-object-edit. Edit this exact 1024x1536 transparent 2x2 right-facing walk cycle of the dark blue bob-haired woman. Change ONLY the arms/sleeves/hands in the BOTTOM-RIGHT sprite, passing phase D. Her hands currently bunch at the back. Correct counter-swing: visible NEAR arm swings gently FORWARD (screen right), relaxed elbow, hand clearly ahead of the shoulder line at upper thigh height BELOW belt; FAR arm swings gently BACK (screen left), one far hand behind the hip. About half the near-arm forward swing of bottom-left phase C, a low restrained walk, not raised arms. Exactly two arms and two hands naturally joined to their own sleeves. Do not put both hands behind the body. Preserve the exact head, hair, face, head size, torso except necessary arm occlusion, belt, both LEGS, bent knee, shoes, feet placement, full-body dimensions, cell position, art style and colors. No changes to leg pose. Top-left A, top-right B and bottom-left C remain unchanged. Keep all four full-body cells with generous transparent gutters. True transparent RGBA background, no glow, no shadows, no props or text.",
+      "references": [
+        "sources/data-agent-sidewalk-v8.png",
+        "sources/data-agent-side-repair-v11.png"
+      ],
+      "referenceRoles": {
+        "editTarget": "2x2 full-frame assembly: A/B/C from sidewalk-v8; D from side-repair-v11. Original resolution and cell positions retained.",
+        "identity": "The same character only; no cross-character pose or appearance transfer."
+      },
+      "steps": [
+        {
+          "outputId": "exec-ac62e746-6e06-4ecd-b622-ee9f10adbadd.png",
+          "prompt": "Use case: precise-object-edit. Edit this exact 1024x1536 transparent 2x2 right-facing walk cycle of the dark blue bob-haired woman. Change ONLY the arms/sleeves/hands in the BOTTOM-RIGHT sprite, passing phase D. Her hands currently bunch at the back. Correct counter-swing: visible NEAR arm swings gently FORWARD (screen right), relaxed elbow, hand clearly ahead of the shoulder line at upper thigh height BELOW belt; FAR arm swings gently BACK (screen left), one far hand behind the hip. About half the near-arm forward swing of bottom-left phase C, a low restrained walk, not raised arms. Exactly two arms and two hands naturally joined to their own sleeves. Do not put both hands behind the body. Preserve the exact head, hair, face, head size, torso except necessary arm occlusion, belt, both LEGS, bent knee, shoes, feet placement, full-body dimensions, cell position, art style and colors. No changes to leg pose. Top-left A, top-right B and bottom-left C remain unchanged. Keep all four full-body cells with generous transparent gutters. True transparent RGBA background, no glow, no shadows, no props or text."
+        }
+      ],
+      "sha256": "a44288b8172f8a3c7030d8b89c76f5cfd7a4b70c59c33bda82dbe4d08a098404"
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent-sidewalk-v8.png",
+      "outputId": "exec-1b51d048-55a0-4e6d-b64c-9fc0ae2c4831",
+      "prompt": "Use case: identity-preserve. Edit the attached FOUR-frame sprite sheet (image 1). Image 2 is the exact neutral standing identity and body-proportion reference. Create a replacement transparent RGBA 1024x1536 sheet, two columns x two rows, four COMPLETE right-facing profile walking sprites. Reading order A B C D.\nRepair ONLY the exaggerated marching stride: compact calm indoor walking, each contact step width about 65% of image 1. Do NOT shrink the character or shorten its legs. Preserve the exact head, hair, face, uniform, proportions, full-body scale and cell layout. Keep shoulders steady and the original leg length. Upper thighs only tilt about 18-22 degrees from vertical, feet land underneath/near the hips instead of reaching far. Toe nearly horizontal, gentle heel contact. Knee lift is tiny, the passing shoe barely clears the floor. Not running, not goose stepping.\nA (top left): near-camera brighter leg slightly forward/right, far darker leg slightly back/left; near arm slightly back/left and far arm slightly forward/right.\nB (top right): near leg supporting below hip, far leg passing close to the support ankle, no high knee.\nC (bottom left): near-camera brighter leg slightly back/left, far darker leg slightly forward/right; near arm slightly forward/right, far arm slightly back/left. This must be the genuine opposite leg phase of A, NOT a duplicate or mirror of the whole person.\nD (bottom right): far leg supporting, near leg passing close to the ankle; opposite B.\nHands stay LOW around the top of the thighs with a small but clearly visible opposite swing; do not eliminate arm swing. Keep the faces closed/mouthless. All four complete characters wholly inside their separate equal cells with generous gutters, same head size, whole shoes visible. True transparent background, no shadow, no new props, no labels, no grid. Do not use large stride or strongly bent raised knees from image 1.\nImage 3 is a POSE AMPLITUDE REFERENCE ONLY: it shows the desired compact stride and lower knees. Follow its quiet leg angles and opposite arm swing, but NEVER copy its brown-haired identity, head or body proportions. Keep the identity and body proportions of image 1 and image 2. In the D passing pose, the forward-passing foot should stay very close to the supporting foot, not form another wide contact step.",
+      "references": [
+        "sources/office-lead-sidewalk-v8.png"
+      ],
+      "historicalReferenceNames": [
+        "sources/data-agent-sidewalk-v6.png",
+        ".character-staging/police-uniform-v7-final/data-agent/frames/idle-right-1.png"
+      ],
+      "sha256": "4a9eb3c6e6733fa9951b85870a476e6034b882daf3bd11e0eb813d6beee1c5ff"
+    },
+    {
+      "id": "review-agent",
+      "source": "sources/review-agent-sidewalk-v8.png",
+      "outputId": "exec-6fee6888-86d2-448d-b2c3-b38b5a029d2f",
+      "prompt": "Use case: precise-object-edit. Edit ONLY the bottom-right full-body sprite (phase D) in this transparent 2x2 animation sheet. Keep the other three sprites unchanged. Preserve this exact dark-brown-haired male police officer identity, head silhouette, face, uniform, full-body height, hand placement and drawing style.\nThe bottom-right currently repeats the top-right leg phase. Correct it to the opposite passing leg: the FAR darker leg is vertical and supporting weight, with its black shoe flat on the floor. The NEAR brighter navy leg gently bends and passes just in front of it toward image-right, near shoe a little higher than the far shoe, toe almost horizontal, only a tiny indoor step and small knee bend, NOT a high marching knee. Show the brighter near shin diagonally over the darker vertical far shin so the two support phases are unmistakably different. Keep both complete feet close together beneath the pelvis. Preserve the same standing head size and shoe baseline as the other three figures. Keep original 1024x1536 dimensions and 2x2 cell layout, true transparent background, no shadow, no text. Do not change the accepted other three poses.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/review-agent-sidewalk-v8-rejected.png"
+      ],
+      "sha256": "23da9e7465a466cb22574fd76513dc34ed585c8e8d5a60afc39f8c9db8f90813"
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent-sidewalk-v8.png",
+      "outputId": "exec-b01136e9-e680-418a-aec4-b62c31a46cc7",
+      "prompt": "Use case: identity-preserve, precise anatomy correction. Image 1 is the four small-stride sprites to fix. Image 2 is the SAME auburn long-haired woman's correct neutral standing proportions. Keep her head, hair, face, uniform, head size, compact leg phases and arm swings from image 1. Her walking BODY BELOW THE BELT is too tall relative to her head.\nFor ALL FOUR sprites in image 1, REDRAW the lower body with slightly SHORTER ANATOMICAL LEGS: move the entire black shoes UP by about 20 pixels toward the hips, reducing total hip-to-sole distance by about 8%. Keep hip and head where they are. Trousers must fully cover legs down to the shoes: NO bare ankles, NO rolled-up trousers, NO cropped pants. Do not merely shorten the fabric hem; shorten the underlying legs and bring the FEET UP. Keep shoe width/size and small horizontal step width. This should make the full-body figure shorter without changing the head, not rescale the whole character. Exact original four phases A near leg forward, B far leg passing, C near leg back, D near leg passing. Preserve the same 1024x1536 transparent 2x2 grid, keep all complete figures and the original head silhouettes. No shadows or ground.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/app-agent-sidewalk-v8-first.png",
+        ".character-staging/police-uniform-v7-final/app-agent/frames/idle-right-1.png"
+      ],
+      "sha256": "2d3229e3dd415b60c5bdd288b459a294628d6355ca0fa51a7449703140f6dea7"
+    },
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent-sidewalk-v8.png",
+      "outputId": "exec-306ba9fa-d807-489e-bda6-b5b6542fe8af",
+      "prompt": "Use case: background-extraction. Clean the transparent background of this exact 1024x1536 four-character sprite sheet. Preserve ALL four character figures exactly: same pixels/colors/anatomy/head sizes/poses/proportions/clothes/shoes/positions. Remove ONLY the dirty dark gray haze/halo/shadow extending OUTSIDE the true illustrated outlines around hair, shoulders, arms, trousers and shoes. The final sprites need crisp clean antialiased silhouette edges with fully transparent empty space immediately beyond those edges. No cast shadows, no fuzzy shadow, no glow, no gradient backdrop. Keep the original black drawn outline itself; remove only the external semi-transparent gray haze. True transparent RGBA. Do not redraw or reposition the characters, no body modifications.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/file-agent-sidewalk-v8-halo.png"
+      ],
+      "sha256": "17893a571f5d0fb3ddcb22430757f5a1199634d3dddc31d2190691e5be784db4"
     }
   ]
 }

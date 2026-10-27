@@ -41,6 +41,6 @@ export async function buildCivicPreview(source, destination) {
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
-  const source = path.resolve(root, process.env.POLICE_STAGING_ROOT ?? '.character-staging/civic-seating-v10-final')
+  const source = path.resolve(root, process.env.POLICE_STAGING_ROOT ?? '.character-staging/civic-sidewalk-v13')
   console.log(JSON.stringify(await buildCivicPreview(source), null, 2))
 }

@@ -12,13 +12,14 @@ test('website release only includes current catalogs, live fallbacks and selecte
   const files = await collectReleaseAssets(root)
   for (const name of ['brand/logo.png', 'brand/title.png', 'site/office-scene.webp', 'LICENSE.txt', 'THIRD_PARTY_NOTICES.txt',
     'pixoffice-config.js', 'characters/registry.json', 'assets/office/reference-v1/room-whiteboard-v3.png',
-    'classroom-assets/roster.json', 'farm-assets/chickens.webp', 'site/civic-preview.webp',
+    'classroom-assets/roster.json', 'farm-assets/chickens.webp', 'site/civic-preview.webp', 'site/customization-contact.jpg',
     'civic-assets/characters/registry.json', 'civic-assets/audit.json']) assert(files.has(name), name)
   for (const name of files.keys()) {
     assert(!name.startsWith('assets/characters/'), name)
     assert(!/README|prompts|room-rounded-v2|whiteboard-rounded-v2|\.DS_Store/.test(name), name)
   }
   const registry = JSON.parse(files.get('characters/registry.json'))
+  assert(files.get('site/customization-contact.jpg').equals(await readFile(`${root}/site/customization-contact.jpg`)))
   const allowed = new Set(['characters/registry.json'])
   for (const character of registry.characters) {
     const catalog = JSON.parse(await readFile(`${root}/asset-packs/${character.id}.json`, 'utf8'))
@@ -29,6 +30,7 @@ test('website release only includes current catalogs, live fallbacks and selecte
 
 test('standalone release selection cannot include another scene or historical generated files', async () => {
   const office = await collectReleaseAssets(root, 'office')
+  assert(!office.has('site/customization-contact.jpg'))
   assert(![...office.keys()].some(name => /^(farm|classroom|civic)-assets\//.test(name)))
   for (const product of ['classroom', 'farm']) {
     const files = await collectReleaseAssets(root, product)

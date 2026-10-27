@@ -11,7 +11,7 @@ npm ci
 npm run dev:vite
 ```
 
-`dev:vite` 启动纯前端演示，使用本地示例数据。首页 `/` 展示项目介绍，其他入口为 `/office/`、`/minimal/`、`/classroom/` 和 `/farm/`。
+`dev:vite` 启动纯前端演示，使用本地示例数据。首页 `/` 直接展示场景列表与定制联系方式，场景入口为 `/office/`、`/minimal/`、`/classroom/`、`/farm/` 和 `/civic/`。
 
 `npm run dev` 同时启动 Vite 与 Fastify，办公室等待外部业务后端初始化。该模式的运行示例、连接配置和部署要求见[对接指南](../integration/README.md)与[部署文档](../integration/docs/message-relay.md)。
 
@@ -21,7 +21,8 @@ npm run dev:vite
 
 | 示例 | 开发方式 | 构建方式与范围 |
 | --- | --- | --- |
-| [完整办公室](../example/office-web/) | `npm run dev:vite`，打开 `/office/` | `npm run build`，在根目录 `dist/` 中生成官网和四个场景入口 |
+| [完整办公室](../example/office-web/) | `npm run dev:vite`，打开 `/office/` | `npm run build`，在根目录 `dist/` 中生成官网和五个场景入口 |
+| [公务场景](../example/office-web/civic/) | `npm run dev:vite`，打开 `/civic/` | 随官网构建，使用独立的公务演示、存档与制服人物预览资源 |
 | [最小办公室](../example/minimal-vanilla/) | 官网的 `/minimal/`，或 `npm run dev -w @pixoffice/example-minimal-vanilla` | 只通过公共包入口装配，不依赖 React |
 | [独立人物场景](../example/isolated-scene/) | `npm run dev:isolated` | `npm run build:isolated`，不依赖办公室包 |
 | [教室](../example/classroom/) | `npm run dev:classroom` | `npm run build:classroom`，不携带办公室资源 |
@@ -32,7 +33,9 @@ npm run dev:vite
 
 ## 办公室交互预览
 
-纯前端本地演示点击“开始演示”后，约 15 秒显示当前办公室的一条确认，约 30 秒显示另一个办公室的一条侧边选择卡。每轮仅这两条问题，回答后不追加；有效期从问题出现时计算，停止演示取消尚未出现的问题。真实连接模式的菜单由后端请求触发。
+纯前端的场景演示由实际派工进度推进，不用固定计时跳过走访。`/office/` 展示商品准备、上架确认、经营观察与优化；`/civic/` 展示社区便民服务日的方案准备、启动确认、现场保障选择、回访与归档。公务演示的三个小组、人物职责、统计、任务、白板和聊天均使用独立内容，新增的本地公务办公室也使用同一案例。
+
+每轮流程最多两条问题：当前办公室的一条确认与其他办公室的一条侧边选择。问题有效期为 60 秒，拒绝或超时不会自动同意；停止或删除主会话会中止流程，重跑保留用户草稿。最终任务和白板显示流程完成，仍待补材料的居民事项在复盘中保留待办，不计入已办结。真实连接模式的菜单由后端请求触发。
 
 动画区域底部提供聊天输入框，支持展开、停止、收起和新建对话。纯前端演示默认不调用模型或执行业务；服务器模式由外部后端在 `offices.initialize` 的 `chat.url` 注册聊天服务，浏览器通过 PixOffice 服务端转发请求和流式回复。源码装配可注入 `OfficeApp.chatSource`，格式见[聊天接口](../integration/docs/chat-integration.md)。
 

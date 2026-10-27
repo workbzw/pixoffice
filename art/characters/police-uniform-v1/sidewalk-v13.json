@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "characters": {
+    "file-agent": { "source": "file-agent-sidewalk-v13.png", "poseReference": "office-lead", "headBottoms": [374, 374, 364, 364], "offsets": [0, 0, 2, 2] },
+    "review-agent": { "source": "review-agent-sidewalk-v13.png", "poseReference": "office-lead", "headBottoms": [364, 364, 364, 364] },
+    "app-agent": { "source": "app-agent-sidewalk-v13.png", "poseReference": "code-agent", "headBottoms": [472, 472, 448, 452] },
+    "data-agent": { "source": "data-agent-sidewalk-v13.png", "poseReference": "code-agent", "headBottoms": [388, 388, 388, 388] }
+  }
+}

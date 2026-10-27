@@ -1,15 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork, GraduationCap, Landmark, Layers3, Menu, MessageCircle, Monitor, Move, Plug, Sprout, Terminal, X } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork, GraduationCap, Landmark, Menu, MessageCircle, Monitor, Sprout, Terminal, X } from 'lucide-react'
 import { websiteContent, websiteReadme, websiteRepository as repository, websiteSnippets } from './content.ts'
 import { readWebsiteLocale, rememberWebsiteLocale, type WebsiteLocale } from './locale.ts'
 
 const base = import.meta.env.BASE_URL
 const docs = `${repository}/blob/main/docs/architecture/README.md`
-const features = [
-  { key: 'collaboration', icon: MessageCircle, tone: 'coral' },
-  { key: 'layout', icon: Move, tone: 'green' },
-  { key: 'integration', icon: Plug, tone: 'blue' },
-] as const
 
 export function Website() {
   const [locale, setLocale] = useState(readWebsiteLocale)
@@ -21,6 +16,7 @@ export function Website() {
   const [snippet, setSnippet] = useState<keyof typeof snippets>('start')
   const [copyStatus, setCopyStatus] = useState<'success' | 'error' | null>(null)
   const menuButton = useRef<HTMLButtonElement>(null)
+  const contactDialog = useRef<HTMLDialogElement>(null)
   const copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   useEffect(() => () => clearTimeout(copyTimer.current), [])
@@ -46,6 +42,11 @@ export function Website() {
     rememberWebsiteLocale(next)
   }
 
+  function openContact() {
+    if (menuOpen) menuButton.current?.focus()
+    contactDialog.current?.showModal()
+  }
+
   async function copy() {
     try {
       await navigator.clipboard.writeText(snippets[snippet])
@@ -66,11 +67,7 @@ export function Website() {
         <a className="site-brand" href={homeHref} aria-label={t.nav.homeLabel}><img src={`${base}site/wordmark.webp`} width="480" height="160" alt="PixOffice" /></a>
         <nav id="site-navigation" aria-label={t.nav.label} className={menuOpen ? 'site-nav is-open' : 'site-nav'} onClick={() => setMenuOpen(false)}>
           <a href={homeHref} aria-current="page">{t.nav.home}</a>
-          <a href={`${base}office/`}>{t.nav.office} <ArrowUpRight size={13} /></a>
-          <a href={`${base}minimal/`}>{t.nav.minimal} <ArrowUpRight size={13} /></a>
-          <a href={`${base}classroom/`}>{t.nav.classroom} <ArrowUpRight size={13} /></a>
-          <a href={`${base}farm/`}>{t.nav.farm} <ArrowUpRight size={13} /></a>
-          <a href={`${base}civic/`}>{t.nav.civic} <ArrowUpRight size={13} /></a>
+          <button type="button" onClick={openContact}><MessageCircle size={15} /> {t.contact.action}</button>
           <a href={docs} target="_blank" rel="noreferrer">{t.nav.docs}</a>
           <a className="site-github" href={readmeHref} target="_blank" rel="noreferrer"><GitFork size={17} /> GitHub <ArrowUpRight size={13} /></a>
         </nav>
@@ -85,44 +82,20 @@ export function Website() {
     </header>
 
     <main id="main">
-      <section className="site-hero" aria-labelledby="hero-title">
-        <div className="site-hero-copy">
-          <p className="site-eyebrow"><span /> {t.hero.eyebrow}</p>
-          <h1 id="hero-title">PixOffice<span>.</span></h1>
-          <p className="site-tagline">{t.hero.tagline}</p>
-          <p className="site-hero-description">{t.hero.description}</p>
-          <div className="site-actions">
-            <a className="site-button site-button-primary" href={`${base}office/`}>{t.hero.primary} <ArrowRight size={17} /></a>
-            <a className="site-button site-button-secondary" href={`${base}minimal/`}><Blocks size={17} /> {t.hero.secondary}</a>
-          </div>
-        </div>
-        <img className="site-hero-scene" src={`${base}site/office-scene.webp`} width="734" height="566" fetchPriority="high" alt={t.hero.alt} />
-        <div className="site-hero-bottom"><span>{t.hero.caption}</span><a href="#overview" aria-label={t.hero.learn}><ArrowDown size={17} /></a><span>React + PixiJS</span></div>
-      </section>
-
-      <section id="overview" className="site-overview site-section">
+      <section id="examples" className="site-examples site-section" aria-labelledby="scenes-title">
         <div className="site-container">
-          <div className="site-section-heading"><div><p className="site-eyebrow">{t.overview.eyebrow}</p><h2>{t.overview.title}</h2></div><p>{t.overview.description}</p></div>
-          <div className="site-features">
-            {features.map(({ key, icon: Icon, tone }, index) => <article key={key}><Icon className={`site-feature-icon ${tone}`} size={25} /><span className="site-number">0{index + 1}</span><h3>{t.features[key].title}</h3><p>{t.features[key].description}</p></article>)}
-          </div>
-        </div>
-      </section>
-
-      <section id="examples" className="site-examples site-section">
-        <div className="site-container">
-          <div className="site-section-heading"><div><p className="site-eyebrow">{t.examples.eyebrow}</p><h2>{t.examples.title}</h2></div><p>{t.examples.description}</p></div>
+          <div className="site-scene-heading"><h1 id="scenes-title">{t.examples.title}</h1><p>{t.examples.description}</p></div>
           <div className="site-example-grid">
             <a className="site-example" href={`${base}office/`}>
-              <div className="site-example-image"><img src={`${base}site/office-preview.webp`} width="1200" height="750" loading="lazy" alt={t.examples.office.alt} /></div>
+              <div className="site-example-image"><img src={`${base}site/office-preview.webp`} width="1200" height="750" fetchPriority="high" alt={t.examples.office.alt} /></div>
               <div className="site-example-copy"><span className="site-example-label"><Monitor size={15} /> {t.examples.office.label}</span><h3>{t.nav.office} <ArrowUpRight size={23} /></h3><p>{t.examples.office.description}</p><span className="site-text-link">{t.examples.office.action} <ArrowRight size={16} /></span></div>
             </a>
             <a className="site-example" href={`${base}classroom/`}>
-              <div className="site-example-image"><img src={`${base}site/classroom-preview.webp`} width="1210" height="729" loading="lazy" alt={t.examples.classroom.alt} /></div>
+              <div className="site-example-image"><img src={`${base}site/classroom-preview.webp`} width="1210" height="729" alt={t.examples.classroom.alt} /></div>
               <div className="site-example-copy"><span className="site-example-label"><GraduationCap size={15} /> {t.examples.classroom.label}</span><h3>{t.nav.classroom} <ArrowUpRight size={23} /></h3><p>{t.examples.classroom.description}</p><span className="site-text-link">{t.examples.classroom.action} <ArrowRight size={16} /></span></div>
             </a>
             <a className="site-example" href={`${base}minimal/`}>
-              <div className="site-example-image minimal"><img src={`${base}site/office-scene.webp`} width="734" height="566" loading="lazy" alt={t.examples.minimal.alt} /></div>
+              <div className="site-example-image minimal"><img src={`${base}site/office-scene.webp`} width="734" height="566" alt={t.examples.minimal.alt} /></div>
               <div className="site-example-copy"><span className="site-example-label"><Blocks size={15} /> {t.examples.minimal.label}</span><h3>{t.nav.minimal} <ArrowUpRight size={23} /></h3><p>{t.examples.minimal.description}</p><span className="site-text-link">{t.examples.minimal.action} <ArrowRight size={16} /></span></div>
             </a>
             <a className="site-example" href={`${base}farm/`}>
@@ -133,16 +106,21 @@ export function Website() {
               <div className="site-example-image"><img src={`${base}site/civic-preview.webp`} width="1440" height="1050" loading="lazy" alt={t.examples.civic.alt} /></div>
               <div className="site-example-copy"><span className="site-example-label"><Landmark size={15} /> {t.examples.civic.label}</span><h3>{t.nav.civic} <ArrowUpRight size={23} /></h3><p>{t.examples.civic.description}</p><span className="site-text-link">{t.examples.civic.action} <ArrowRight size={16} /></span></div>
             </a>
+            <article id="customization" className="site-contact-card">
+              <div className="site-contact-preview">
+                <button className="site-qr-button" type="button" aria-label={t.contact.enlarge} title={t.contact.enlarge} onClick={openContact}>
+                  <img src={`${base}site/customization-contact.jpg`} width="638" height="637" loading="lazy" alt={t.contact.qrAlt} />
+                </button>
+              </div>
+              <div className="site-example-copy">
+                <span className="site-example-label"><MessageCircle size={15} /> {t.contact.label}</span>
+                <h2>{t.contact.title}</h2>
+                <p>{t.contact.description}</p>
+                <button className="site-text-link" type="button" onClick={openContact}>{t.contact.action} <ArrowUpRight size={16} /></button>
+              </div>
+            </article>
           </div>
           <p className="site-example-note">{t.examples.note}</p>
-        </div>
-      </section>
-
-      <section className="site-architecture site-section">
-        <div className="site-container">
-          <div className="site-section-heading"><div><p className="site-eyebrow">{t.architecture.eyebrow}</p><h2>{t.architecture.title}</h2></div><a className="site-text-link" href={docs} target="_blank" rel="noreferrer">{t.architecture.action} <ArrowUpRight size={17} /></a></div>
-          <div className="site-module-grid">{Object.entries(t.modules).map(([name, { title, description }], index) => <a key={name} href={`${repository}/tree/main/packages/${name}`} target="_blank" rel="noreferrer"><span>0{index + 1}<ArrowUpRight size={15} /></span><h3>{title}</h3><code>{name}</code><p>{description}</p></a>)}</div>
-          <p className="site-architecture-note"><Layers3 size={17} /> {t.architecture.note}</p>
         </div>
       </section>
 
@@ -162,6 +140,20 @@ export function Website() {
         </div>
       </section>
     </main>
+
+    <dialog ref={contactDialog} className="site-contact-dialog" aria-labelledby="contact-title" aria-describedby="contact-description" onClick={event => {
+      if (event.target === event.currentTarget) contactDialog.current?.close()
+    }}>
+      <div className="site-contact-dialog-content">
+        <div className="site-contact-dialog-heading">
+          <h2 id="contact-title">{t.contact.dialogTitle}</h2>
+          <form method="dialog"><button className="site-contact-close" aria-label={t.contact.close} title={t.contact.close}><X size={20} /></button></form>
+        </div>
+        <p id="contact-description">{t.contact.description}</p>
+        <img className="site-contact-qr" src={`${base}site/customization-contact.jpg`} width="638" height="637" alt={t.contact.qrAlt} />
+        <p className="site-contact-channel">{t.contact.channel}</p>
+      </div>
+    </dialog>
 
     <footer className="site-footer"><div className="site-container"><a className="site-brand" href={homeHref} aria-label={t.nav.returnHome}><img src={`${base}site/wordmark.webp`} width="480" height="160" loading="lazy" alt="PixOffice" /></a><p>{t.footer.tagline}</p><nav aria-label={t.footer.resources}><a href={readmeHref} target="_blank" rel="noreferrer">GitHub</a><a href={docs} target="_blank" rel="noreferrer">{t.nav.docs}</a><a href={`${base}LICENSE.txt`} target="_blank" rel="noreferrer">{t.footer.license}</a><a href={`${base}THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">{t.footer.notices}</a></nav></div></footer>
   </div>

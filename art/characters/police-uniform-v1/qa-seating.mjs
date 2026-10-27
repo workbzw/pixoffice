@@ -6,7 +6,7 @@ import { inspectCharacterQuality } from '../../../scripts/characters/quality.mjs
 import { measureFrame } from '../../../scripts/characters/standard.mjs'
 
 const root = path.resolve(import.meta.dirname, '../../..')
-const staging = path.resolve(root, process.env.POLICE_STAGING_ROOT ?? '.character-staging/civic-seating-v10-final')
+const staging = path.resolve(root, process.env.POLICE_STAGING_ROOT ?? '.character-staging/civic-sidewalk-v13')
 const output = path.join(import.meta.dirname, 'qa')
 const ids = ['office-lead', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']
 const poses = ['idle.front', 'idle.back', 'sit.back', 'pose.rise-1', 'pose.rise-3', 'talk.seated-right']

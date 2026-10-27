@@ -5,6 +5,7 @@ import { seatStepDurationMs } from '@pixoffice/scene-office/pixi/projection'
 import type { ScenePack } from '@pixoffice/runtime/scenePack'
 import type { OfficeEnvironment } from '../application/officeEnvironment.ts'
 import { supportsCharacterPose } from '../application/poseSupport.ts'
+import { civicDemoScenario } from './demo.ts'
 
 export const civicScenePack: ScenePack = {
   ...referenceOfficeScenePack,
@@ -19,6 +20,7 @@ export function civicEntryUrl(href: string): URL {
 
 export function createCivicEnvironment(storage: Storage): OfficeEnvironment {
   return {
+    demo: civicDemoScenario,
     createRuntime: (sceneId, persistent) => createSceneRuntime(civicScenePack, { sceneId,
       ...(persistent ? { persistence: browserPersistence(storage, sceneId, 'civic') } : {}),
       seatStepDuration: seatStepDurationMs, supportsPose: supportsCharacterPose }),

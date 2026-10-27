@@ -18,6 +18,7 @@ public/characters
 public/asset-packs
 public/classroom-assets
 public/farm-assets
+public/civic-assets
 public/.character-publish-*
 # Generated office WebP copies (scripts/build-office-assets.mjs)
 public/assets/office/office.webp

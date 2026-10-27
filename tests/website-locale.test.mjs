@@ -60,10 +60,14 @@ test('GitHub links open the matching README and default to Chinese', () => {
   assert.equal(content.websiteReadme('en'), `${root}README.en.md`)
 })
 
-test('civic follows farm in homepage navigation and scene cards, with neutral naming', async () => {
+test('homepage starts with scene cards, with civic after farm and a custom scene contact', async () => {
   const source = await readFile(new URL('../example/office-web/src/website/Website.tsx', import.meta.url), 'utf8')
-  assert.match(source, /t\.nav\.farm[\s\S]*?<a href=\{`\$\{base\}civic\/`\}>\{t\.nav\.civic\}/)
+  assert.match(source, /<main id="main">\s*<section id="examples"/)
+  assert.doesNotMatch(source, /site-hero|site-overview|site-architecture/)
   assert.match(source, /t\.examples\.farm\.action[\s\S]*?<a className="site-example" href=\{`\$\{base\}civic\/`\}>/)
+  assert.match(source, /<article id="customization"/)
+  assert.match(source, /<dialog[^>]*aria-labelledby="contact-title" aria-describedby="contact-description"/)
+  await access(new URL('../public/site/customization-contact.jpg', import.meta.url))
   assert.equal(content.websiteContent.zh.nav.civic, '公务')
   const entry = await readFile(new URL('../example/office-web/civic/index.html', import.meta.url), 'utf8')
   const main = await readFile(new URL('../example/office-web/src/civic/main.tsx', import.meta.url), 'utf8')

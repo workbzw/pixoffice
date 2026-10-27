@@ -3,7 +3,7 @@ import path from 'node:path'
 import sharp from 'sharp'
 
 const root = path.resolve(import.meta.dirname, '../../..')
-const staging = path.resolve(root, process.env.POLICE_STAGING_ROOT ?? '.character-staging/civic-seating-v10-final')
+const staging = path.resolve(root, process.env.POLICE_STAGING_ROOT ?? '.character-staging/civic-sidewalk-v13')
 const output = path.join(import.meta.dirname, 'qa')
 const ids = ['office-lead', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']
 const rows = []
@@ -22,30 +22,20 @@ for (const [row, files] of rows.entries()) for (const [column, file] of files.en
 await sharp({ create: { width: 1280, height: 2304, channels: 4, background: '#edf1ef' } })
   .composite(contact).png().toFile(path.join(output, 'walking-contact.png'))
 
-const legs = []
-for (const [row, files] of rows.entries()) for (const [column, index] of [1, 3].entries()) {
-  const input = await sharp(files[index]).extract({ left: 32, top: 240, width: 192, height: 112 })
-    .resize(384, 224).png().toBuffer()
-  legs.push({ input, left: column * 384, top: row * 224 })
-}
-await sharp({ create: { width: 768, height: 1344, channels: 4, background: '#edf1ef' } })
-  .composite(legs).png().toFile(path.join(output, 'walking-contacts.png'))
-
-const width = 960, pageHeight = 480, frames = []
 const phases = [0, 1, 2, 3, 4, 1, 2, 3, 4, 0]
+
+const comparisons = []
 for (const phase of phases) {
   const layers = []
-  for (const [column, files] of rows.entries()) for (const direction of [0, 1]) {
-    let sprite = sharp(files[phase])
-    if (direction === 1) sprite = sprite.flop()
-    layers.push({ input: await sprite.resize(160, 240).png().toBuffer(), left: column * 160, top: direction * 240 })
+  for (const [index, actor] of [0, 2, 4, 1, 3, 5].entries()) {
+    layers.push({ input: rows[actor][phase], left: index % 3 * 256, top: Math.floor(index / 3) * 384 })
   }
-  frames.push(await sharp({ create: { width, height: pageHeight, channels: 4, background: '#edf1ef' } })
+  comparisons.push(await sharp({ create: { width: 768, height: 768, channels: 4, background: '#edf1ef' } })
     .composite(layers).raw().toBuffer())
 }
-await sharp(Buffer.concat(frames), { raw: { width, height: pageHeight * frames.length, pageHeight, channels: 4 } })
-  .webp({ quality: 90, loop: 0, delay: phases.map((_, index) => index === 0 || index === phases.length - 1 ? 600 : 180) })
-  .toFile(path.join(output, 'walking.webp'))
+await sharp(Buffer.concat(comparisons), { raw: { width: 768, height: 768 * phases.length, pageHeight: 768, channels: 4 } })
+  .webp({ quality: 90, loop: 0, delay: phases.map((_, index) => index === 0 || index === phases.length - 1 ? 600 : 200) })
+  .toFile(path.join(output, 'walking-template-comparison.webp'))
 
 const directions = ['front', 'right', 'back', 'left']
 const walking = []
@@ -73,12 +63,4 @@ for (const phase of phases) {
 await sharp(Buffer.concat(allFrames), { raw: { width: 768, height: 768 * allFrames.length, pageHeight: 768, channels: 4 } })
   .webp({ quality: 90, loop: 0, delay: phases.map((_, index) => index === 0 || index === phases.length - 1 ? 600 : 180) })
   .toFile(path.join(output, 'walking-directions.webp'))
-for (const [column, views] of walking.entries()) {
-  const layers = []
-  for (const [row, files] of views.slice(0, 3).entries()) for (const [index, frame] of files.entries()) {
-    layers.push({ input: frame.file, left: index * 256, top: row * 384 })
-  }
-  await sharp({ create: { width: 1280, height: 1152, channels: 4, background: '#edf1ef' } })
-    .composite(layers).png().toFile(path.join(output, `${ids[column]}-walking.png`))
-}
 console.log(output)

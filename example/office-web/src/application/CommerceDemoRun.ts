@@ -3,7 +3,7 @@ import type { DecisionRequest } from './decisions/DecisionSession.ts'
 import { CommerceOfficeDataSource } from '../dashboard/CommerceOfficeDataSource.ts'
 import { commerceMetricTable, commerceProduct } from '../dashboard/commerceScenario.ts'
 import type { CommerceStage, CommerceStrategy } from '../dashboard/commerceScenario.ts'
-import { CommerceSceneQueue } from './CommerceSceneQueue.ts'
+import { OfficeScenarioQueue } from './OfficeScenarioQueue.ts'
 
 type CommerceSession = OfficeTeamSession & { source: CommerceOfficeDataSource }
 type LocalDecision<T = DecisionRequest> = T extends DecisionRequest ? Omit<T, 'teamId' | 'conversationId' | 'requester'> : never
@@ -15,7 +15,7 @@ export class CommerceDemoRun {
   private readonly sessions: CommerceSession[]
   private readonly timers = new Set<ReturnType<typeof setTimeout>>()
   private readonly subscriptions: (() => void)[] = []
-  private readonly scenes = new Map<CommerceSession, CommerceSceneQueue>()
+  private readonly scenes = new Map<CommerceSession, OfficeScenarioQueue>()
   private awaiting?: { session: CommerceSession; id: string; resolve: (choice: string) => void }
   private ended = false
   private stage: CommerceStage = 'dispatching'
@@ -45,7 +45,7 @@ export class CommerceDemoRun {
         hasMain = present
         if (removed) this.finish('stopped')
       }))
-      this.scenes.set(session, new CommerceSceneQueue(session.runtime))
+      this.scenes.set(session, new OfficeScenarioQueue(session.runtime))
       session.source.beginDispatch()
     }
     this.log('dispatch-start', '开始本轮商品准备。', '本轮成员先待命。负责人将依次走访工位，交代各自的商品任务；每人回应结束后才开工，不会提前开始。')

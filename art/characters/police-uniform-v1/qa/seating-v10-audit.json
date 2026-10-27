@@ -57,7 +57,7 @@
       "quality": {
         "schemaVersion": 1,
         "id": "office-lead",
-        "digest": "a1af8673e99193b29ccf7bf405c582beba4845028372a21f26059728d9714174",
+        "digest": "a6cb8fb4a7f70e403bc16b985bff1a585f5eece7af6ab60e84d9a70d3aa70115",
         "passed": false,
         "issues": [
           {
@@ -164,9 +164,9 @@
             "name": "walk.right",
             "frames": 4,
             "outsideChanges": 0,
-            "maxHeadStepPx": 1,
+            "maxHeadStepPx": 2,
             "maxHeadAreaStepRatio": 0.024533413606261267,
-            "maxSilhouetteChangeRatio": 0.2658584190376098
+            "maxSilhouetteChangeRatio": 0.273517815689598
           },
           {
             "name": "work.quiet-back",
@@ -315,7 +315,7 @@
       "quality": {
         "schemaVersion": 1,
         "id": "code-agent",
-        "digest": "ae41af7c7425e0bb81f0e9688f630ee3dc11b05d16e412f679db9d0273b9df91",
+        "digest": "c228cd588e6720cb96b2ff2ca1be29eba88005fd6f7434f228efc3fbff5a717c",
         "passed": false,
         "issues": [
           {
@@ -422,9 +422,9 @@
             "name": "walk.right",
             "frames": 4,
             "outsideChanges": 0,
-            "maxHeadStepPx": 2,
-            "maxHeadAreaStepRatio": 0.019175233914751066,
-            "maxSilhouetteChangeRatio": 0.22584241034460795
+            "maxHeadStepPx": 3,
+            "maxHeadAreaStepRatio": 0.03399020522388052,
+            "maxSilhouetteChangeRatio": 0.22514704464371807
           },
           {
             "name": "work.quiet-back",
@@ -573,7 +573,7 @@
       "quality": {
         "schemaVersion": 1,
         "id": "file-agent",
-        "digest": "7c63433c68c3ae536e2c3175c7ad389e164daa8e29ec289f915005131875fcaa",
+        "digest": "cd3b8dc4da5462f1906112053fac162501b2c9b240129c1bfd31371daf2b8fc0",
         "passed": false,
         "issues": [
           {
@@ -670,9 +670,9 @@
             "name": "walk.right",
             "frames": 4,
             "outsideChanges": 0,
-            "maxHeadStepPx": 4,
-            "maxHeadAreaStepRatio": 0.025690430314707857,
-            "maxSilhouetteChangeRatio": 0.22951444205859944
+            "maxHeadStepPx": 3,
+            "maxHeadAreaStepRatio": 0.02588020760274934,
+            "maxSilhouetteChangeRatio": 0.2723014690227805
           },
           {
             "name": "work.quiet-back",
@@ -821,7 +821,7 @@
       "quality": {
         "schemaVersion": 1,
         "id": "app-agent",
-        "digest": "a6f8da0e00e10079baf69be151d7c926af2ba8d0742326fe936056d12b014806",
+        "digest": "800cfff4e0db26c1a3e03a07de56c5620a034556beb1ed9d63a7989f9bf0a0be",
         "passed": false,
         "issues": [
           {
@@ -918,9 +918,9 @@
             "name": "walk.right",
             "frames": 4,
             "outsideChanges": 0,
-            "maxHeadStepPx": 4,
-            "maxHeadAreaStepRatio": 0.011390002109259667,
-            "maxSilhouetteChangeRatio": 0.20301584007747112
+            "maxHeadStepPx": 2,
+            "maxHeadAreaStepRatio": 0.0220080321285141,
+            "maxSilhouetteChangeRatio": 0.22925940205390627
           },
           {
             "name": "work.quiet-back",
@@ -1069,7 +1069,7 @@
       "quality": {
         "schemaVersion": 1,
         "id": "review-agent",
-        "digest": "cb38469f57dd6339955760f829f1b2cf284a403d2bb4164e3e71dfce8d9922ef",
+        "digest": "62f7797dac103bf6d0581984d7be0fcafda623203ec3c46390b09dd04ded600b",
         "passed": false,
         "issues": [
           {
@@ -1176,9 +1176,9 @@
             "name": "walk.right",
             "frames": 4,
             "outsideChanges": 0,
-            "maxHeadStepPx": 1,
-            "maxHeadAreaStepRatio": 0.00959787025360792,
-            "maxSilhouetteChangeRatio": 0.20140834950061076
+            "maxHeadStepPx": 2,
+            "maxHeadAreaStepRatio": 0.009898889910202824,
+            "maxSilhouetteChangeRatio": 0.2652019604529322
           },
           {
             "name": "work.quiet-back",
@@ -1327,7 +1327,7 @@
       "quality": {
         "schemaVersion": 1,
         "id": "data-agent",
-        "digest": "5b4e8a31676eef1a893626d311a6b60b1e27af3fbc9ed49aa879f133a69679c6",
+        "digest": "6f061d6df2f2db80eccaf01901f7559e056805b414548c62d469db6451363f3e",
         "passed": false,
         "issues": [
           {
@@ -1452,9 +1452,9 @@
             "name": "walk.right",
             "frames": 4,
             "outsideChanges": 0,
-            "maxHeadStepPx": 2,
-            "maxHeadAreaStepRatio": 0.0022158498435870255,
-            "maxSilhouetteChangeRatio": 0.24079972890545578
+            "maxHeadStepPx": 3,
+            "maxHeadAreaStepRatio": 0.015176956858692803,
+            "maxSilhouetteChangeRatio": 0.25541961054626916
           },
           {
             "name": "work.quiet-back",

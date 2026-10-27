@@ -9,7 +9,7 @@ type Job = { command: SceneCommand; stops: Stop[]; received: Set<string>; replyP
   onDelivered: (actorId: string) => void; onCompleted: () => void }
 
 /** Local choreography observes completed dialogue phases, never elapsed walk estimates. */
-export class CommerceSceneQueue {
+export class OfficeScenarioQueue {
   private readonly runtime: SceneRuntime
   private jobs: Job[] = []
   private active?: Job

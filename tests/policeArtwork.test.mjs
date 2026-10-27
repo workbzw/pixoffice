@@ -14,6 +14,32 @@ const root = path.resolve(import.meta.dirname, '..')
 const ids = ['office-lead', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']
 let staging
 const json = async file => JSON.parse(await readFile(file, 'utf8'))
+const gaitReferences = { 'file-agent': 'office-lead', 'app-agent': 'code-agent', 'review-agent': 'office-lead', 'data-agent': 'code-agent' }
+const armRepairFrames = Object.fromEntries(Object.keys(gaitReferences).map(id => [id, [0, 1, 2, 3]]))
+
+function handComponents(data) {
+  const pixels = new Set()
+  for (let y = 220; y < 295; y++) for (let x = 0; x < 256; x++) {
+    const at = y * 256 + x
+    const [r, g, b, alpha] = data.subarray(at * 4, at * 4 + 4)
+    if (alpha > 128 && r > 195 && g > 125 && b > 100 && r - g > 10 && r - b > 20) pixels.add(at)
+  }
+  const components = []
+  while (pixels.size) {
+    const first = pixels.values().next().value
+    const queue = [first]
+    pixels.delete(first)
+    for (let index = 0; index < queue.length; index++) {
+      const at = queue[index]
+      for (const offset of [-257, -256, -255, -1, 1, 255, 256, 257]) {
+        const next = at + offset
+        if (Math.abs(next % 256 - at % 256) <= 1 && pixels.delete(next)) queue.push(next)
+      }
+    }
+    if (queue.length >= 25) components.push({ pixels: queue.length, x: queue.reduce((sum, at) => sum + at % 256, 0) / queue.length })
+  }
+  return components.sort((a, b) => a.x - b.x)
+}
 
 function hands(data, headBottom) {
   const result = { left: { pixels: 0, x: 0 }, right: { pixels: 0, x: 0 } }
@@ -97,18 +123,23 @@ for (const id of ids) test(`${id}: police lateral walking keeps standing proport
   }
   const idle = character.clips['idle.right'].frames[0]
   const standing = await readFrame(idle.file)
+  assert.equal(provenance.find(record => record.file === idle.file).source, `sources/${id}-side-repair-v11.png`)
+  assert.deepEqual(provenance.find(record => record.file === idle.file).crop, { left: 512, top: 0, width: 512, height: 768 })
   const walk = character.clips['walk.right']
   assert(walk.loop)
   assert.equal(walk.frames.length, 4)
   assert.deepEqual(character.clips['walk.left'], { alias: 'walk.right', mirrorX: true })
   const hashes = [], measures = [], footSpans = [], foregroundLegs = []
   const scale = quality.registrations[walk.frames[0].file].scale
-  for (const frame of walk.frames) {
+  for (const [index, frame] of walk.frames.entries()) {
     const { data, measured } = await readFrame(frame.file)
     hashes.push(createHash('sha256').update(data).digest('hex'))
     measures.push(measured)
     assert.equal(quality.registrations[frame.file].scale, scale)
-    assert.equal(provenance.find(record => record.file === frame.file).source, `sources/${id}-sidewalk-v8.png`)
+    const record = provenance.find(record => record.file === frame.file)
+    const armRepair = armRepairFrames[id]?.includes(index)
+    assert.equal(record.source, `sources/${id}-${armRepair ? 'sidewalk-v13' : index === 3 ? 'side-repair-v11' : 'sidewalk-v8'}.png`)
+    assert.deepEqual(record.crop, { left: index % 2 * 512, top: Math.floor(index / 2) * 768, width: 512, height: 768 })
     assert(Math.abs(measured.headArea / standing.measured.headArea - 1) <= .035)
     assert(Math.abs(measured.headWidth - standing.measured.headWidth) <= 14)
     assert(Math.abs(measured.headHeight - standing.measured.headHeight) <= 16)
@@ -128,7 +159,7 @@ for (const id of ids) test(`${id}: police lateral walking keeps standing proport
     // The reviewed side artwork gives the near trouser leg a lighter navy tone.
     // Track that same leg across the two contact poses, not just different hashes.
     let foregroundX = 0, foregroundPixels = 0
-    const revisedLegPalette = ['file-agent', 'app-agent'].includes(id)
+    const revisedLegPalette = ['file-agent', 'app-agent'].includes(gaitReferences[id] ?? id)
     const legTop = revisedLegPalette ? 245 : 265
     const nearLegRed = revisedLegPalette ? 28 : 35
     for (let y = legTop; y < 315; y++) for (let x = 0; x < 256; x++) {
@@ -149,9 +180,10 @@ for (const id of ids) test(`${id}: police lateral walking keeps standing proport
     assert(Math.abs(measured.headArea / next.headArea - 1) <= .035)
   }
   assert(footSpans[1] < footSpans[0] * .85 && footSpans[3] < footSpans[2] * .85, 'passing poses must close the stride')
+  assert(footSpans[3] < footSpans[2] * .65, 'repaired D must pass underneath the body rather than kick forward')
   assert(foregroundLegs[0].pixels > 200 && foregroundLegs[2].pixels > 200, 'both contact poses need the authored near-leg shading')
   // Compact indoor steps retain leg reversal without requiring the old marching amplitude.
-  assert(foregroundLegs[0].x - foregroundLegs[2].x > standing.measured.headWidth * .12, 'the SAME foreground leg must travel from forward to backward')
+  assert(foregroundLegs[0].x - foregroundLegs[2].x > measures[0].headWidth * .12, 'the SAME foreground leg must travel from forward to backward')
   for (const index of [0, 2]) {
     assert(footSpans[index] <= measures[index].headWidth, 'indoor contact poses must not spread the feet wider than the head')
     const file = walk.frames[index].file
@@ -164,6 +196,49 @@ for (const id of ids) test(`${id}: police lateral walking keeps standing proport
   }
   const report = await inspectCharacterQuality(directory)
   assert.deepEqual(report.issues.filter(issue => issue.clip === 'walk.right'), [])
+})
+
+for (const [id, referenceId] of Object.entries(gaitReferences)) test(`${id}: lateral arm phases follow ${referenceId} with natural passing occlusion`, async () => {
+  const directory = path.join(staging, id)
+  const character = await json(path.join(directory, 'character.json'))
+  const standard = await json(path.join(directory, 'standard.json'))
+  const referenceDirectory = path.join(staging, referenceId)
+  const reference = await json(path.join(referenceDirectory, 'character.json'))
+  const referenceStandard = await json(path.join(referenceDirectory, 'standard.json'))
+  for (const index of [0, 1, 2, 3]) {
+    const { file } = character.clips['walk.right'].frames[index]
+    const data = await sharp(path.join(directory, file)).ensureAlpha().raw().toBuffer()
+    const components = handComponents(data)
+    const referenceFile = reference.clips['walk.right'].frames[index].file
+    const referenceData = await sharp(path.join(referenceDirectory, referenceFile)).ensureAlpha().raw().toBuffer()
+    const referenceHands = handComponents(referenceData)
+    // The palette guard follows the chosen template; a passing far hand may be occluded.
+    assert.equal(components.length, referenceHands.length, `${file}: hand visibility must follow the template, with no extra hands`)
+    const near = index === 2 ? components.at(-1) : components[0]
+    const referenceNear = index === 2 ? referenceHands.at(-1) : referenceHands[0]
+    const position = (near.x - 128) / standard.views.right.headWidth
+    const referencePosition = (referenceNear.x - 128) / referenceStandard.views.right.headWidth
+    assert(Math.abs(position - referencePosition) < .1, `${file}: near arm must follow the matching template phase`)
+  }
+})
+
+const unchangedFrameHashes = {
+  'office-lead': '5e2fb99eda00ebf73013bf4bed541e160cd8a42e52bb2703731c68dcf2d026b1',
+  'code-agent': 'd64090643775ef88b9453f344d7bd9fa81e58bcef3b7ee60e7c5bbd0a819e9f9',
+  'file-agent': '82be83e3ce198c3cd01dd887db659aee0f46b1cc1005b70a04b1525d005ae171',
+  'app-agent': '5b8dce342d07b5ddbe99366d3a3ace81d5658459d2e1e50ea8475a4076e7c003',
+  'review-agent': '269f5967c4ad9d1d67f8e92f91c52101b3857807a6c1666c92754b2a5f5cc97d',
+  'data-agent': '55b879fcc66a298516b166f685551b4117ba4f2f02c7ac30aa1ad9511ab69a51',
+}
+for (const id of ids) test(`${id}: side arm repair leaves all other frame pixels unchanged`, async () => {
+  const directory = path.join(staging, id)
+  const character = await json(path.join(directory, 'character.json'))
+  const excluded = new Set((armRepairFrames[id] ?? []).map(index => character.clips['walk.right'].frames[index].file))
+  const files = [...new Set(Object.values(character.clips).flatMap(clip => (clip.frames ?? []).map(frame => frame.file)))]
+    .filter(file => !excluded.has(file)).sort()
+  const hash = createHash('sha256')
+  for (const file of files) hash.update(file).update(await sharp(path.join(directory, file)).ensureAlpha().raw().toBuffer())
+  assert.equal(hash.digest('hex'), unchangedFrameHashes[id])
 })
 
 for (const id of ids) test(`${id}: front/back walking alternates arm swing with stable head and foot registration`, async () => {
@@ -273,7 +348,7 @@ test('civic long-haired characters retain natural variation without oversized ba
   assert(sizes['app-agent'] > shortHair && sizes['data-agent'] > shortHair, 'retain the long-hair silhouettes')
 })
 
-test('civic artwork retains only current source images with matching provenance hashes', async () => {
+test('civic artwork retains only current sources and their reproducible generation references', async () => {
   const directory = path.join(root, 'art/characters/police-uniform-v1')
   const provenance = await json(path.join(directory, 'provenance.json'))
   const recipe = await json(path.join(directory, 'seating-v10.json'))
@@ -285,7 +360,9 @@ test('civic artwork retains only current source images with matching provenance 
   for (const id of ids) {
     for (const record of await json(path.join(staging, id, 'registration-source.json'))) used.add(record.source)
   }
-  assert.deepEqual([...declared].sort(), [...used].sort(), 'no retired source sheet remains')
+  const references = new Map(provenance.records.map(record => [record.source, record.references ?? []]))
+  for (const source of used) for (const reference of references.get(source) ?? []) used.add(reference)
+  assert.deepEqual([...declared].sort(), [...used].sort(), 'no unreferenced source sheet remains')
   for (const record of provenance.records) {
     const bytes = await readFile(path.join(directory, record.source))
     assert.equal(createHash('sha256').update(bytes).digest('hex'), record.sha256, record.source)

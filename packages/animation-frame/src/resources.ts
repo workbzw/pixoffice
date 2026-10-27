@@ -5,6 +5,16 @@ import { CharacterPackResources } from './CharacterPackResources.ts'
 import { characterFrameDependencies, type CharacterManifest } from './packSchema.ts'
 
 export type CharacterPack = CharacterPackResources
+
+class CharacterResourceError extends Error {
+  readonly unavailable: boolean
+  constructor(message: string, unavailable = false, options?: ErrorOptions) {
+    super(message, options)
+    this.name = 'CharacterResourceError'
+    this.unavailable = unavailable
+  }
+}
+
 export function createCharacterResources<T extends CharacterManifest>(options: {
   parseManifest(data: unknown): T
   dependencies?: (manifest: T, names: string[]) => string[]
@@ -22,25 +32,44 @@ export function createCharacterResources<T extends CharacterManifest>(options: {
     if (registryPromise && resourceBase !== next) throw new Error('Configure character resources before loading')
     resourceBase = next
   }
-  async function readJson(url: string) {
-    const response = await fetch(url)
-    if (!response.ok) throw new Error(`Character resource ${url}: HTTP ${response.status}`)
-    return response.json()
+  async function readJson(url: string, revalidate = false) {
+    const response = await fetch(url, revalidate ? { cache: 'no-cache' } : undefined)
+    if (!response.ok) throw new CharacterResourceError(`Character resource ${url}: HTTP ${response.status}`, [404, 410].includes(response.status))
+    if (response.headers.get('content-type')?.toLowerCase().includes('text/html')) {
+      throw new CharacterResourceError(`Character resource ${url}: expected JSON but received an HTML page. The resource may have changed or the URL is incorrect; refresh the page and retry.`, true)
+    }
+    try { return await response.json() }
+    catch (cause) { throw new CharacterResourceError(`Character resource ${url}: invalid JSON response`, false, { cause }) }
   }
   function loadCharacterRegistry(): Promise<CharacterRegistry> {
-    return registryPromise ??= readJson(`${resourceBase}/registry.json`).then(data => CharacterRegistrySchema.parse(data)).catch(error => {
+    return registryPromise ??= readJson(`${resourceBase}/registry.json`, true).then(data => CharacterRegistrySchema.parse(data)).catch(error => {
       registryPromise = undefined
       throw error
     })
   }
   async function readCharacterManifest(id: string) {
-    const registry = await loadCharacterRegistry()
+    const registryRequest = loadCharacterRegistry()
+    const registry = await registryRequest
     const entry = registry.characters.find(character => character.id === id)
     if (!entry) throw new Error(`Unknown character resource pack: ${id}`)
     const url = canonicalUrl(`${resourceBase}/${entry.manifest}`)
-    const result = await readManifestUrl(url, id)
-    manifestUrls.set(id, url)
-    return result
+    try {
+      const result = await readManifestUrl(url, id)
+      manifestUrls.set(id, url)
+      return result
+    } catch (error) {
+      if (!(error instanceof CharacterResourceError) || !error.unavailable) throw error
+      // A live page may retain a registry whose content-addressed files were replaced.
+      // Share one refresh across concurrent misses, and retry only a changed URL.
+      if (registryPromise === registryRequest) registryPromise = undefined
+      const latest = await loadCharacterRegistry()
+      const replacement = latest.characters.find(character => character.id === id)
+      const nextUrl = replacement && canonicalUrl(`${resourceBase}/${replacement.manifest}`)
+      if (!nextUrl || nextUrl === url) throw error
+      const result = await readManifestUrl(nextUrl, id)
+      manifestUrls.set(id, nextUrl)
+      return result
+    }
   }
   async function readManifestUrl(url: string, id?: string) {
     let pending = manifests.get(url)

@@ -114,9 +114,9 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
 }
 
 function DemoApp({ environment }: { environment: OfficeEnvironment }) {
-  const [dataSource] = useState(createOfficeDataSource)
-  const [chatSource] = useState(() => new PreviewChatSource())
-  const [directory] = useState(() => dataSource.kind === 'example' ? new DemoOfficeDirectory(dataSource, environment.storage) : undefined)
+  const [dataSource] = useState(() => environment.demo?.createSource() ?? createOfficeDataSource())
+  const [chatSource] = useState(() => environment.demo?.createChatSource() ?? new PreviewChatSource())
+  const [directory] = useState(() => dataSource.kind === 'example' ? new DemoOfficeDirectory(dataSource, environment.storage, environment.demo) : undefined)
   const [initialTeams] = useState(() => {
     const teams = directory?.list() ?? []
     return teams.length ? teams : [{ id: 'office-1', name: '办公室', sceneLabel: '办公室', source: dataSource }]

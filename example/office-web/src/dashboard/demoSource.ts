@@ -22,7 +22,7 @@ export type ExampleOfficeSeed = {
   whiteboard?: DashboardSnapshot['whiteboard']
   conversationTitle?: string
   conversations?: DashboardConversation[]
-  insightDomain?: 'commerce'
+  insightDomain?: 'commerce' | 'civic'
 }
 
 export class ExampleOfficeDataSource implements OfficeDataSource {
@@ -33,7 +33,7 @@ export class ExampleOfficeDataSource implements OfficeDataSource {
   private conversationTitles = new Map<string, string>()
   private readonly generatedWhiteboard: boolean
   private readonly insightAt: Date
-  private readonly insightDomain?: 'commerce'
+  private readonly insightDomain?: 'commerce' | 'civic'
 
   constructor(now = new Date(), seed: ExampleOfficeSeed = {}) {
     this.generatedWhiteboard = !seed.whiteboard

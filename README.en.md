@@ -20,7 +20,7 @@ The top-right demo menu also offers an all-member action showcase: four-directio
 
 Switch between classic and member layouts with the top-left layout control. The member sidebar retains each person's task activity. [View the full-page high-resolution screenshot](./docs/page-preview.jpeg).
 
-The public service scene at `/civic/` uses six uniformed characters and defaults to the member layout, retaining office interactions. Character artwork is still a preview, with an explicit review-pending notice.
+The public service scene at `/civic/` uses six uniformed characters and defaults to the member layout. Its independent community-service story covers individual task handoffs, plan approval, on-site coordination, follow-up and archiving, including matching profiles, boards, tasks and chat. Character artwork is still a preview, with an explicit review-pending notice.
 
 <a id="quick-start"></a>
 

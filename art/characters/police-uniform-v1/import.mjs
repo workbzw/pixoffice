@@ -5,8 +5,9 @@ import { measureFrame } from '../../../scripts/characters/standard.mjs'
 import { createQualityDraft } from '../../../scripts/characters/quality-cli.mjs'
 
 const root = path.resolve(import.meta.dirname, '../../..')
-const staging = path.resolve(root, process.env.POLICE_STAGING_ROOT ?? '.character-staging/civic-seating-v10-final')
+const staging = path.resolve(root, process.env.POLICE_STAGING_ROOT ?? '.character-staging/civic-sidewalk-v13')
 const seating = JSON.parse(await readFile(new URL('./seating-v10.json', import.meta.url), 'utf8'))
+const sideWalking = JSON.parse(await readFile(new URL('./sidewalk-v13.json', import.meta.url), 'utf8'))
 const ids = ['office-lead', 'code-agent', 'file-agent', 'app-agent', 'review-agent', 'data-agent']
 const slots = [
   ['idle.front', 0], ['idle.right', 0], ['idle.back', 0], ['sit.back', 0], ['pose.lean', 0], ['pose.rise', 0],
@@ -44,13 +45,8 @@ const sideWalkHeads = {
   'review-agent': [344, 344, 319, 319],
   'data-agent': [384, 384, 354, 354],
 }
-// Whole-frame registration only; keep every sole within the existing 344 +/- 2 rule.
-const sideWalkOffsets = {
-  'office-lead': [0, 0, 0, 1],
-  'file-agent': [0, 2, 0, 0],
-  'app-agent': [2, 2, -2, -2],
-  'data-agent': [1, 1, 0, 0],
-}
+// Stop the repaired head band at the chin/collar boundary, before the blue collar pixels.
+const sideRepairHeads = { 'file-agent': [332, 302] }
 
 async function isolateSprite(buffer) {
   const { data, info } = await sharp(buffer).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
@@ -100,6 +96,7 @@ function landmarks(source, standard, name, index) {
 
 async function importCharacter(id) {
   const correction = seating.characters[id]
+  const sideRecipe = sideWalking.characters[id]
   const workFingerRegions = (wholeWorkSheets[id]?.fingers ?? fingerRegions).map(region => ({
     x: Math.round(128 + (region.x - 128) * correction.scale),
     y: Math.round(377 + (region.y - 377) * correction.scale),
@@ -127,10 +124,12 @@ async function importCharacter(id) {
   }
   // References belong to these police standing masters, not to the old costume pack.
   const references = Object.fromEntries(cells.slice(0, 3).map(cell => [cell.authored.view, cell.measured.headArea * (baseScale * correction.scale) ** 2]))
+  const standingRight = cells.find(cell => cell.name === 'idle.right')
   for (const [kind, count] of [['transition', 6], ['gait', 4]]) {
-    const sourceName = kind === 'transition' ? correction.transitionSource : `${id}-sidewalk-v8.png`
+    const sourceName = kind === 'transition' ? correction.transitionSource : sideRecipe?.source ?? `${id}-sidewalk-v8.png`
     const image = path.join(import.meta.dirname, 'sources', sourceName)
     const meta = await sharp(image).metadata()
+    if (kind === 'gait' && (meta.width !== 1024 || meta.height !== 1536)) throw new Error(`${id}: unexpected lateral gait dimensions`)
     for (let index = 0; index < count; index++) {
       const columns = kind === 'transition' ? 3 : 2
       const left = Math.round(index % columns * meta.width / columns)
@@ -138,7 +137,7 @@ async function importCharacter(id) {
       const width = Math.floor(meta.width / columns)
       const height = Math.floor(meta.height / 2)
       const bytes = await isolateSprite(await sharp(image).extract({ left, top, width, height }).png().toBuffer())
-      const band = { headTop: 0, headBottom: kind === 'transition' ? correction.headBottoms[index] : sideWalkHeads[id][index] }
+      const band = { headTop: 0, headBottom: kind === 'transition' ? correction.headBottoms[index] : sideRecipe?.headBottoms[index] ?? sideWalkHeads[id][index] }
       const name = kind === 'gait' ? 'walk.right' : index === 0 ? 'sit.back' : index === 5 ? 'idle.back' : `pose.rise-${index}`
       const authored = { view: kind === 'gait' ? 'right' : 'back', footY: kind === 'gait' ? 344 : Math.round(377 - index * 33 / 5) }
       const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
@@ -147,6 +146,23 @@ async function importCharacter(id) {
       const previous = cells.findIndex(item => item.name === name && item.index === cell.index)
       if (previous < 0) cells.push(cell)
       else cells[previous] = cell
+    }
+  }
+  // The standing source remains shared; only the two original guides retain v11's D.
+  const sideRepairs = [['idle.right', 0, 1], ...sideRecipe ? [] : [['walk.right', 3, 3]]]
+  for (const [name, index, slot] of sideRepairs) {
+    const sourceName = `${id}-side-repair-v11.png`
+    const image = path.join(import.meta.dirname, 'sources', sourceName)
+    const meta = await sharp(image).metadata()
+    if (meta.width !== 1024 || meta.height !== 1536) throw new Error(`${id}: unexpected side repair dimensions`)
+    const crop = { left: 512, top: slot === 1 ? 0 : 768, width: 512, height: 768 }
+    const bytes = await isolateSprite(await sharp(image).extract(crop).png().toBuffer())
+    const band = { headTop: 0, headBottom: sideRepairHeads[id]?.[slot === 1 ? 0 : 1] ?? sideWalkHeads[id][slot] }
+    const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+    cells[cells.findIndex(cell => cell.name === name && cell.index === index)] = {
+      name, index, bytes, width: crop.width, height: crop.height,
+      authored: { view: 'right', footY: 344 }, band,
+      source: `sources/${sourceName}`, crop, measured: measureFrame(data, info.width, info.height, band),
     }
   }
   {
@@ -202,6 +218,13 @@ async function importCharacter(id) {
   }))
   await mkdir(path.join(directory, 'frames'), { recursive: true })
   const frames = {}, registrations = {}, provenance = [], clips = {}
+  const oldSideWidth = Math.round(standingRight.width * baseScale * correction.scale)
+  const oldSideScale = oldSideWidth / standingRight.width
+  const oldSide = await sharp(standingRight.bytes).resize({ width: oldSideWidth }).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+  const oldSideMeasure = measureFrame(oldSide.data, oldSide.info.width, oldSide.info.height, {
+    headTop: Math.floor(standingRight.band.headTop * oldSideScale), headBottom: Math.ceil(standingRight.band.headBottom * oldSideScale),
+  })
+  const oldSideMouth = source.clips['idle.right'].frames[0].mouth
   let workRegistration
   for (const cell of active) {
     const scale = scales.get(cell.group)
@@ -212,7 +235,8 @@ async function importCharacter(id) {
     const { data, info } = await sharp(bytes).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
     const measured = measureFrame(data, info.width, info.height, band)
     let x = Math.round(128 - measured.headCenter)
-    let y = cell.authored.footY - measured.footY + (cell.name === 'walk.right' ? sideWalkOffsets[id]?.[cell.index] ?? 0 : 0)
+    const walkOffset = sideRecipe?.offsets?.[cell.index] ?? 0
+    let y = cell.authored.footY - measured.footY + (cell.name === 'walk.right' ? walkOffset : 0)
     if (wholeWork && cell.name === 'work.quiet-back') {
       workRegistration ??= { x, y }
       x = workRegistration.x
@@ -249,6 +273,13 @@ async function importCharacter(id) {
       x: originalFrame.mouth.x * cell.registration.scale / baseScale + cell.registration.x,
       y: originalFrame.mouth.y * cell.registration.scale / baseScale + cell.registration.y,
       scale: (originalFrame.mouth.scale ?? 1) * cell.registration.scale / baseScale,
+    }
+    if (cell.name === 'idle.right' && oldSideMouth) {
+      mouth = { ...oldSideMouth,
+        x: cell.headAnchor.x + oldSideMouth.x * oldSideScale / baseScale - oldSideMeasure.headCenter,
+        y: cell.headAnchor.y + oldSideMouth.y * oldSideScale / baseScale - oldSideMeasure.headTop,
+        scale: (oldSideMouth.scale ?? 1) * oldSideScale / baseScale,
+      }
     }
     if (cell.name === 'walk.right' || cell.name === 'walk.front') {
       const idleName = `idle.${cell.authored.view}`
