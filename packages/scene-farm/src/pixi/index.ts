@@ -40,11 +40,12 @@ export function createFarmPresentation(assetBaseUrl: string, now: () => number):
         const step = actor.step, motion = actor.motion
         const walking = Boolean(step || motion && !motion.waiting && motion.index < motion.path.length)
         const phase = phases.find(p => p.participants.includes(actor.id)), action = phase?.ready ? phase.actions.find(a => a.actorId === actor.id) : undefined
+        const leisure = !phase && !walking && !motion && !actor.seatTransition && !actor.speech && !actor.expression && actor.presentation.status === 'idle' && !runtime.isEditing
         const progress = step ? Math.min(1, step.elapsedMs / step.durationMs) : 0
         const point = step ? { x: step.from.x + (step.to.x - step.from.x) * progress, y: step.from.y + (step.to.y - step.from.y) * progress } : actor.position
         return { id: actor.id, name: actor.name, appearanceId: actor.templateId, position: { x: (point.x + .5) * CELL, y: (point.y + .5) * CELL }, depth: (point.y + .5) * CELL,
           displayHeight: 112 * FARM_PLOT_LAYOUT.scale, status: walking ? 'walking' : action ? 'working' : 'idle', title: phase?.title,
-          intent: { actionId: walking ? 'core.walk' : action?.actionId ?? 'core.idle', poseId: 'standing', view: walking ? actor.facing : action ? 'back' : actor.facing,
+          intent: { actionId: walking ? 'core.walk' : action?.actionId ?? (leisure ? 'core.leisure' : 'core.idle'), poseId: 'standing', view: walking ? actor.facing : action ? 'back' : actor.facing,
             ...(action && !walking ? { progress: phase!.progress } : {}) } }
       })
     },

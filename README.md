@@ -10,13 +10,17 @@ PixOffice 是基于 Vite + React + PixiJS 的二维互动场景项目。内置�
 
 ## 在线演示
 
-[官网](https://pixoffice.online/?lang=zh) · [完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/) · [教室](https://pixoffice.online/classroom/) · [农场](https://pixoffice.online/farm/)
+[官网](https://pixoffice.online/?lang=zh) · [完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/) · [教室](https://pixoffice.online/classroom/) · [农场](https://pixoffice.online/farm/) · [公务预览](https://pixoffice.online/civic/)
 
 ![PixOffice 办公室：任务白板、人物走动与工位交流](./docs/office-demo.gif)
 
 默认本地场景为电商商品上架与优化：负责人逐人派工，成员并行处理标题、图片、详情、价格与审核；确认上架后观察经营反馈，再选择优化措施并复盘。流程约一分钟，等待用户决定时不会自动批准。所有店铺操作和经营数据均为本地示例。
 
+右上角可选择“电商流程”或“全员动作”再播放。全员动作会展示六人的四向行走、坐起、工作、左右交谈、表情、闲时状态与白板会议，不推进业务任务，也不弹出审批菜单。闲时动作由场景素材决定，当前没有专用素材时保持自然待机。
+
 页面支持经典布局和成员布局，成员侧栏按人物保留任务动态，可通过左上角布局按钮切换。[查看完整页面高清截图](./docs/page-preview.jpeg)。
+
+公务场景 `/civic/` 使用六位制服人物，默认成员布局，保留原办公室交互。当前人物素材仍为预览状态，页面会显示未验收提示。
 
 <a id="quick-start"></a>
 

@@ -6,6 +6,7 @@ import { createFarmScenePack, createFarmClock, cropStatus, crops, farmRoster, te
 import { createFarmPresentation } from '@pixoffice/scene-farm/pixi'
 import { bindFarmFrames } from '@pixoffice/assets-farm'
 import { CharacterManifestSchema } from '@pixoffice/animation-frame/packSchema'
+import { resolveVisualRequest } from '../packages/renderer-pixi/dist/presentation/AnimationPresenter.js'
 
 function setup(t, options = {}, transform = pack => pack) {
   const clock = createFarmClock(), runtime = createSceneRuntime(transform(createFarmScenePack(clock.now)), options)
@@ -200,7 +201,7 @@ test('farm action projection uses explicit semantic actions and independent fram
     const actor = runtime.readActors()[0], projected = presentation.projectActors(runtime)[0]
     if (actor.motion && !actor.step && !actor.motion.waiting && actor.motion.index < actor.motion.path.length) { boundaries++; assert.equal(projected.intent.actionId, 'core.walk') }
     if (projected.intent.actionId === 'farm.plant') { sawWork = true; assert.equal(projected.intent.view, 'back'); assert(projected.intent.progress >= 0 && projected.intent.progress <= 1) }
-    assert(visual.capabilities.variants.some(v => v.actionId === projected.intent.actionId && v.poseId === projected.intent.poseId && v.view === projected.intent.view))
+    assert.doesNotThrow(() => resolveVisualRequest(visual, projected.intent))
   }
   assert(sawWork && boundaries > 0); assert.equal(farmRoster.length, 2)
 })

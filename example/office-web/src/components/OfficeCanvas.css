@@ -123,5 +123,12 @@
 .runtime-scene-toolbar button:hover { background: #eef1ee; }
 .runtime-scene-toolbar button[aria-pressed=true] { background: #eaf0ec; color: #39543f; }
 .runtime-scene-toolbar span { padding: 0 5px; font-size: 11px; color: #728078; }
+.runtime-demo-picker { position: relative; }
+.runtime-demo-picker > button { width: 40px; display: flex; justify-content: center; gap: 2px; }
+.runtime-demo-menu { position: absolute; z-index: 2; top: calc(100% + 8px); right: 0; min-width: 156px; padding: 4px; border: 1px solid #dce4df; border-radius: 6px; background: #fff; box-shadow: 0 6px 20px #23342a12; }
+.runtime-demo-menu button { width: 100%; min-height: 34px; height: auto; padding: 8px 10px; display: flex; gap: 8px; justify-content: flex-start; white-space: nowrap; font-size: 13px; color: #354b3c; }
+.runtime-demo-menu button svg:last-child:not(:first-child) { margin-left: auto; }
+.runtime-demo-menu button[aria-checked=true] { background: #edf5ef; }
+.runtime-scene-toolbar .runtime-demo-status { position: absolute; top: calc(100% + 6px); right: 0; width: max-content; max-width: min(300px, calc(100vw - 48px)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 5px 8px; border-radius: 4px; background: #fffffff0; color: #52665a; }
 .runtime-scene-notice { position: absolute; z-index: 8; top: 62px; left: 12px; right: 12px; display: flex; justify-content: space-between; gap: 6px; padding: 8px 10px; background: #fff; border: 1px solid #e8d6d2; color: #a45a52; border-radius: 6px; font-size: 12px; }
 .runtime-scene-notice button { background: transparent; border: 0; }

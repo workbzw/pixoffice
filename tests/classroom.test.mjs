@@ -11,7 +11,7 @@ import { Assets, Texture, TextureSource } from 'pixi.js'
 import sharp from 'sharp'
 import { CLASSROOM_ARTWORK, CLASSROOM_CHARACTER, CLASSROOM_CONTENT_SCALE, CLASSROOM_SEATED_OFFSET, CLASSROOM_SEAT_RECESS, classroomActorGeometry, classroomCellCenter, classroomFurnitureLayout } from '../packages/scene-classroom/dist/pixi/alignment.js'
 import { createClassroomDeskView } from '../packages/scene-classroom/dist/pixi/deskView.js'
-import { AnimationPresenter } from '../packages/renderer-pixi/dist/presentation/AnimationPresenter.js'
+import { AnimationPresenter, resolveVisualRequest } from '../packages/renderer-pixi/dist/presentation/AnimationPresenter.js'
 
 const base = (runtime, id) => ({ protocolVersion: '2.0', sceneId: runtime.sceneId, commandId: id })
 const participants = classroomRoster.map(p => ({ entityId: p.id, role: p.role }))
@@ -98,7 +98,8 @@ for (const fps of [30, 60, 120]) for (const student of classroomRoster.filter(p 
   assert.equal(runtime.getRecord(command.commandId).status, 'completed')
   assert(movementBoundaries > 0 && passageBoundaries > 0 && turns > 0, 'Exercise cells, seat passages and turns')
   const settled = pack.projectActors(runtime).find(a => a.id === student.id)
-  assert.equal(settled.intent.actionId, 'core.idle'); assert.equal(settled.intent.poseId, 'seated')
+  assert.equal(settled.intent.actionId, 'core.leisure'); assert.equal(settled.intent.poseId, 'seated')
+  assert.equal(presenter.sample(settled, manifest, 0).request.variantIds[0], 'core.idle.seated.back')
 })
 
 test('classroom distinguishes continuous movement from blocked, aligning and posture-changing states', t => {
@@ -202,7 +203,7 @@ test('classroom manifests exclude office work clips and cover every projected te
   runtime.submit(command)
   finish(runtime, [command.commandId], () => {
     for (const actor of pack.projectActors(runtime)) {
-      assert(appearances.get(actor.appearanceId).capabilities.variants.some(v => v.actionId === actor.intent.actionId && v.poseId === actor.intent.poseId && v.view === actor.intent.view), JSON.stringify(actor.intent))
+      assert.doesNotThrow(() => resolveVisualRequest(appearances.get(actor.appearanceId), actor.intent), JSON.stringify(actor.intent))
       if (actor.intent.actionId === 'core.walk') assert.equal(actor.intent.speech, undefined)
     }
   })
@@ -214,7 +215,8 @@ test('classroom startup atlases contain only current poses; walking and unused p
     const root = new URL(`../public/classroom-assets/${actor.appearanceId}/`, import.meta.url)
     const appearance = JSON.parse(await readFile(new URL('visual.json', root), 'utf8'))
     const manifest = CharacterManifestSchema.parse(JSON.parse(await readFile(new URL(appearance.source.uri, root), 'utf8')))
-    const variant = appearance.capabilities.variants.find(v => v.channel === 'base' && v.actionId === actor.intent.actionId && v.poseId === actor.intent.poseId && v.view === actor.intent.view)
+    const request = resolveVisualRequest(appearance, actor.intent)
+    const variant = appearance.capabilities.variants.find(v => v.variantId === request.variantIds[0])
     assert(variant, `Initial pose must be supported: ${actor.id}`)
     const dependencies = characterFrameDependencies(manifest, [appearance.source.bindings[variant.variantId].clip])
     const startup = Object.entries(manifest.frames).filter(([, frame]) => manifest.pages[frame.page].group === 'startup').map(([key]) => key)

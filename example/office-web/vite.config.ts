@@ -38,6 +38,7 @@ export default defineConfig({
         minimal: path.resolve(root, 'minimal/index.html'),
         classroom: path.resolve(root, 'classroom/index.html'),
         farm: path.resolve(root, 'farm/index.html'),
+        civic: path.resolve(root, 'civic/index.html'),
       },
     },
   },

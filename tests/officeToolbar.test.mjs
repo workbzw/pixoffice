@@ -24,11 +24,13 @@ test('office toolbar keeps layout/demo controls and removes the character previe
   const demo = render(true)
   assert.match(demo, /aria-label="编辑布局"/)
   assert.match(demo, /aria-label="开始演示"/)
+  assert.match(demo, /aria-label="选择演示类型"/)
   assert(!demo.includes('人物预览'))
   assert(!demo.includes('character-preview-trigger'))
   const real = render(false)
   assert.match(real, /aria-label="编辑布局"/)
   assert(!real.includes('开始演示'))
+  assert(!real.includes('选择演示类型'))
 })
 
 test('office toolbar is anchored to the top-right of the scene', async () => {

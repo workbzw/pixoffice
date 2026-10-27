@@ -1,6 +1,7 @@
-import { useEffect } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { Grid2X2, Pause, Play, RotateCw } from 'lucide-react'
+import { Check, ChevronDown, Clapperboard, Grid2X2, Pause, Play, RotateCw, UsersRound } from 'lucide-react'
+import type { OfficeDemoMode } from '../application/OfficeSimulation.ts'
 import type { AgentState } from '@pixoffice/scene-office/types'
 import type { SceneRuntime } from '@pixoffice/runtime/SceneRuntime'
 import type { OfficeSceneController } from '../controller/useOfficeSceneController.ts'
@@ -27,8 +28,18 @@ export function OfficeSceneControls({ runtime, controller, mapView, setMapView, 
   teamSelection?: OfficeTeamSelection; teamName?: string; onTeamPickerOpenChange?: (open: boolean) => void
   teamSwitcherTarget?: HTMLElement | null
 }) {
-  const { sceneRef, menu, setMenu, demo, setDemo, canDemo, setNotice, loaded, actions, thumbnails, previewProp, highlightProp } = controller
+  const { sceneRef, menu, setMenu, demo, setDemo, demoMode = 'scenario', setDemoMode, demoStatus, demoScenarioLabel = '工位协作', canDemo, setNotice, loaded, actions, thumbnails, previewProp, highlightProp } = controller
+  const [demoMenuOpen, setDemoMenuOpen] = useState(false)
+  const demoMenuRef = useRef<HTMLDivElement>(null)
+  const demoMenuId = useId()
   const editorRuntime = runtime, editor = runtime.editorSnapshot()
+  useEffect(() => {
+    if (!demoMenuOpen) return
+    const close = (event: PointerEvent) => { if (event.target instanceof Node && !demoMenuRef.current?.contains(event.target)) setDemoMenuOpen(false) }
+    const escape = (event: KeyboardEvent) => { if (event.key === 'Escape') { setDemoMenuOpen(false); demoMenuRef.current?.querySelector<HTMLButtonElement>('button')?.focus() } }
+    document.addEventListener('pointerdown', close); document.addEventListener('keydown', escape)
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', escape) }
+  }, [demoMenuOpen])
   useEffect(() => {
     const close = (event: PointerEvent) => {
       const target = event.target
@@ -68,12 +79,16 @@ export function OfficeSceneControls({ runtime, controller, mapView, setMapView, 
     setMenu(null)
   }
   const edit = () => {
-    try { sceneRef.current?.beginEditing(); setMapView(initialMapView); setDemo(false); setMenu(null); setNotice(null) }
+    try { sceneRef.current?.beginEditing(); setDemoMenuOpen(false); setMapView(initialMapView); setDemo(false); setMenu(null); setNotice(null) }
     catch (error) { setNotice(error instanceof Error ? error.message : '暂时无法编辑') }
   }
   const toggleDemo = () => {
     try { sceneRef.current?.setDemo(!demo); setNotice(null) }
     catch (error) { setNotice(error instanceof Error ? error.message : '演示启动失败') }
+  }
+  const selectDemo = (mode: OfficeDemoMode) => {
+    try { sceneRef.current?.setDemoMode(mode); setDemoMode(mode); setDemoMenuOpen(false); setNotice(null) }
+    catch (error) { setNotice(error instanceof Error ? error.message : '演示切换失败') }
   }
 
   return <>
@@ -83,7 +98,26 @@ export function OfficeSceneControls({ runtime, controller, mapView, setMapView, 
         <RoomEditor key={editor.id} runtime={editorRuntime} draft={editor} view={mapView} setView={setMapView} onError={setNotice} thumbnails={thumbnails} />
       </> : <div className="runtime-scene-toolbar">
           <button type="button" title="编辑布局" aria-label="编辑布局" disabled={!loaded || !actions.ready} onClick={edit}><Grid2X2 size={17} /></button>
-          {canDemo && <button type="button" title={demo ? '停止演示' : '开始演示'} aria-label={demo ? '停止演示' : '开始演示'} disabled={!loaded || !actions.ready} onClick={toggleDemo}>{demo ? <Pause size={17} /> : <Play size={17} />}</button>}
+          {canDemo && <>
+            <div className="runtime-demo-picker" ref={demoMenuRef}>
+              <button type="button" title={`演示类型：${demoMode === 'actions' ? '全员动作' : demoScenarioLabel}`} aria-label="选择演示类型" aria-expanded={demoMenuOpen} aria-haspopup="menu" aria-controls={demoMenuId}
+                disabled={!loaded || !actions.ready} onClick={() => setDemoMenuOpen(value => !value)}>
+                {demoMode === 'actions' ? <UsersRound size={17} /> : <Clapperboard size={17} />}<ChevronDown size={10} />
+              </button>
+              {demoMenuOpen && <div id={demoMenuId} className="runtime-demo-menu" role="menu" aria-label="演示类型" onKeyDown={event => {
+                if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return
+                event.preventDefault()
+                const items = [...event.currentTarget.querySelectorAll<HTMLButtonElement>('button')]
+                const index = items.indexOf(document.activeElement as HTMLButtonElement)
+                items[event.key === 'Home' ? 0 : event.key === 'End' ? items.length - 1 : (index + (event.key === 'ArrowUp' ? -1 : 1) + items.length) % items.length]?.focus()
+              }}>
+                {([{ id: 'scenario', label: demoScenarioLabel, icon: Clapperboard }, { id: 'actions', label: '全员动作', icon: UsersRound }] as const).map(({ id, label, icon: Icon }) =>
+                  <button key={id} type="button" role="menuitemradio" aria-checked={demoMode === id} onClick={() => selectDemo(id)}><Icon size={15} />{label}{demoMode === id && <Check size={14} />}</button>)}
+              </div>}
+            </div>
+            <button type="button" title={demo ? '停止演示' : '开始演示'} aria-label={demo ? '停止演示' : '开始演示'} disabled={!loaded || !actions.ready} onClick={toggleDemo}>{demo ? <Pause size={17} /> : <Play size={17} />}</button>
+            {demoMode === 'actions' && demoStatus && <span className="runtime-demo-status" role="status" title={demoStatus}>{demoStatus}</span>}
+          </>}
           {loaded && !actions.ready && <span role="status" title={actions.error}>{actions.error ? '互动动作加载失败' : `准备互动动作 · ${actions.completed}/${actions.total}`}</span>}
           {loaded && actions.error && <button type="button" title="重试加载互动动作" aria-label="重试加载互动动作" onClick={() => { void sceneRef.current?.prepareActions() }}><RotateCw size={16} /></button>}
       </div>}

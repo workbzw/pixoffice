@@ -23,14 +23,20 @@ export class OfficeTeamHost {
     for (const session of next) if (!this.sessions.has(session) || session.isStarted === false) void session.start()
     this.sessions = next
     for (const session of next) if ((session.decisionPreviewEnabled || session.source instanceof CommerceOfficeDataSource) && !this.demoSubscriptions.has(session)) {
-      let running = session.simulation.isDemoRunning
+      let running = session.simulation.isScenarioRunning
+      let actionsRunning = session.simulation.demoMode === 'actions' && session.simulation.isDemoRunning
       this.demoSubscriptions.set(session, session.simulation.subscribe(() => {
-        const next = session.simulation.isDemoRunning
+        const next = session.simulation.isScenarioRunning
+        const nextActions = session.simulation.demoMode === 'actions' && session.simulation.isDemoRunning
+        const startingActions = nextActions && !actionsRunning
+        actionsRunning = nextActions
+        if (startingActions) { this.cancelDecisionPreview(); this.stopCommerce() }
         if (next === running) return
         running = next
         if (session.source instanceof CommerceOfficeDataSource) {
           if (running) {
             this.cancelDecisionPreview(); this.stopCommerce()
+            for (const target of this.sessions) if (target.source instanceof CommerceOfficeDataSource && target.simulation.demoMode === 'actions') target.simulation.setDemo(false)
             this.commerceRun = new CommerceDemoRun([...this.sessions], session)
             this.commerceRun.start()
           } else if (this.commerceRun?.owner === session) this.stopCommerce()
@@ -59,7 +65,7 @@ export class OfficeTeamHost {
     for (const { target, kind, delay } of previews) {
       run.timers.set(target, setTimeout(() => {
         run.timers.delete(target)
-        if (this.previewRun === run && this.sessions.has(target) && target.isStarted && owner.isStarted && owner.simulation.isDemoRunning) {
+        if (this.previewRun === run && this.sessions.has(target) && target.isStarted && owner.isStarted && owner.simulation.isScenarioRunning) {
           target.showDecisionPreview(kind)
         }
         if (this.previewRun === run && !run.timers.size) this.previewRun = undefined

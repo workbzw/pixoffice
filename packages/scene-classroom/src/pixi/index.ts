@@ -52,8 +52,9 @@ export function createClassroomPresentation(assetBaseUrl: string): ScenePresenta
           ? (transition.stage === 'entering' || transition.stage === 'exiting') && !transition.waiting
           : actor.motion && actor.motion.index < actor.motion.path.length && !actor.motion.waiting))
         const seated = actor.posture === 'seated' && !walking
-        const actionId = sitting ? 'core.sit-down' : rising ? 'core.stand-up' : walking ? 'core.walk' : 'core.idle'
         const phase = phases.find(p => p.participants.includes(actor.id))
+        const leisure = !phase && !transition && !walking && !actor.motion && !actor.speech && !actor.expression && actor.presentation.status === 'idle' && !runtime.isEditing
+        const actionId = sitting ? 'core.sit-down' : rising ? 'core.stand-up' : walking ? 'core.walk' : leisure ? 'core.leisure' : 'core.idle'
         const { position, depth } = classroomActorGeometry(actor)
         return {
           id: actor.id, appearanceId: actor.templateId, name: actor.name, position, depth,

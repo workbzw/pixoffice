@@ -1,0 +1,274 @@
+{
+  "schemaVersion": 1,
+  "tool": "built-in image_gen",
+  "scope": "Only artwork used by the current civic build, plus its canonical pose reference.",
+  "historicalReferencePolicy": "Historical reference names record inputs used at generation time. Their discarded intermediate binaries are intentionally not retained and are not build dependencies.",
+  "records": [
+    {
+      "id": "office-lead",
+      "source": "sources/office-lead.png",
+      "outputId": "exec-4a33196d-ba4b-4d69-9c46-2a29ceba9a98.png",
+      "tool": "image_gen.imagegen",
+      "sha256": "146de11ef68afba8111734af1a7a26f901ac845f81f80770cc504cea0748a914"
+    },
+    {
+      "id": "code-agent",
+      "source": "sources/code-agent.png",
+      "outputId": "exec-102d7e71-d860-4a94-93c9-295dca8ef21b.png",
+      "tool": "image_gen.imagegen",
+      "sha256": "2978659c6e97c1987ec9f8d2c9268a29ab97bfc6c767f4d343efeee0c07362e6"
+    },
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent.png",
+      "outputId": "exec-81fad1c1-51be-485a-80bb-04783a944398.png",
+      "tool": "image_gen.imagegen",
+      "sha256": "b32d7bca265a9059ef632a42209a40e5ef40dcda7a3564fdbcb41a243e466136"
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent.png",
+      "outputId": "exec-ce79d099-5aa7-403c-90e2-9ee73ba4a274.png",
+      "tool": "image_gen.imagegen",
+      "sha256": "b0efce250a7fcd1009511affe37590ac6de119def521320fb778215fe94d472a"
+    },
+    {
+      "id": "review-agent",
+      "source": "sources/review-agent.png",
+      "outputId": "exec-75e98fca-ed24-4767-b2a5-c2c58310c84a.png",
+      "tool": "image_gen.imagegen",
+      "sha256": "80c39d6c3d29937030a6adba899c42b9fc0b95d844944ff4ad26aa7f68f92daf"
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent.png",
+      "outputId": "exec-57fbaff7-495b-4592-854f-07f6f7d8112e.png",
+      "tool": "image_gen.imagegen",
+      "sha256": "acd5a61465677e34679ad1a01695020b23056d1eb0196b08fda3d816c048cfde"
+    },
+    {
+      "id": "office-lead",
+      "source": "sources/office-lead-frontback-v6.png",
+      "outputId": "exec-a5c92f76-cc61-446b-88b8-9711fbc3ecbf.png",
+      "prompt": "Use case: background-extraction. Remove ALL background and ALL colored glows/auras from the attached eight-character sprite sheet. Only the eight characters themselves, bounded by their precise dark outlines, may remain visible. Every pixel outside those tight character silhouettes must be fully transparent (alpha 0), including between all arms and legs. This is a clean game sprite cutout, NOT a photograph, NO soft shadow, NO lighting halo, NO translucent background. Preserve all eight characters, their exact heads, limbs, body size, pose and grid positions. Do not redraw characters or alter poses. Same 1536x1024 RGBA output, four columns and two rows.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/office-lead-frontback-v6-arms.png"
+      ],
+      "sha256": "7a4c96e5fc58577f4a93639edec1a5167be27b6ce3406329940b96a71f4c015d"
+    },
+    {
+      "id": "code-agent",
+      "source": "sources/code-agent-frontback-v6.png",
+      "outputId": "exec-4a3355cb-0c8a-4ebe-abe5-b9fa2290996d.png",
+      "prompt": "Use case: precise-object-edit. The arm swing in this eight-sprite sheet is INCORRECT: same-side arm and leg move together. Fix ONLY arms in columns ONE and THREE of BOTH rows. For each affected figure, SWAP THE TWO ARM POSES while keeping head, torso, legs and feet absolutely unchanged.\nIn column ONE of both rows: the large visible fist currently on the LEFT SIDE OF THE IMAGE must instead be on the RIGHT SIDE OF THE IMAGE, in front of the right hip. The left-side hand must become the smaller partly hidden rear hand.\nIn column THREE of both rows: the large visible fist currently on the RIGHT SIDE OF THE IMAGE must instead be on the LEFT SIDE OF THE IMAGE, in front of the left hip. The right-side hand must become the smaller partly hidden rear hand.\nDo NOT mirror the character or swap the legs, ponytail or face. Only redraw the two sleeves/arms/hands in these four figures. Columns TWO and FOUR stay identical. Keep the same sizes and positions. Same 1536x1024 clean transparent RGBA, no shadow or aura.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/code-agent-frontback-v6-first.png"
+      ],
+      "sha256": "8ca81d87eb5232421751ebd8b936f1d36dc33ac2906144d00f41b0c4ce51704e"
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent-frontback-v6.png",
+      "outputId": "exec-6bda3154-c8a8-43bf-b9bf-b0917913cb7e.png",
+      "prompt": "Use case: background-extraction. Remove ALL background and ALL colored glows/auras from the attached eight-character sprite sheet. Only the eight characters themselves, bounded by their precise dark outlines, may remain visible. Every pixel outside those tight character silhouettes must be fully transparent (alpha 0), including between all arms and legs. This is a clean game sprite cutout, NOT a photograph, NO soft shadow, NO lighting halo, NO translucent background. Preserve all eight characters, their exact heads, limbs, body size, pose and grid positions. Do not redraw characters or alter poses. Same 1536x1024 RGBA output, four columns and two rows.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/app-agent-frontback-v6-arms.png"
+      ],
+      "sha256": "9b53c9ab5506cfe29fb36e8c84fd569f2505c980f0ef697c7fcd3becdc61c189"
+    },
+    {
+      "id": "review-agent",
+      "source": "sources/review-agent-frontback-v6.png",
+      "outputId": "exec-6b92d763-d780-4c97-87e8-149f92c80878.png",
+      "prompt": "Use case: identity-preserve. Create eight full-body police sprites in a 1536x1024 transparent 4-column 2-row sheet. Image 1 is ONLY the exact motion/arm-phase guide; image 2 is the sole identity, outfit details and head/body proportion reference (short dark-brown-haired male, no glasses). Replace the guide character with the identity from image 2, keeping image 2's face, hairstyle, hair color and proportions, and using exactly image 1's arm positions in each cell. Top row FRONT, bottom row BACK, phases A B C D.\nArm poses in BOTH rows: A right side of IMAGE hand is forward/large and left hand behind/small; C left side of IMAGE hand forward/large, right behind/small. B D relaxed passing arms. Same-side arm and leg must oppose each other. Keep gentle gait, no high fists. Preserve all eight original legs from image 2 and its front/back head silhouettes consistently. No mouth. Same character size across each row. True transparent alpha cutouts: outside outline alpha 0, no shadows/glow/haze/backdrop.",
+      "references": [
+        "sources/office-lead-frontback-v6.png"
+      ],
+      "historicalReferenceNames": [
+        "references/review-agent-frontback-v6.png"
+      ],
+      "sha256": "cf285c75ddafcc30ff064b2f74c9504a03a3f19069b75cda91738197d75c9536"
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent-frontback-v6.png",
+      "outputId": "exec-d788d552-3e66-4733-b13f-aacc3ce3966c.png",
+      "prompt": "Use case: background-extraction. Remove ALL background and ALL colored glows/auras from the attached eight-character sprite sheet. Only the eight characters themselves, bounded by their precise dark outlines, may remain visible. Every pixel outside those tight character silhouettes must be fully transparent (alpha 0), including between all arms and legs. This is a clean game sprite cutout, NOT a photograph, NO soft shadow, NO lighting halo, NO translucent background. Preserve all eight characters, their exact heads, limbs, body size, pose and grid positions. Do not redraw characters or alter poses. Same 1536x1024 RGBA output, four columns and two rows.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/data-agent-frontback-v6-arms.png"
+      ],
+      "sha256": "a7dae467a7b1c968f8507bd5590f17b093713304e45f5f7eb9075e88393dcba5"
+    },
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent-front-arms-v6.png",
+      "outputId": "exec-ad42b3ef-4668-407f-b6ba-9b50eaf77040.png",
+      "prompt": "Use case: precise-object-edit. Edit the attached 1024x1536 FOUR-frame FRONT walking sheet of the bespectacled police character. Preserve EXACTLY the existing heads, faces, glasses, hair silhouettes, body/leg proportions, leg poses, shoe sizes, positions and the 2x2 layout. Change ONLY sleeves, arms and hands:\nTOP LEFT A: arm on IMAGE RIGHT swings toward camera, relaxed bent elbow, hand visible in front of right hip; arm on IMAGE LEFT swings away, narrower/smaller hand partly hidden behind left hip. Do not confuse image left/right with anatomical left/right.\nTOP RIGHT B: both arms pass near neutral, slightly bent relaxed elbows.\nBOTTOM LEFT C: reverse A. IMAGE LEFT hand swings toward camera in front of left hip, IMAGE RIGHT arm swings away behind right hip.\nBOTTOM RIGHT D: opposite passing near-neutral arms.\nBoth forward hands stay below belt height, small casual indoor swing, not raised fists. Opposite arm follows opposite leg. Keep leg poses entirely unchanged and each head exactly the current size. True clean transparent RGBA, zero alpha outside each precise outline, no haze, shadows or glow.",
+      "references": [],
+      "historicalReferenceNames": [
+        "references/file-agent-front-arms-v6.png"
+      ],
+      "sha256": "e37feec5bc57128181c484d3ea2aeaf3a298daa7a8aaeaa643f2e6e655347c1d"
+    },
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent-back-arms-v6.png",
+      "outputId": "exec-2d8da538-9f6a-44e6-b88f-33667a3b8217.png",
+      "prompt": "Use case: precise-object-edit. Edit the attached 1024x1536 FOUR-frame BACK walking sheet of the dark-haired male police character seen from behind. Preserve EXACTLY the existing heads, faces, glasses, hair silhouettes, body/leg proportions, leg poses, shoe sizes, positions and the 2x2 layout. Change ONLY sleeves, arms and hands:\nTOP LEFT A: arm on IMAGE RIGHT swings backward toward camera, relaxed bent elbow, hand visible behind the right hip; arm on IMAGE LEFT swings forward away from camera, narrower/smaller hand partly hidden in front of left hip. Do not confuse image left/right with anatomical left/right.\nTOP RIGHT B: both arms pass near neutral, slightly bent relaxed elbows.\nBOTTOM LEFT C: reverse A. IMAGE LEFT hand swings backward toward camera behind left hip, IMAGE RIGHT arm swings forward away from camera in front of right hip.\nBOTTOM RIGHT D: opposite passing near-neutral arms.\nBoth forward hands stay below belt height, small casual indoor swing, not raised fists. Opposite arm follows opposite leg. Keep leg poses entirely unchanged and each head exactly the current size. True clean transparent RGBA, zero alpha outside each precise outline, no haze, shadows or glow.",
+      "references": [],
+      "historicalReferenceNames": [
+        "references/file-agent-back-arms-v6.png"
+      ],
+      "sha256": "ea23d1d0e56e29c56a6c077350a20e6bf3d1c8e24d70fd77fc508ed9be1a5f69"
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent-back-arms-v6.png",
+      "outputId": "exec-e4a767ae-1c9f-4ab4-97e1-3fd93359056d.png",
+      "prompt": "Use case: precise-object-edit. Edit the attached 1024x1536 FOUR-frame BACK walking sheet of the female police character with long auburn wavy hair seen from behind. Preserve EXACTLY the existing heads, faces, glasses, hair silhouettes, body/leg proportions, leg poses, shoe sizes, positions and the 2x2 layout. Change ONLY sleeves, arms and hands:\nTOP LEFT A: arm on IMAGE RIGHT swings backward toward camera, relaxed bent elbow, hand visible behind the right hip; arm on IMAGE LEFT swings forward away from camera, narrower/smaller hand partly hidden in front of left hip. Do not confuse image left/right with anatomical left/right.\nTOP RIGHT B: both arms pass near neutral, slightly bent relaxed elbows.\nBOTTOM LEFT C: reverse A. IMAGE LEFT hand swings backward toward camera behind left hip, IMAGE RIGHT arm swings forward away from camera in front of right hip.\nBOTTOM RIGHT D: opposite passing near-neutral arms.\nBoth forward hands stay below belt height, small casual indoor swing, not raised fists. Opposite arm follows opposite leg. Keep leg poses entirely unchanged and each head exactly the current size. True clean transparent RGBA, zero alpha outside each precise outline, no haze, shadows or glow.",
+      "references": [],
+      "historicalReferenceNames": [
+        "references/app-agent-back-arms-v6.png"
+      ],
+      "sha256": "bc84f1379abb3192eeed3ef40b5df149309fc5443109b90a9a89d05898e46d22"
+    },
+    {
+      "id": "office-lead",
+      "source": "sources/office-lead-sidewalk-v8.png",
+      "outputId": "exec-d8f2a110-77ee-4fbb-898a-81c3c29d09cb",
+      "prompt": "Use case: identity-preserve. Edit the attached FOUR-frame sprite sheet (image 1). Image 2 is the exact neutral standing identity and body-proportion reference. Create a replacement transparent RGBA 1024x1536 sheet, two columns x two rows, four COMPLETE right-facing profile walking sprites. Reading order A B C D.\nRepair ONLY the exaggerated marching stride: compact calm indoor walking, each contact step width about 65% of image 1. Do NOT shrink the character or shorten its legs. Preserve the exact head, hair, face, uniform, proportions, full-body scale and cell layout. Keep shoulders steady and the original leg length. Upper thighs only tilt about 18-22 degrees from vertical, feet land underneath/near the hips instead of reaching far. Toe nearly horizontal, gentle heel contact. Knee lift is tiny, the passing shoe barely clears the floor. Not running, not goose stepping.\nA (top left): near-camera brighter leg slightly forward/right, far darker leg slightly back/left; near arm slightly back/left and far arm slightly forward/right.\nB (top right): near leg supporting below hip, far leg passing close to the support ankle, no high knee.\nC (bottom left): near-camera brighter leg slightly back/left, far darker leg slightly forward/right; near arm slightly forward/right, far arm slightly back/left. This must be the genuine opposite leg phase of A, NOT a duplicate or mirror of the whole person.\nD (bottom right): far leg supporting, near leg passing close to the ankle; opposite B.\nHands stay LOW around the top of the thighs with a small but clearly visible opposite swing; do not eliminate arm swing. Keep the faces closed/mouthless. All four complete characters wholly inside their separate equal cells with generous gutters, same head size, whole shoes visible. True transparent background, no shadow, no new props, no labels, no grid. Do not use large stride or strongly bent raised knees from image 1.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/office-lead-sidewalk-v6.png",
+        ".character-staging/police-uniform-v7-final/office-lead/frames/idle-right-1.png"
+      ],
+      "sha256": "51b5d5a7f5931c0725b942eb179d7aeb14a955e667e94eaa1c32c797fee710d0"
+    },
+    {
+      "id": "code-agent",
+      "source": "sources/code-agent-sidewalk-v8.png",
+      "outputId": "exec-8e857714-99a8-40c6-a6c0-b4fb34cb04d1",
+      "prompt": "Use case: identity-preserve. Edit the attached FOUR-frame sprite sheet (image 1). Image 2 is the exact neutral standing identity and body-proportion reference. Create a replacement transparent RGBA 1024x1536 sheet, two columns x two rows, four COMPLETE right-facing profile walking sprites. Reading order A B C D.\nRepair ONLY the exaggerated marching stride: compact calm indoor walking, each contact step width about 65% of image 1. Do NOT shrink the character or shorten its legs. Preserve the exact head, hair, face, uniform, proportions, full-body scale and cell layout. Keep shoulders steady and the original leg length. Upper thighs only tilt about 18-22 degrees from vertical, feet land underneath/near the hips instead of reaching far. Toe nearly horizontal, gentle heel contact. Knee lift is tiny, the passing shoe barely clears the floor. Not running, not goose stepping.\nA (top left): near-camera brighter leg slightly forward/right, far darker leg slightly back/left; near arm slightly back/left and far arm slightly forward/right.\nB (top right): near leg supporting below hip, far leg passing close to the support ankle, no high knee.\nC (bottom left): near-camera brighter leg slightly back/left, far darker leg slightly forward/right; near arm slightly forward/right, far arm slightly back/left. This must be the genuine opposite leg phase of A, NOT a duplicate or mirror of the whole person.\nD (bottom right): far leg supporting, near leg passing close to the ankle; opposite B.\nHands stay LOW around the top of the thighs with a small but clearly visible opposite swing; do not eliminate arm swing. Keep the faces closed/mouthless. All four complete characters wholly inside their separate equal cells with generous gutters, same head size, whole shoes visible. True transparent background, no shadow, no new props, no labels, no grid. Do not use large stride or strongly bent raised knees from image 1.\nImage 3 is a POSE AMPLITUDE REFERENCE ONLY: it shows the desired compact stride and lower knees. Follow its quiet leg angles and opposite arm swing, but NEVER copy its brown-haired identity, head or body proportions. Keep the identity and body proportions of image 1 and image 2. In the D passing pose, the forward-passing foot should stay very close to the supporting foot, not form another wide contact step.",
+      "references": [
+        "sources/office-lead-sidewalk-v8.png"
+      ],
+      "historicalReferenceNames": [
+        "sources/code-agent-sidewalk-v6.png",
+        ".character-staging/police-uniform-v7-final/code-agent/frames/idle-right-1.png"
+      ],
+      "sha256": "7f3b9e4a2948b356935a1ff94a5c273ac5e27755b196533d2face2581dda114c"
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent-sidewalk-v8.png",
+      "outputId": "exec-1b51d048-55a0-4e6d-b64c-9fc0ae2c4831",
+      "prompt": "Use case: identity-preserve. Edit the attached FOUR-frame sprite sheet (image 1). Image 2 is the exact neutral standing identity and body-proportion reference. Create a replacement transparent RGBA 1024x1536 sheet, two columns x two rows, four COMPLETE right-facing profile walking sprites. Reading order A B C D.\nRepair ONLY the exaggerated marching stride: compact calm indoor walking, each contact step width about 65% of image 1. Do NOT shrink the character or shorten its legs. Preserve the exact head, hair, face, uniform, proportions, full-body scale and cell layout. Keep shoulders steady and the original leg length. Upper thighs only tilt about 18-22 degrees from vertical, feet land underneath/near the hips instead of reaching far. Toe nearly horizontal, gentle heel contact. Knee lift is tiny, the passing shoe barely clears the floor. Not running, not goose stepping.\nA (top left): near-camera brighter leg slightly forward/right, far darker leg slightly back/left; near arm slightly back/left and far arm slightly forward/right.\nB (top right): near leg supporting below hip, far leg passing close to the support ankle, no high knee.\nC (bottom left): near-camera brighter leg slightly back/left, far darker leg slightly forward/right; near arm slightly forward/right, far arm slightly back/left. This must be the genuine opposite leg phase of A, NOT a duplicate or mirror of the whole person.\nD (bottom right): far leg supporting, near leg passing close to the ankle; opposite B.\nHands stay LOW around the top of the thighs with a small but clearly visible opposite swing; do not eliminate arm swing. Keep the faces closed/mouthless. All four complete characters wholly inside their separate equal cells with generous gutters, same head size, whole shoes visible. True transparent background, no shadow, no new props, no labels, no grid. Do not use large stride or strongly bent raised knees from image 1.\nImage 3 is a POSE AMPLITUDE REFERENCE ONLY: it shows the desired compact stride and lower knees. Follow its quiet leg angles and opposite arm swing, but NEVER copy its brown-haired identity, head or body proportions. Keep the identity and body proportions of image 1 and image 2. In the D passing pose, the forward-passing foot should stay very close to the supporting foot, not form another wide contact step.",
+      "references": [
+        "sources/office-lead-sidewalk-v8.png"
+      ],
+      "historicalReferenceNames": [
+        "sources/data-agent-sidewalk-v6.png",
+        ".character-staging/police-uniform-v7-final/data-agent/frames/idle-right-1.png"
+      ],
+      "sha256": "4a9eb3c6e6733fa9951b85870a476e6034b882daf3bd11e0eb813d6beee1c5ff"
+    },
+    {
+      "id": "review-agent",
+      "source": "sources/review-agent-sidewalk-v8.png",
+      "outputId": "exec-6fee6888-86d2-448d-b2c3-b38b5a029d2f",
+      "prompt": "Use case: precise-object-edit. Edit ONLY the bottom-right full-body sprite (phase D) in this transparent 2x2 animation sheet. Keep the other three sprites unchanged. Preserve this exact dark-brown-haired male police officer identity, head silhouette, face, uniform, full-body height, hand placement and drawing style.\nThe bottom-right currently repeats the top-right leg phase. Correct it to the opposite passing leg: the FAR darker leg is vertical and supporting weight, with its black shoe flat on the floor. The NEAR brighter navy leg gently bends and passes just in front of it toward image-right, near shoe a little higher than the far shoe, toe almost horizontal, only a tiny indoor step and small knee bend, NOT a high marching knee. Show the brighter near shin diagonally over the darker vertical far shin so the two support phases are unmistakably different. Keep both complete feet close together beneath the pelvis. Preserve the same standing head size and shoe baseline as the other three figures. Keep original 1024x1536 dimensions and 2x2 cell layout, true transparent background, no shadow, no text. Do not change the accepted other three poses.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/review-agent-sidewalk-v8-rejected.png"
+      ],
+      "sha256": "23da9e7465a466cb22574fd76513dc34ed585c8e8d5a60afc39f8c9db8f90813"
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent-sidewalk-v8.png",
+      "outputId": "exec-b01136e9-e680-418a-aec4-b62c31a46cc7",
+      "prompt": "Use case: identity-preserve, precise anatomy correction. Image 1 is the four small-stride sprites to fix. Image 2 is the SAME auburn long-haired woman's correct neutral standing proportions. Keep her head, hair, face, uniform, head size, compact leg phases and arm swings from image 1. Her walking BODY BELOW THE BELT is too tall relative to her head.\nFor ALL FOUR sprites in image 1, REDRAW the lower body with slightly SHORTER ANATOMICAL LEGS: move the entire black shoes UP by about 20 pixels toward the hips, reducing total hip-to-sole distance by about 8%. Keep hip and head where they are. Trousers must fully cover legs down to the shoes: NO bare ankles, NO rolled-up trousers, NO cropped pants. Do not merely shorten the fabric hem; shorten the underlying legs and bring the FEET UP. Keep shoe width/size and small horizontal step width. This should make the full-body figure shorter without changing the head, not rescale the whole character. Exact original four phases A near leg forward, B far leg passing, C near leg back, D near leg passing. Preserve the same 1024x1536 transparent 2x2 grid, keep all complete figures and the original head silhouettes. No shadows or ground.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/app-agent-sidewalk-v8-first.png",
+        ".character-staging/police-uniform-v7-final/app-agent/frames/idle-right-1.png"
+      ],
+      "sha256": "2d3229e3dd415b60c5bdd288b459a294628d6355ca0fa51a7449703140f6dea7"
+    },
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent-sidewalk-v8.png",
+      "outputId": "exec-306ba9fa-d807-489e-bda6-b5b6542fe8af",
+      "prompt": "Use case: background-extraction. Clean the transparent background of this exact 1024x1536 four-character sprite sheet. Preserve ALL four character figures exactly: same pixels/colors/anatomy/head sizes/poses/proportions/clothes/shoes/positions. Remove ONLY the dirty dark gray haze/halo/shadow extending OUTSIDE the true illustrated outlines around hair, shoulders, arms, trousers and shoes. The final sprites need crisp clean antialiased silhouette edges with fully transparent empty space immediately beyond those edges. No cast shadows, no fuzzy shadow, no glow, no gradient backdrop. Keep the original black drawn outline itself; remove only the external semi-transparent gray haze. True transparent RGBA. Do not redraw or reposition the characters, no body modifications.",
+      "references": [],
+      "historicalReferenceNames": [
+        "sources/file-agent-sidewalk-v8-halo.png"
+      ],
+      "sha256": "17893a571f5d0fb3ddcb22430757f5a1199634d3dddc31d2190691e5be784db4"
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent-work-v7.png",
+      "outputId": "exec-891a47b7-bb3a-431b-b475-eff13ff85cf6.png",
+      "prompt": "Use case: precise-object-edit.\nEdit target: the attached 1024x1536 transparent sprite sheet, 2 columns by 2 rows. It shows four identical full-body BACK-view seated poses of one female police officer, with blue-black bobbed hair, pale blue police shirt, navy trousers, black shoes. This is a frame animation, not an illustration.\nKeep ALL four heads, hair outlines and strands, shoulders, sleeves, torso, hips, legs and shoes exactly fixed in position, shape, scale, color and shading. Do not redraw the whole character. Preserve her identity and the soft original linework. Full characters stay inside their existing 512x768 cells.\nChange ONLY the tiny exposed FINGERTIPS above the two sleeve cuffs for a quiet typing loop. A top-left: existing resting fingertips. B top-right: left fingertips bend down slightly to press, right fingertips relax. C bottom-left: both hands neutral. D bottom-right: right fingertips bend down slightly, left fingertips relax. Movement is 3 to 6 source pixels maximum, no forearm lift, no hair motion, no head bob, no changing hands into fists. Keep continuous natural skin contours and the existing sleeves underneath.\nEvery full-body frame must be anatomically seamless: no rectangular patch borders, hair cuts, duplicated sleeve contours, double wrists, seams or transparency holes. This sheet is imported as FOUR COMPLETE IMAGES, never patch-composited.\nExactly the same image dimensions and grid positions. True transparent RGBA with alpha zero outside clean character outlines, no colored haze, glow, backdrop, chair, desk, keyboard, text or shadows.",
+      "references": [],
+      "historicalReferenceNames": [
+        "references/data-agent-work-v7.png"
+      ],
+      "sha256": "79839d93c64a9a47990aa24d8ba49cc13036b10103f2fac43039b50f1f2996d6"
+    },
+    {
+      "id": "pose-reference",
+      "source": "sources/seated-pose-reference-v10.png",
+      "outputId": "exec-73964b2d-00f7-4d61-91f5-e2040fae21f4.png",
+      "prompt": "Use case: identity-preserve. Asset type: ONE full-body transparent rear-view character sprite for an office game. The attached standing sprite is the exact identity/outfit/head reference, NOT a pose reference. Draw this same blond chibi adult in a proper CHAIR-SITTING posture with the chair entirely invisible: hips pushed BACK at normal chair-seat height, thighs extending FORWARD horizontally away from the viewer toward the unseen desk, knees bent about ninety degrees, lower legs hanging vertically DOWN, and both shoe soles FLAT ON THE FLOOR. We see the BACKS OF THE HEELS, never the bottoms of the shoes. There must be clear vertical lower-leg length between the buttocks and the floor. Both knees are off the floor. NOT kneeling, NOT seiza, NOT sitting on heels, NOT feet tucked underneath buttocks, NOT crossed legs. Keep head/hair size and shoulder width identical to the standing reference; the body becomes lower through hip/knee articulation, not whole-person shrinking. Camera is the same elevated straight BACK view, facing away, no face visible. Torso upright with slight forward desk lean; elbows bent comfortably, forearms extending forward as if resting at an invisible keyboard. Navy trousers, light blue shirt, same black shoes, same hair. Match exact soft outlined chibi rendering. No chair, furniture, floor, ground shadow, text, extra figures or diagram. Complete feet and transparent gutters. One complete isolated sprite only.",
+      "sha256": "129ca5195575b3d7fcc596d8a7a2f5d3c0e994b8bda8a6ee39e690fc763ae3df"
+    },
+    {
+      "id": "office-lead",
+      "source": "sources/office-lead-transition-v10.png",
+      "outputId": "exec-0f2253e2-5e22-4087-b8e7-8eeff939ec00.png",
+      "prompt": "Use case: precise-object-edit. IMAGE 1 IS THE EDIT TARGET. Keep its exact 3-column x 2-row grid and preserve ALL SIX original heads, hair, faces/ears, necks, shirts, shoulders, sleeves and arms at their existing sizes and positions. Do not redraw or resize anything above the belt. Image 2 supplies ONLY the CORRECT LOWER-BODY ANATOMY. Repair the trousers and shoes of the TOP LEFT seated and TOP MIDDLE leaning figures: they are kneeling, with legs tucked behind/under the buttocks. Instead put their hips back on an invisible chair, thighs pointing forward away from camera, knees bent about 90 degrees and CLEAR VERTICAL LOWER LEGS descending beneath the hips to FLAT planted feet. Show BACKS OF HEELS, absolutely NO SHOE SOLES facing the viewer. No knees on ground, no sitting on heels. Use the natural lower legs in Image 2, without copying its head or body scale. Correct the third and fourth figures only as needed for a smooth rise to standing. The fifth and sixth standing figures must stay unchanged. Keep all original head silhouettes PIXEL-CONSISTENT and SAME SCALE; do not make seated heads bigger than standing. True transparent background, no glow/shadow/floor/chair/desk/text. Output the repaired original SIX-sprite sheet only.",
+      "sha256": "405c1b525f4125b08aedd903a6c2c012df9832d9f22e5741acf2469c555cb304"
+    },
+    {
+      "id": "code-agent",
+      "source": "sources/code-agent-transition-v10.png",
+      "outputId": "exec-e1027559-d11e-45d8-8b0c-96c97c9eb4ca.png",
+      "prompt": "Use case: precise-object-edit. IMAGE 1 IS THE EDIT TARGET. Keep its exact 3-column x 2-row grid and preserve ALL SIX original heads, hair, faces/ears, necks, shirts, shoulders, sleeves and arms at their existing sizes and positions. Do not redraw or resize anything above the belt. Image 2 supplies ONLY the CORRECT LOWER-BODY ANATOMY. Repair the trousers and shoes of the TOP LEFT seated and TOP MIDDLE leaning figures: they are kneeling, with legs tucked behind/under the buttocks. Instead put their hips back on an invisible chair, thighs pointing forward away from camera, knees bent about 90 degrees and CLEAR VERTICAL LOWER LEGS descending beneath the hips to FLAT planted feet. Show BACKS OF HEELS, absolutely NO SHOE SOLES facing the viewer. No knees on ground, no sitting on heels. Use the natural lower legs in Image 2, without copying its head or body scale. Correct the third and fourth figures only as needed for a smooth rise to standing. The fifth and sixth standing figures must stay unchanged. Keep all original head silhouettes PIXEL-CONSISTENT and SAME SCALE; do not make seated heads bigger than standing. True transparent background, no glow/shadow/floor/chair/desk/text. Output the repaired original SIX-sprite sheet only. This character is the brown-haired ponytail woman from IMAGE 1. Keep HER head and ponytail, not the blond reference person's identity. Keep both feet separated, heel-backs pointing toward the viewer.",
+      "sha256": "72337c18ad50fe9ea7fae0378dfc6c89c3d9c69694580c4cf3d3d160d01446f1"
+    },
+    {
+      "id": "file-agent",
+      "source": "sources/file-agent-transition-v10.png",
+      "outputId": "exec-c3ab1126-6b8e-47b5-8982-b09b621ad963.png",
+      "prompt": "Use case: precise-object-edit. IMAGE 1 IS THE EDIT TARGET. Keep its exact 3-column x 2-row grid and preserve ALL SIX original heads, hair, faces/ears, necks, shirts, shoulders, sleeves and arms at their existing sizes and positions. Do not redraw or resize anything above the belt. Image 2 supplies ONLY the CORRECT LOWER-BODY ANATOMY. Repair the trousers and shoes of the TOP LEFT seated and TOP MIDDLE leaning figures: they are kneeling, with legs tucked behind/under the buttocks. Instead put their hips back on an invisible chair, thighs pointing forward away from camera, knees bent about 90 degrees and CLEAR VERTICAL LOWER LEGS descending beneath the hips to FLAT planted feet. Show BACKS OF HEELS, absolutely NO SHOE SOLES facing the viewer. No knees on ground, no sitting on heels. Use the natural lower legs in Image 2, without copying its head or body scale. Correct the third and fourth figures only as needed for a smooth rise to standing. The fifth and sixth standing figures must stay unchanged. Keep all original head silhouettes PIXEL-CONSISTENT and SAME SCALE; do not make seated heads bigger than standing. True transparent background, no glow/shadow/floor/chair/desk/text. Output the repaired original SIX-sprite sheet only. This character is the short BLACK-haired man from IMAGE 1. Retain his exact head/hair, not the blond reference identity. Keep his head and shirt size fixed.",
+      "sha256": "76f4e5eb0f34f5f7926d1a222019558df6af3589b0519b82256f30dcff87707a"
+    },
+    {
+      "id": "app-agent",
+      "source": "sources/app-agent-transition-v10.png",
+      "outputId": "exec-b1ec72eb-ceb2-4573-b262-64720162db9e.png",
+      "prompt": "Use case: precise-object-edit. IMAGE 1 IS THE EDIT TARGET. Keep its exact 3-column x 2-row grid and preserve ALL SIX original heads, hair, faces/ears, necks, shirts, shoulders, sleeves and arms at their existing sizes and positions. Do not redraw or resize anything above the belt. Image 2 supplies ONLY the CORRECT LOWER-BODY ANATOMY. Repair the trousers and shoes of the TOP LEFT seated and TOP MIDDLE leaning figures: they are kneeling, with legs tucked behind/under the buttocks. Instead put their hips back on an invisible chair, thighs pointing forward away from camera, knees bent about 90 degrees and CLEAR VERTICAL LOWER LEGS descending beneath the hips to FLAT planted feet. Show BACKS OF HEELS, absolutely NO SHOE SOLES facing the viewer. No knees on ground, no sitting on heels. Use the natural lower legs in Image 2, without copying its head or body scale. Correct the third and fourth figures only as needed for a smooth rise to standing. The fifth and sixth standing figures must stay unchanged. Keep all original head silhouettes PIXEL-CONSISTENT and SAME SCALE; do not make seated heads bigger than standing. True transparent background, no glow/shadow/floor/chair/desk/text. Output the repaired original SIX-sprite sheet only. This character is the LONG AUBURN-haired woman from IMAGE 1. Keep all her original long hair and upper-body pixels; do not copy the blond person's identity. Do not expand her hips or thighs. The seated pose must keep shins vertically down with heel-backs visible, not stubby feet tucked at the hips.",
+      "sha256": "a48105777e706a2b7db351f8454a8fb20ab1d113b2a313e7415a884d3846cc3d"
+    },
+    {
+      "id": "review-agent",
+      "source": "sources/review-agent-transition-v10.png",
+      "outputId": "exec-05e488b0-6236-40a9-8ab5-ab26dac5ac9e.png",
+      "prompt": "Use case: precise-object-edit. IMAGE 1 IS THE EDIT TARGET. Keep its exact 3-column x 2-row grid and preserve ALL SIX original heads, hair, faces/ears, necks, shirts, shoulders, sleeves and arms at their existing sizes and positions. Do not redraw or resize anything above the belt. Image 2 supplies ONLY the CORRECT LOWER-BODY ANATOMY. Repair the trousers and shoes of the TOP LEFT seated and TOP MIDDLE leaning figures: they are kneeling, with legs tucked behind/under the buttocks. Instead put their hips back on an invisible chair, thighs pointing forward away from camera, knees bent about 90 degrees and CLEAR VERTICAL LOWER LEGS descending beneath the hips to FLAT planted feet. Show BACKS OF HEELS, absolutely NO SHOE SOLES facing the viewer. No knees on ground, no sitting on heels. Use the natural lower legs in Image 2, without copying its head or body scale. Correct the third and fourth figures only as needed for a smooth rise to standing. The fifth and sixth standing figures must stay unchanged. Keep all original head silhouettes PIXEL-CONSISTENT and SAME SCALE; do not make seated heads bigger than standing. True transparent background, no glow/shadow/floor/chair/desk/text. Output the repaired original SIX-sprite sheet only. This character is the short BROWN-haired man from IMAGE 1, not the blond reference. Keep his head/shirt exactly unchanged. Emphasize that the top two poses sit on an invisible chair with hips back and lower legs straight down; no backward-folded shins or upward shoe bottoms.",
+      "sha256": "223e7d6cf0ed00de189dcf8679f893f8244659ed7432f8345ea4f37698044b28"
+    },
+    {
+      "id": "data-agent",
+      "source": "sources/data-agent-transition-v10.png",
+      "outputId": "exec-0bfaba07-6912-4548-98f4-30818ef8419f.png",
+      "prompt": "Use case: precise-object-edit. IMAGE 1 IS THE EDIT TARGET. Keep its exact 3-column x 2-row grid and preserve ALL SIX original heads, hair, faces/ears, necks, shirts, shoulders, sleeves and arms at their existing sizes and positions. Do not redraw or resize anything above the belt. Image 2 supplies ONLY the CORRECT LOWER-BODY ANATOMY. Repair the trousers and shoes of the TOP LEFT seated and TOP MIDDLE leaning figures: they are kneeling, with legs tucked behind/under the buttocks. Instead put their hips back on an invisible chair, thighs pointing forward away from camera, knees bent about 90 degrees and CLEAR VERTICAL LOWER LEGS descending beneath the hips to FLAT planted feet. Show BACKS OF HEELS, absolutely NO SHOE SOLES facing the viewer. No knees on ground, no sitting on heels. Use the natural lower legs in Image 2, without copying its head or body scale. Correct the third and fourth figures only as needed for a smooth rise to standing. The fifth and sixth standing figures must stay unchanged. Keep all original head silhouettes PIXEL-CONSISTENT and SAME SCALE; do not make seated heads bigger than standing. True transparent background, no glow/shadow/floor/chair/desk/text. Output the repaired original SIX-sprite sheet only. This character is the long dark blue/black-haired woman from IMAGE 1, not the blond reference. Keep her original upper body and hair completely unchanged. Reduce the very spread seated hips to a natural chair-seat width, similar to her shoulders; feet must sit BELOW the hips with visible vertical calves, never at the sides of the buttocks. Keep the last standing figure unchanged.",
+      "sha256": "d3ec9f82273cd468b022394311a6af7310e7ff315b33d33050ed43e0df9aaf88"
+    }
+  ]
+}

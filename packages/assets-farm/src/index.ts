@@ -13,6 +13,7 @@ export function bindFarmFrames(source: CharacterManifest, uri: string): FrameAss
   }
   for (const view of ['front', 'back', 'left', 'right'] as const) {
     add('core.idle', view, `idle.${view}`); add('core.walk', view, `walk.${view}`)
+    if (source.clips[`leisure.standing-${view}`]) add('core.leisure', view, `leisure.standing-${view}`)
   }
   for (const action of ['plant', 'water', 'harvest']) add(`farm.${action}`, 'back', `farm.${action}`)
   return { schemaVersion: 1, asset: { id: source.id, revision: source.revision }, adapterId: 'pixoffice.frame', adapterApiVersion: 1,

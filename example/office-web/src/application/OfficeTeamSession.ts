@@ -78,7 +78,8 @@ export class OfficeTeamSession {
       },
     })
     this.ui = new OfficeUiSession(runtime.sceneId, options.requestUi, () => this.chat.getSnapshot().selectedId)
-    this.simulation = options.simulation ?? new OfficeSimulation(runtime, source.kind === 'example' ? new OfficeDemoSource(runtime, { automatic: !(source instanceof CommerceOfficeDataSource) }) : undefined)
+    this.simulation = options.simulation ?? new OfficeSimulation(runtime, source.kind === 'example' ? new OfficeDemoSource(runtime, { automatic: !(source instanceof CommerceOfficeDataSource) }) : undefined,
+      source instanceof CommerceOfficeDataSource ? '电商流程' : '工位协作')
     if (this.simulation.runtime !== runtime) throw new Error('团队会话与动画必须使用同一个运行时')
     this.bridge = new DashboardSceneBridge(runtime, { whiteboard: source.kind === 'example' ? 'demo-summary' : 'external' })
     this.state = { dashboard: null, dashboardError: null, sceneLinkError: null, connection: options.transport ? '连接中' : source.kind === 'example' ? '本地示例' : '未配置', pendingTaskIds: [], actionError: null }

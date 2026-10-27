@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDown, ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork, GraduationCap, Layers3, Menu, MessageCircle, Monitor, Move, Plug, Sprout, Terminal, X } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork, GraduationCap, Landmark, Layers3, Menu, MessageCircle, Monitor, Move, Plug, Sprout, Terminal, X } from 'lucide-react'
 import { websiteContent, websiteReadme, websiteRepository as repository, websiteSnippets } from './content.ts'
 import { readWebsiteLocale, rememberWebsiteLocale, type WebsiteLocale } from './locale.ts'
 
@@ -70,6 +70,7 @@ export function Website() {
           <a href={`${base}minimal/`}>{t.nav.minimal} <ArrowUpRight size={13} /></a>
           <a href={`${base}classroom/`}>{t.nav.classroom} <ArrowUpRight size={13} /></a>
           <a href={`${base}farm/`}>{t.nav.farm} <ArrowUpRight size={13} /></a>
+          <a href={`${base}civic/`}>{t.nav.civic} <ArrowUpRight size={13} /></a>
           <a href={docs} target="_blank" rel="noreferrer">{t.nav.docs}</a>
           <a className="site-github" href={readmeHref} target="_blank" rel="noreferrer"><GitFork size={17} /> GitHub <ArrowUpRight size={13} /></a>
         </nav>
@@ -127,6 +128,10 @@ export function Website() {
             <a className="site-example" href={`${base}farm/`}>
               <div className="site-example-image"><img src={`${base}site/farm-preview.webp`} width="1200" height="900" loading="lazy" alt={t.examples.farm.alt} /></div>
               <div className="site-example-copy"><span className="site-example-label"><Sprout size={15} /> {t.examples.farm.label}</span><h3>{t.nav.farm} <ArrowUpRight size={23} /></h3><p>{t.examples.farm.description}</p><span className="site-text-link">{t.examples.farm.action} <ArrowRight size={16} /></span></div>
+            </a>
+            <a className="site-example" href={`${base}civic/`}>
+              <div className="site-example-image"><img src={`${base}site/civic-preview.webp`} width="1440" height="1050" loading="lazy" alt={t.examples.civic.alt} /></div>
+              <div className="site-example-copy"><span className="site-example-label"><Landmark size={15} /> {t.examples.civic.label}</span><h3>{t.nav.civic} <ArrowUpRight size={23} /></h3><p>{t.examples.civic.description}</p><span className="site-text-link">{t.examples.civic.action} <ArrowRight size={16} /></span></div>
             </a>
           </div>
           <p className="site-example-note">{t.examples.note}</p>

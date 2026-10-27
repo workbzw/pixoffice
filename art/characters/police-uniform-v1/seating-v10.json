@@ -1,0 +1,95 @@
+{
+  "version": 10,
+  "status": "preview-only",
+  "poseReference": {
+    "source": "sources/seated-pose-reference-v10.png",
+    "role": "Lower-body anatomy only. Exact identity remains the individual v3 source."
+  },
+  "characters": {
+    "office-lead": {
+      "scale": 1,
+      "headBottoms": [
+        319,
+        319,
+        319,
+        272,
+        272,
+        272
+      ],
+      "transitionSource": "office-lead-transition-v10.png"
+    },
+    "code-agent": {
+      "scale": 1,
+      "headBottoms": [
+        307,
+        307,
+        307,
+        280,
+        280,
+        280
+      ],
+      "transitionSource": "code-agent-transition-v10.png"
+    },
+    "file-agent": {
+      "scale": 1,
+      "headBottoms": [
+        318,
+        318,
+        318,
+        291,
+        291,
+        291
+      ],
+      "transitionSource": "file-agent-transition-v10.png"
+    },
+    "app-agent": {
+      "scale": 0.94,
+      "headBottoms": [
+        354,
+        354,
+        354,
+        299,
+        299,
+        299
+      ],
+      "transitionSource": "app-agent-transition-v10.png"
+    },
+    "review-agent": {
+      "scale": 1,
+      "headBottoms": [
+        320,
+        320,
+        320,
+        319,
+        319,
+        320
+      ],
+      "transitionSource": "review-agent-transition-v10.png"
+    },
+    "data-agent": {
+      "scale": 0.97,
+      "walkScale": 0.99,
+      "headBottoms": [
+        330,
+        330,
+        330,
+        330,
+        330,
+        333
+      ],
+      "transitionSource": "data-agent-transition-v10.png"
+    }
+  },
+  "scope": "Repair lower-body seated/rising anatomy for six characters. Re-register app-agent at 94% and data-agent at 97% across all actions; data-agent lateral walking uses one additional 99% clip-wide registration to match its standing height. The desk-ready neutral pose reuses the complete first work frame. No runtime scaling, furniture, geometry, or protocol changes.",
+  "acceptance": {
+    "standingFootY": 344,
+    "seatedFootY": 377,
+    "headAreaTolerance": 0.035,
+    "requirements": [
+      "Knees are not on the floor.",
+      "Shins point down and shoe heels face the viewer; no upward soles or feet tucked under the buttocks.",
+      "Head silhouette remains stable across sit/rise.",
+      "Corrective scale applies equally to standing, walking, seated, work and mouth attachments."
+    ]
+  }
+}

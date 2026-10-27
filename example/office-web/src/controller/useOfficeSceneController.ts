@@ -5,6 +5,7 @@ import type { SceneRuntime } from '@pixoffice/runtime/SceneRuntime'
 import type { MapFurniture } from '../components/map-editor/commands.ts'
 import { SceneHost } from '../../../shared/scene/SceneHost.ts'
 import type { OfficeSimulation } from '../application/OfficeSimulation.ts'
+import type { OfficeDemoMode } from '../application/OfficeSimulation.ts'
 import type { DashboardSnapshot } from '@pixoffice/protocol/dashboard'
 import { officeActorTasks } from '../dashboard/actorTasks.ts'
 import { WhiteboardProgress } from '@pixoffice/scene-office/whiteboard'
@@ -40,6 +41,9 @@ export function useOfficeSceneController(runtime: SceneRuntime, covered = false,
   const [menu, setMenu] = useState<AgentMenuState | null>(null)
   const [whiteboardId, setWhiteboardId] = useState<string | null>(null)
   const [demo, setDemo] = useState(false)
+  const [demoMode, setDemoMode] = useState<OfficeDemoMode>(simulation?.demoMode ?? 'scenario')
+  const [demoStatus, setDemoStatus] = useState('')
+  const [demoScenarioLabel, setDemoScenarioLabel] = useState(simulation?.scenarioLabel ?? '工位协作')
   const [notice, setNotice] = useState<string | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [progress, setProgress] = useState<SceneLoadProgress>({ completed: 0, total: 0 })
@@ -66,6 +70,8 @@ export function useOfficeSceneController(runtime: SceneRuntime, covered = false,
   useEffect(() => {
     const element = host.element
     setMenu(null); setWhiteboardId(null); setNotice(simulation?.error ?? null); setDemo(simulation?.isDemoRunning ?? false)
+    setDemoMode(simulation?.demoMode ?? 'scenario'); setDemoStatus(simulation?.demoStatus ?? '')
+    setDemoScenarioLabel(simulation?.scenarioLabel ?? '工位协作')
 
     const handleAgentClick = (event: OfficeAgentClick) => {
       if (selectionHandler.current?.(event.agent.id)) { setMenu(null); insightInteraction.close(); return }
@@ -76,7 +82,8 @@ export function useOfficeSceneController(runtime: SceneRuntime, covered = false,
     }
 
     let active = true
-    const scene = new OfficeScene({ runtime, simulation, onAgentClick: handleAgentClick, onDraftChange: setNotice, onDemoChange: setDemo,
+    const scene = new OfficeScene({ runtime, simulation, onAgentClick: handleAgentClick, onDraftChange: setNotice,
+      onDemoChange: (running, mode, status) => { setDemo(running); setDemoMode(mode); setDemoStatus(status) },
       onActorHover: event => {
         if (!insightsEnabledRef.current) return
         if (event.hovered) insightInteraction.enter({ ...event, ...(sceneRef.current?.actorClientAnchor(event.actorId) ?? event) })
@@ -102,6 +109,7 @@ export function useOfficeSceneController(runtime: SceneRuntime, covered = false,
         void scene.init(element, width, height).then(async () => {
           if (!active) return
           setLoaded(true); setDemo(scene.isDemoRunning)
+          setDemoMode(scene.demoMode); setDemoStatus(scene.demoStatus); setDemoScenarioLabel(scene.demoScenarioLabel)
           const previews: Record<string, string> = {}
           for (const template of runtime.templates()) {
             if (!active) return
@@ -134,7 +142,7 @@ export function useOfficeSceneController(runtime: SceneRuntime, covered = false,
   }, [covered, whiteboardId, loaded, runtime])
 
   const whiteboard = whiteboardId ? runtime.readWorld().props.find(prop => prop.id === whiteboardId) : undefined
-  return { host, sceneRef, menu, setMenu, whiteboard, whiteboardProgress, closeWhiteboard: () => setWhiteboardId(null), demo, setDemo, canDemo: simulation?.canDemo ?? true, notice, setNotice,
+  return { host, sceneRef, menu, setMenu, whiteboard, whiteboardProgress, closeWhiteboard: () => setWhiteboardId(null), demo, setDemo, demoMode, setDemoMode, demoStatus, demoScenarioLabel, canDemo: simulation?.canDemo ?? true, notice, setNotice,
     loaded, progress, actions, thumbnails, previewProp, highlightProp, insight, insightInteraction, showAgentActions, actorInsightsEnabled }
 }
 export type OfficeSceneController = ReturnType<typeof useOfficeSceneController>

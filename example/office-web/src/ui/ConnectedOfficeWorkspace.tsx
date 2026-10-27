@@ -6,9 +6,8 @@ import { chatPath } from '@pixoffice/protocol/chat'
 import { responseEnvelopeSchema, stringifyProtocolObject } from '@pixoffice/protocol/schema'
 import { OfficeIntegrationSession } from '../application/OfficeIntegrationSession.ts'
 import { OfficeTeamSession } from '../application/OfficeTeamSession.ts'
-import { createOfficeRuntime } from '../application/createOfficeRuntime.ts'
-import { supportsCharacterPose } from '../application/poseSupport.ts'
-import { seatStepDurationMs } from '@pixoffice/scene-office/pixi/projection'
+import { officeEnvironment } from '../application/officeEnvironment.ts'
+import type { OfficeEnvironment } from '../application/officeEnvironment.ts'
 import { browserChatPersistence } from '../chat/persistence.ts'
 import { HttpChatSource } from '../chat/sources.ts'
 import { useOfficeTeamHost } from '../controller/useOfficeTeamHost.ts'
@@ -23,15 +22,14 @@ import type { OfficeLayoutControl } from './officeLayout.ts'
 import { OfficeLayoutSwitch } from './OfficeLayoutSwitch.tsx'
 import { MemberOfficeShell } from './MemberOfficeShell.tsx'
 
-export function ConnectedOfficeWorkspace({ baseUrl, renderOffice }: { baseUrl: string; renderOffice: (props: {
+export function ConnectedOfficeWorkspace({ baseUrl, renderOffice, environment = officeEnvironment }: { baseUrl: string; environment?: OfficeEnvironment; renderOffice: (props: {
   session: OfficeTeamSession; teamSelection: OfficeTeamSelection; layout: LayoutMode; pageLayout: OfficeLayoutControl; decisionOpenToken: number; integrationError: string | null
 }) => ReactNode }) {
   const [chatSource] = useState(() => new HttpChatSource(`${baseUrl.replace(/\/$/, '')}${chatPath}`))
   const [integration] = useState(() => new OfficeIntegrationSession({
-    transport: new SseMessageTransport(baseUrl), storage: localStorage,
+    transport: new SseMessageTransport(baseUrl), storage: environment.storage,
     changeLayout: layoutId => requestOfficeLayout(baseUrl, layoutId),
-    createSession: (source, sceneId) => new OfficeTeamSession(createOfficeRuntime({ sceneId, referenceLayout: true,
-      seatStepDuration: seatStepDurationMs, supportsPose: supportsCharacterPose }), source, { chatSource,
+    createSession: (source, sceneId) => new OfficeTeamSession(environment.createRuntime(sceneId, false), source, { chatSource,
       requestUi: async action => {
         const response = await fetch(`${baseUrl.replace(/\/$/, '')}${officeIntegrationPaths.ui}`, { method: 'POST',
           headers: { 'Content-Type': 'application/json' }, body: stringifyProtocolObject(action), signal: AbortSignal.timeout(65000) })
@@ -40,7 +38,7 @@ export function ConnectedOfficeWorkspace({ baseUrl, renderOffice }: { baseUrl: s
         if (!response.ok) throw new Error(`${result.msg}（${result.data?.reasonCode ?? response.status}）`)
         return officeUiPresentationSchema.parse(result.data)
       },
-      chatPersistence: browserChatPersistence(sceneId, `connected:${baseUrl}:${chatSource.historyKey ?? chatSource.kind}`) }),
+      chatPersistence: browserChatPersistence(sceneId, environment.chatKey(`connected:${baseUrl}:${chatSource.historyKey ?? chatSource.kind}`)) }),
     reply: async value => {
       const response = await fetch(`${baseUrl.replace(/\/$/, '')}${officeIntegrationPaths.reply}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: stringifyProtocolObject(value), signal: AbortSignal.timeout(10000),

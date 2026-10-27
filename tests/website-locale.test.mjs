@@ -60,6 +60,18 @@ test('GitHub links open the matching README and default to Chinese', () => {
   assert.equal(content.websiteReadme('en'), `${root}README.en.md`)
 })
 
+test('civic follows farm in homepage navigation and scene cards, with neutral naming', async () => {
+  const source = await readFile(new URL('../example/office-web/src/website/Website.tsx', import.meta.url), 'utf8')
+  assert.match(source, /t\.nav\.farm[\s\S]*?<a href=\{`\$\{base\}civic\/`\}>\{t\.nav\.civic\}/)
+  assert.match(source, /t\.examples\.farm\.action[\s\S]*?<a className="site-example" href=\{`\$\{base\}civic\/`\}>/)
+  assert.equal(content.websiteContent.zh.nav.civic, '公务')
+  const entry = await readFile(new URL('../example/office-web/civic/index.html', import.meta.url), 'utf8')
+  const main = await readFile(new URL('../example/office-web/src/civic/main.tsx', import.meta.url), 'utf8')
+  assert.doesNotMatch(source + entry + main, /警察|police/i)
+  assert.match(entry, /<title>公务 · PixOffice<\/title>/)
+  assert.match(main, /公务场景预览/)
+})
+
 test('READMEs link to each other, preserve website language, and use existing local assets', async () => {
   for (const [language, filename, other] of [
     ['zh', 'README.md', 'README.en.md'],

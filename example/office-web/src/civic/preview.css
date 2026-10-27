@@ -1,0 +1,14 @@
+.civic-preview-status {
+  position: fixed;
+  right: 12px;
+  top: 72px;
+  max-width: calc(100vw - 24px);
+  z-index: 10000;
+  padding: 6px 10px;
+  border: 1px solid #d8dfd9;
+  border-radius: 4px;
+  background: #fff;
+  color: #58675d;
+  font-size: 12px;
+  pointer-events: none;
+}

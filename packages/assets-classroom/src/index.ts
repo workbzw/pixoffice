@@ -21,8 +21,12 @@ export function bindClassroomFrames(source: CharacterManifest, uri: string): Fra
   for (const view of ['front', 'back', 'left', 'right'] as const) {
     add('core.idle', 'standing', view, `idle.${view}`)
     add('core.walk', 'standing', view, `walk.${view}`)
+    if (source.clips[`leisure.standing-${view}`]) add('core.leisure', 'standing', view, `leisure.standing-${view}`)
   }
-  for (const view of ['back', 'left', 'right'] as const) add('core.idle', 'seated', view, view === 'back' ? 'sit.back' : `talk.seated-${view}`)
+  for (const view of ['back', 'left', 'right'] as const) {
+    add('core.idle', 'seated', view, view === 'back' ? 'sit.back' : `talk.seated-${view}`)
+    if (source.clips[`leisure.seated-${view}`]) add('core.leisure', 'seated', view, `leisure.seated-${view}`)
+  }
   add('core.sit-down', 'transition', 'back', 'sit-down.back')
   add('core.stand-up', 'transition', 'back', 'stand-up.back')
   for (const base of variants.filter(v => v.actionId === 'core.idle')) {

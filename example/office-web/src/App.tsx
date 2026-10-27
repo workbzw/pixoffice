@@ -1,9 +1,7 @@
 import { useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { RuntimeWorkspace } from './components/RuntimeWorkspace.tsx'
-import { createOfficeRuntime } from './application/createOfficeRuntime.ts'
-import { browserPersistence } from '@pixoffice/runtime/adapters/storage'
-import { seatStepDurationMs } from '@pixoffice/scene-office/pixi/projection'
-import { supportsCharacterPose } from './application/poseSupport.ts'
+import { officeEnvironment } from './application/officeEnvironment.ts'
+import type { OfficeEnvironment } from './application/officeEnvironment.ts'
 import { createOfficeDataSource } from './dashboard/createSource.ts'
 import type { OfficeDataSource } from '@pixoffice/protocol/dashboard'
 import type { SceneRuntime } from '@pixoffice/runtime/SceneRuntime'
@@ -32,7 +30,7 @@ import { sceneRelayUrl } from '../../shared/scene/connectionConfig.ts'
 import { ConnectedOfficeWorkspace } from './ui/ConnectedOfficeWorkspace.tsx'
 
 function createTeamRuntime(sceneId: string) {
-  return createOfficeRuntime({ sceneId, referenceLayout: true, persistence: browserPersistence(localStorage, sceneId), seatStepDuration: seatStepDurationMs, supportsPose: supportsCharacterPose })
+  return officeEnvironment.createRuntime(sceneId, true)
 }
 
 export function OfficeApp({ dataSource, runtime: suppliedRuntime, simulation, session: suppliedSession, chatSource: suppliedChatSource, layout, pageLayout, shell, teamSelection, decisionOpenToken, integrationError }: { layout?: LayoutMode; pageLayout?: OfficeLayoutControl; shell?: ComponentType<OfficeShellProps>; dataSource: OfficeDataSource; runtime?: SceneRuntime; simulation?: OfficeSimulation; session?: OfficeTeamSession; chatSource?: OfficeChatSource; teamSelection?: OfficeTeamSelection; decisionOpenToken?: number; integrationError?: string | null }) {
@@ -53,16 +51,17 @@ export function OfficeApp({ dataSource, runtime: suppliedRuntime, simulation, se
     pendingTaskIds={pendingTaskIds} actionError={actionError} chatSession={session.chat} decisionSession={session.decisions} uiSession={session.ui} decisionOpenToken={decisionOpenToken} />
 }
 
-export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layout = 'full' }: {
+export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layout = 'full', environment = officeEnvironment }: {
   initialTeams: readonly OfficeTeamDefinition[]
   createTeam?: OfficeTeamCreator
   chatSource: OfficeChatSource
   layout?: LayoutMode
+  environment?: OfficeEnvironment
 }) {
   const createEntry = (team: OfficeTeamDefinition) => {
-    const runtime = createTeamRuntime(team.id)
+    const runtime = environment.createRuntime(team.id, true)
     return { team, session: new OfficeTeamSession(runtime, team.source, { transport: officeTeamTransport(runtime), decisionPreview: team.source.kind === 'example' && chatSource.kind === 'preview', chatSource,
-      chatPersistence: browserChatPersistence(team.id, chatSource.historyKey ?? chatSource.kind) }) }
+      chatPersistence: browserChatPersistence(team.id, environment.chatKey(chatSource.historyKey ?? chatSource.kind)) }) }
   }
   const [entries, setEntries] = useState(() => { assertOfficeDirectory(initialTeams); return initialTeams.map(createEntry) })
   const creating = useRef(false)
@@ -114,21 +113,21 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
       resolveDecision: (teamId, decisionId, choiceId) => { void sessions.get(teamId)?.decisions.choose(teamId, decisionId, choiceId) } }} layout={layout} />
 }
 
-function DemoApp() {
+function DemoApp({ environment }: { environment: OfficeEnvironment }) {
   const [dataSource] = useState(createOfficeDataSource)
   const [chatSource] = useState(() => new PreviewChatSource())
-  const [directory] = useState(() => dataSource.kind === 'example' ? new DemoOfficeDirectory(dataSource, localStorage) : undefined)
+  const [directory] = useState(() => dataSource.kind === 'example' ? new DemoOfficeDirectory(dataSource, environment.storage) : undefined)
   const [initialTeams] = useState(() => {
     const teams = directory?.list() ?? []
     return teams.length ? teams : [{ id: 'office-1', name: '办公室', sceneLabel: '办公室', source: dataSource }]
   })
-  return <OfficeTeamWorkspace initialTeams={initialTeams} createTeam={directory?.create} chatSource={chatSource}
+  return <OfficeTeamWorkspace initialTeams={initialTeams} createTeam={directory?.create} chatSource={chatSource} environment={environment}
     layout={new URLSearchParams(location.search).get('layout') === 'scene' ? 'scene' : 'full'} />
 }
 
-function App() {
+function App({ environment = officeEnvironment }: { environment?: OfficeEnvironment }) {
   const relayUrl = sceneRelayUrl()
-  return relayUrl ? <ConnectedOfficeWorkspace baseUrl={relayUrl} renderOffice={props => <OfficeApp dataSource={props.session.source} {...props} />} /> : <DemoApp />
+  return relayUrl ? <ConnectedOfficeWorkspace baseUrl={relayUrl} environment={environment} renderOffice={props => <OfficeApp dataSource={props.session.source} {...props} />} /> : <DemoApp environment={environment} />
 }
 
 export default App

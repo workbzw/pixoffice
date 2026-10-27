@@ -20,6 +20,8 @@ export function bindOfficeFrames(source: CharacterManifest, uri: string): FrameA
     add('core.idle', 'standing', view, `idle.${view}`)
     add('core.walk', 'standing', view, `walk.${view}`)
     add('core.idle', 'seated', view, view === 'back' ? 'sit.back' : `talk.seated-${view}`)
+    add('core.leisure', 'standing', view, `leisure.standing-${view}`)
+    add('core.leisure', 'seated', view, `leisure.seated-${view}`)
   }
   add('core.sit-down', 'transition', 'back', 'sit-down.back')
   add('core.stand-up', 'transition', 'back', 'stand-up.back')

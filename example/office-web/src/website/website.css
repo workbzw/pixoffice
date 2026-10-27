@@ -105,7 +105,7 @@ a.site-text-link:hover { text-decoration: underline; text-underline-offset: 5px;
 .site-footer nav { display: flex; flex-wrap: wrap; gap: 18px; font-size: 11px; color: #7f8a7c; }
 .site-footer nav a:hover { color: #304e35; }
 @media (min-height: 900px) { .site-hero-copy { padding-top: 44px; } }
-@media (max-width: 1000px) {
+@media (max-width: 1280px) {
   .site-header { height: 64px; }
   .site-menu-toggle { display: inline-flex; }
   .site-nav { display: none; position: absolute; inset: 64px 0 auto; padding: 16px 20px 22px; flex-direction: column; align-items: stretch; gap: 3px; background: #fff; border-bottom: 1px solid #e1e7de; }

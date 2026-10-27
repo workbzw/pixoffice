@@ -10,13 +10,17 @@ PixOffice is a 2D interactive scene project built with Vite, React, and PixiJS. 
 
 ## Live Demo
 
-[Website](https://pixoffice.online/?lang=en) · [Full Office](https://pixoffice.online/office/) · [Minimal Example](https://pixoffice.online/minimal/) · [Classroom](https://pixoffice.online/classroom/) · [Farm](https://pixoffice.online/farm/)
+[Website](https://pixoffice.online/?lang=en) · [Full Office](https://pixoffice.online/office/) · [Minimal Example](https://pixoffice.online/minimal/) · [Classroom](https://pixoffice.online/classroom/) · [Farm](https://pixoffice.online/farm/) · [Public Service Preview](https://pixoffice.online/civic/)
 
 ![PixOffice office: task whiteboard, walking characters and desk conversations](./docs/office-demo.gif)
 
 The default local scenario follows an ecommerce product from preparation and individual task handoffs through launch approval, sales observation, optimization and review. The flow takes about a minute, excluding time spent awaiting user decisions. Store operations and business figures use local sample data only.
 
+The top-right demo menu also offers an all-member action showcase: four-direction walking, sitting and rising, working, conversations from both sides, expressions, leisure, and whiteboard meetings. It does not advance business tasks or open approval dialogs. Leisure artwork belongs to each scene; the current characters use neutral idle poses until dedicated artwork is provided.
+
 Switch between classic and member layouts with the top-left layout control. The member sidebar retains each person's task activity. [View the full-page high-resolution screenshot](./docs/page-preview.jpeg).
+
+The public service scene at `/civic/` uses six uniformed characters and defaults to the member layout, retaining office interactions. Character artwork is still a preview, with an explicit review-pending notice.
 
 <a id="quick-start"></a>
 

@@ -13,6 +13,7 @@ import type { ActorTaskPresentation } from '@pixoffice/contracts/presentation'
 import { createOfficeRuntime } from './createOfficeRuntime.ts'
 import { commandBase, presentationCommand, projectAgents, visitCommand } from '@pixoffice/scene-office/adapters/office'
 import { OfficeSimulation } from './OfficeSimulation.ts'
+import type { OfficeDemoMode } from './OfficeSimulation.ts'
 import { OfficeDemoSource } from '../dashboard/OfficeDemoSource.ts'
 import type { Agent, AgentState } from '@pixoffice/scene-office/types'
 import type { WhiteboardProgress } from '@pixoffice/scene-office/whiteboard'
@@ -26,7 +27,7 @@ export type OfficeSceneOptions = Partial<Pick<SceneViewOptions, 'animations' | '
   taskForActor?: (id: string) => ActorTaskPresentation | undefined
   whiteboardProgress?: WhiteboardProgress
   onDraftChange?: (error: string | null) => void
-  onDemoChange?: (enabled: boolean) => void
+  onDemoChange?: (enabled: boolean, mode: OfficeDemoMode, status: string) => void
   onLoadProgress?: (progress: SceneLoadProgress) => void
   onActionProgress?: (progress: SceneActionProgress) => void
 }
@@ -67,7 +68,7 @@ export class OfficeScene extends SceneView {
     this.artwork = artwork; this.ownsRuntime = !options.runtime && !options.simulation
     this.simulation = simulation
     this.unsubscribeSimulation = simulation.subscribe(() => {
-      options.onDemoChange?.(simulation.isDemoRunning)
+      options.onDemoChange?.(simulation.isDemoRunning, simulation.demoMode, simulation.demoStatus)
       if (simulation.error) options.onDraftChange?.(simulation.error)
     })
   }
@@ -85,6 +86,10 @@ export class OfficeScene extends SceneView {
   setAgentState(id: string, state: AgentState, task?: string) { this.requireActions(); return this.runtime.submit(presentationCommand(this.runtime, id, state, task)) }
   playAgentAnimation(id: string, animation: string) { this.requireActions(); return this.runtime.submit({ ...commandBase(this.runtime), type: 'activity.start', capability: 'office.emote', participants: [{ entityId: id, role: 'actor' }], params: { animation } }) }
   get isDemoRunning() { return this.simulation.isDemoRunning }
+  get demoMode() { return this.simulation.demoMode }
+  get demoStatus() { return this.simulation.demoStatus }
+  get demoScenarioLabel() { return this.simulation.scenarioLabel }
+  setDemoMode(mode: OfficeDemoMode) { this.simulation.setDemoMode(mode) }
   setWorkstationTrial(enabled: boolean) {
     this.artwork.enabled = enabled
     this.refresh()

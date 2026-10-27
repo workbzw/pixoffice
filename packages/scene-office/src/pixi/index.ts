@@ -24,6 +24,10 @@ export function createOfficePresentation(trialEnabled: () => boolean = () => tru
     },
     createPropViews: () => createOfficePropViews(trialEnabled),
     projectActors(runtime, preview) {
+      const busy = new Set(runtime.readActivePhases().flatMap(phase => phase.participants))
+      for (const actor of preview?.actors ?? runtime.readActors()) {
+        if (actor.motion || actor.step || actor.seatTransition || actor.presentation.status !== 'idle') busy.add(actor.id)
+      }
       return projectAgents(runtime, false, preview).map(agent => {
         const pose = apartmentPoseForState(agent.state, agent.customAnimation, Boolean(agent.seated && !agent.customAnimation && agent.state !== 'walking'))
         const seated = pose === 'seated' || pose === 'typing', view = agent.viewFacing ?? 'front'
@@ -33,6 +37,7 @@ export function createOfficePresentation(trialEnabled: () => boolean = () => tru
           speech: ['idle', 'seated', 'typing'].includes(pose) && !agent.seatTransition ? agent.bubbleText : undefined,
           contactProfileId: seated ? 'office-desk-v1' : undefined }
         const transition = agent.seatTransition
+        if (agent.state === 'idle' && !agent.bubbleText && !transition && !busy.has(agent.id) && !runtime.isEditing) intent.actionId = 'core.leisure'
         if (transition) {
           const posture = transition.stage === 'rising' || transition.stage === 'sitting'
           intent.actionId = posture ? transition.stage === 'rising' ? 'core.stand-up' : 'core.sit-down' : ['entering', 'exiting'].includes(transition.stage) ? 'core.walk' : 'core.idle'

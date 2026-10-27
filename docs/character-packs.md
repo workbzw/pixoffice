@@ -106,6 +106,21 @@ public/characters/                 # 自动生成，不提交 Git
 
 现有口型素材与制作记录见 `art/characters/speech-mouths/README.md`。新增人物可以直接提供完整说话帧，无需依赖这份六人素材制作脚本。
 
+### 闲时动作
+
+`core.idle` 表示中性待机姿态，`core.leisure` 表示空闲期间的生活化动作。具体内容属于场景和人物素材：办公室可以喝咖啡，教室可以整理书本，农场可以擦汗。场景逻辑与业务接口不使用 `coffee` 等具体动作名称。
+
+三个帧资源适配器使用以下可选槽位；不同场景可将同一个槽位绑定到不同图片或动作别名：
+
+| 姿态 | 素材槽位 |
+| --- | --- |
+| 站立 | `leisure.standing-front`、`leisure.standing-back`、`leisure.standing-left`、`leisure.standing-right` |
+| 坐姿（支持坐姿的场景） | `leisure.seated-back`、`leisure.seated-left`、`leisure.seated-right` |
+
+槽位仍使用普通 `clips` 格式，可直接声明序列帧，也可显式引用该场景自己的动作。循环和各帧时长由素材包决定。新增图片、别名和配置同样需要通过素材准入，不在运行时合成端杯或喝咖啡动作。
+
+人物没有参与活动且处于空闲状态时，场景选择闲时语义。它不创建运行时命令、不预约资源、不产生业务事件；工作、移动、交谈、坐起和布局编辑立即优先。缺少相应闲时素材时，播放器使用**相同姿态、相同朝向**的中性待机；不跨姿态猜图，也不为其他未知动作提供兜底。当前六个人物尚无具体喝咖啡序列帧，因此仍显示中性待机。
+
 ### 可选独立嘴部
 
 现有六人均使用“无嘴身体帧 + 独立嘴部 Sprite”。正面/侧面站立、室内行走、坐着转头已拆分；背面不显示嘴，原有表情和历史行走暂保留原画。原图不覆盖，新底图位于各人物包的 `body/`，口型位于 `mouth/`。生成来源及导入脚本见 `art/characters/office-lead-mouth-layer/README.md` 与 `art/characters/mouth-layers/README.md`。

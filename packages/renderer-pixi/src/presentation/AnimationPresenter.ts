@@ -4,7 +4,11 @@ import type { ActorIntent, PresentedActor } from '@pixoffice/contracts/presentat
 
 export function resolveVisualRequest(manifest: VisualAssetManifest, intent: ActorIntent): VisualRequest {
   const find = (action: string) => manifest.capabilities.variants.find(v => v.actionId === action && v.poseId === intent.poseId && v.view === intent.view)
-  const base = find(intent.actionId)
+  // Leisure is optional artwork; its defined default is the same pose's neutral idle.
+  // Speech interrupts leisure rather than combining a drink/read animation with a mouth layer.
+  const base = intent.actionId === 'core.leisure'
+    ? (!intent.speech && find('core.leisure')) || find('core.idle')
+    : find(intent.actionId)
   if (!base) throw new Error(`Unsupported action: ${manifest.asset.id} / ${intent.actionId}.${intent.poseId}.${intent.view}`)
   const speech = intent.speech && find('core.speak')
   const request = { poseId: intent.poseId, view: intent.view, variantIds: [base.variantId, ...(speech ? [speech.variantId] : [])], contactProfileId: intent.contactProfileId }
@@ -26,7 +30,8 @@ export class AnimationPresenter {
   private previousGroundPosition?: PresentedActor['position']
 
   sample(actor: PresentedActor, manifest: VisualAssetManifest, dt: number): EntityPresentation {
-    const intent = actor.intent, key = `${intent.actionId}:${intent.poseId}`, ms = Math.max(0, Number.isFinite(dt) ? dt * 1000 : 0)
+    const intent = actor.intent, actionId = intent.actionId === 'core.leisure' && intent.speech ? 'core.idle' : intent.actionId
+    const key = `${actionId}:${intent.poseId}`, ms = Math.max(0, Number.isFinite(dt) ? dt * 1000 : 0)
     if (this.action !== key) { this.action = key; this.elapsedMs = 0; this.travelledDu = 0; this.generation++ }
     if (this.speech !== (intent.speech ?? '')) { this.speech = intent.speech ?? ''; this.speechMs = 0; this.speechGeneration++ }
     this.elapsedMs += ms

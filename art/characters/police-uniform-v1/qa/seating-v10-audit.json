@@ -1,0 +1,1551 @@
+{
+  "status": "preview-only",
+  "reports": [
+    {
+      "id": "office-lead",
+      "technical": "passed",
+      "measurements": {
+        "idle.front": {
+          "headWidth": 147,
+          "headHeight": 131,
+          "headArea": 12803,
+          "headCenter": 128,
+          "headTop": 67,
+          "footY": 344
+        },
+        "idle.back": {
+          "headWidth": 156,
+          "headHeight": 123,
+          "headArea": 12926,
+          "headCenter": 128.5,
+          "headTop": 67,
+          "footY": 344
+        },
+        "sit.back": {
+          "headWidth": 150,
+          "headHeight": 120,
+          "headArea": 12607,
+          "headCenter": 128.5,
+          "headTop": 134,
+          "footY": 377
+        },
+        "pose.rise-1": {
+          "headWidth": 156,
+          "headHeight": 124,
+          "headArea": 13028,
+          "headCenter": 128.5,
+          "headTop": 100,
+          "footY": 370
+        },
+        "pose.rise-3": {
+          "headWidth": 156,
+          "headHeight": 123,
+          "headArea": 12936,
+          "headCenter": 128.5,
+          "headTop": 79,
+          "footY": 357
+        },
+        "talk.seated-right": {
+          "headWidth": 153,
+          "headHeight": 126,
+          "headArea": 13190,
+          "headCenter": 128,
+          "headTop": 127,
+          "footY": 377
+        }
+      },
+      "quality": {
+        "schemaVersion": 1,
+        "id": "office-lead",
+        "digest": "a1af8673e99193b29ccf7bf405c582beba4845028372a21f26059728d9714174",
+        "passed": false,
+        "issues": [
+          {
+            "code": "registration.scale",
+            "message": "stand-up.back must use one import scale across its frames"
+          },
+          {
+            "code": "continuity.jump",
+            "message": "stand-up.back: maxSilhouetteChangeRatio 0.3844 exceeds 0.35",
+            "clip": "stand-up.back"
+          },
+          {
+            "code": "registration.scale",
+            "message": "sit-down.back must use one import scale across its frames"
+          },
+          {
+            "code": "continuity.jump",
+            "message": "sit-down.back: maxSilhouetteChangeRatio 0.3844 exceeds 0.35",
+            "clip": "sit-down.back"
+          }
+        ],
+        "actions": [
+          {
+            "name": "idle.front",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "sit.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.front",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.008266396319114078,
+            "maxSilhouetteChangeRatio": 0.08017248597504814
+          },
+          {
+            "name": "talk.seated-right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.wave",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 1,
+            "maxHeadAreaStepRatio": 0.00766906809202883,
+            "maxSilhouetteChangeRatio": 0.07939322301024429
+          },
+          {
+            "name": "emote.thinking",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.surprised",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.right",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 1,
+            "maxHeadAreaStepRatio": 0.024533413606261267,
+            "maxSilhouetteChangeRatio": 0.2658584190376098
+          },
+          {
+            "name": "work.quiet-back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-1",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-2",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-3",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-4",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "stand-up.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.032315013816395455,
+            "maxSilhouetteChangeRatio": 0.38443564613487374
+          },
+          {
+            "name": "sit-down.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.03339414610930436,
+            "maxSilhouetteChangeRatio": 0.38443564613487374
+          },
+          {
+            "name": "mouth.front-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.front-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "code-agent",
+      "technical": "passed",
+      "measurements": {
+        "idle.front": {
+          "headWidth": 160,
+          "headHeight": 148,
+          "headArea": 17200,
+          "headCenter": 128.5,
+          "headTop": 59,
+          "footY": 344
+        },
+        "idle.back": {
+          "headWidth": 153,
+          "headHeight": 131,
+          "headArea": 15132,
+          "headCenter": 128,
+          "headTop": 53,
+          "footY": 344
+        },
+        "sit.back": {
+          "headWidth": 145,
+          "headHeight": 133,
+          "headArea": 15006,
+          "headCenter": 128,
+          "headTop": 137,
+          "footY": 377
+        },
+        "pose.rise-1": {
+          "headWidth": 152,
+          "headHeight": 133,
+          "headArea": 15196,
+          "headCenter": 128.5,
+          "headTop": 84,
+          "footY": 370
+        },
+        "pose.rise-3": {
+          "headWidth": 155,
+          "headHeight": 131,
+          "headArea": 15203,
+          "headCenter": 128,
+          "headTop": 67,
+          "footY": 357
+        },
+        "talk.seated-right": {
+          "headWidth": 165,
+          "headHeight": 141,
+          "headArea": 17435,
+          "headCenter": 128,
+          "headTop": 143,
+          "footY": 377
+        }
+      },
+      "quality": {
+        "schemaVersion": 1,
+        "id": "code-agent",
+        "digest": "ae41af7c7425e0bb81f0e9688f630ee3dc11b05d16e412f679db9d0273b9df91",
+        "passed": false,
+        "issues": [
+          {
+            "code": "registration.scale",
+            "message": "stand-up.back must use one import scale across its frames"
+          },
+          {
+            "code": "continuity.jump",
+            "message": "stand-up.back: maxSilhouetteChangeRatio 0.4062 exceeds 0.35",
+            "clip": "stand-up.back"
+          },
+          {
+            "code": "registration.scale",
+            "message": "sit-down.back must use one import scale across its frames"
+          },
+          {
+            "code": "continuity.jump",
+            "message": "sit-down.back: maxSilhouetteChangeRatio 0.4062 exceeds 0.35",
+            "clip": "sit-down.back"
+          }
+        ],
+        "actions": [
+          {
+            "name": "idle.front",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "sit.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.front",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 2,
+            "maxHeadAreaStepRatio": 0.0032388663967611864,
+            "maxSilhouetteChangeRatio": 0.08485727423861908
+          },
+          {
+            "name": "talk.seated-right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.wave",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 3,
+            "maxHeadAreaStepRatio": 0.0028410967955071476,
+            "maxSilhouetteChangeRatio": 0.08261929093624715
+          },
+          {
+            "name": "emote.thinking",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.surprised",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.right",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 2,
+            "maxHeadAreaStepRatio": 0.019175233914751066,
+            "maxSilhouetteChangeRatio": 0.22584241034460795
+          },
+          {
+            "name": "work.quiet-back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-1",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-2",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-3",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-4",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "stand-up.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.012503290339562989,
+            "maxSilhouetteChangeRatio": 0.4061892659590372
+          },
+          {
+            "name": "sit-down.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.012661602025856311,
+            "maxSilhouetteChangeRatio": 0.4061892659590372
+          },
+          {
+            "name": "mouth.front-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.front-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "file-agent",
+      "technical": "passed",
+      "measurements": {
+        "idle.front": {
+          "headWidth": 150,
+          "headHeight": 134,
+          "headArea": 13935,
+          "headCenter": 128.5,
+          "headTop": 57,
+          "footY": 344
+        },
+        "idle.back": {
+          "headWidth": 155,
+          "headHeight": 125,
+          "headArea": 13660,
+          "headCenter": 128,
+          "headTop": 68,
+          "footY": 344
+        },
+        "sit.back": {
+          "headWidth": 150,
+          "headHeight": 128,
+          "headArea": 13353,
+          "headCenter": 128.5,
+          "headTop": 111,
+          "footY": 377
+        },
+        "pose.rise-1": {
+          "headWidth": 155,
+          "headHeight": 125,
+          "headArea": 13654,
+          "headCenter": 128,
+          "headTop": 106,
+          "footY": 370
+        },
+        "pose.rise-3": {
+          "headWidth": 155,
+          "headHeight": 125,
+          "headArea": 13631,
+          "headCenter": 128,
+          "headTop": 83,
+          "footY": 357
+        },
+        "talk.seated-right": {
+          "headWidth": 153,
+          "headHeight": 126,
+          "headArea": 14109,
+          "headCenter": 128,
+          "headTop": 128,
+          "footY": 377
+        }
+      },
+      "quality": {
+        "schemaVersion": 1,
+        "id": "file-agent",
+        "digest": "7c63433c68c3ae536e2c3175c7ad389e164daa8e29ec289f915005131875fcaa",
+        "passed": false,
+        "issues": [
+          {
+            "code": "registration.scale",
+            "message": "stand-up.back must use one import scale across its frames"
+          },
+          {
+            "code": "registration.scale",
+            "message": "sit-down.back must use one import scale across its frames"
+          }
+        ],
+        "actions": [
+          {
+            "name": "idle.front",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "sit.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.front",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 3,
+            "maxHeadAreaStepRatio": 0.01079758134177955,
+            "maxSilhouetteChangeRatio": 0.08006828158023085
+          },
+          {
+            "name": "talk.seated-right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.wave",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 1,
+            "maxHeadAreaStepRatio": 0.005566542151907994,
+            "maxSilhouetteChangeRatio": 0.07598955193891903
+          },
+          {
+            "name": "emote.thinking",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.surprised",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.right",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 4,
+            "maxHeadAreaStepRatio": 0.025690430314707857,
+            "maxSilhouetteChangeRatio": 0.22951444205859944
+          },
+          {
+            "name": "work.quiet-back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-1",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-2",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-3",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-4",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "stand-up.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.022044822030174327,
+            "maxSilhouetteChangeRatio": 0.23361136452495765
+          },
+          {
+            "name": "sit-down.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.022541750917396852,
+            "maxSilhouetteChangeRatio": 0.23361136452495765
+          },
+          {
+            "name": "mouth.front-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.front-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "app-agent",
+      "technical": "passed",
+      "measurements": {
+        "idle.front": {
+          "headWidth": 172,
+          "headHeight": 149,
+          "headArea": 19873,
+          "headCenter": 128.5,
+          "headTop": 81,
+          "footY": 344
+        },
+        "idle.back": {
+          "headWidth": 172,
+          "headHeight": 140,
+          "headArea": 19032,
+          "headCenter": 128.5,
+          "headTop": 67,
+          "footY": 344
+        },
+        "sit.back": {
+          "headWidth": 176,
+          "headHeight": 140,
+          "headArea": 18835,
+          "headCenter": 128.5,
+          "headTop": 124,
+          "footY": 377
+        },
+        "pose.rise-1": {
+          "headWidth": 171,
+          "headHeight": 140,
+          "headArea": 18935,
+          "headCenter": 128,
+          "headTop": 103,
+          "footY": 370
+        },
+        "pose.rise-3": {
+          "headWidth": 171,
+          "headHeight": 140,
+          "headArea": 19040,
+          "headCenter": 128,
+          "headTop": 80,
+          "footY": 357
+        },
+        "talk.seated-right": {
+          "headWidth": 170,
+          "headHeight": 144,
+          "headArea": 18753,
+          "headCenter": 128.5,
+          "headTop": 129,
+          "footY": 377
+        }
+      },
+      "quality": {
+        "schemaVersion": 1,
+        "id": "app-agent",
+        "digest": "a6f8da0e00e10079baf69be151d7c926af2ba8d0742326fe936056d12b014806",
+        "passed": false,
+        "issues": [
+          {
+            "code": "registration.scale",
+            "message": "stand-up.back must use one import scale across its frames"
+          },
+          {
+            "code": "registration.scale",
+            "message": "sit-down.back must use one import scale across its frames"
+          }
+        ],
+        "actions": [
+          {
+            "name": "idle.front",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "sit.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.front",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 4,
+            "maxHeadAreaStepRatio": 0.001509282084821706,
+            "maxSilhouetteChangeRatio": 0.09206761163239502
+          },
+          {
+            "name": "talk.seated-right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.wave",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 1,
+            "maxHeadAreaStepRatio": 0.01770477815699656,
+            "maxSilhouetteChangeRatio": 0.060067258156840296
+          },
+          {
+            "name": "emote.thinking",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.surprised",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.right",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 4,
+            "maxHeadAreaStepRatio": 0.011390002109259667,
+            "maxSilhouetteChangeRatio": 0.20301584007747112
+          },
+          {
+            "name": "work.quiet-back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-1",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-2",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-3",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-4",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "stand-up.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.005281225244256671,
+            "maxSilhouetteChangeRatio": 0.2661043846244269
+          },
+          {
+            "name": "sit-down.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.005309264666843561,
+            "maxSilhouetteChangeRatio": 0.2661043846244269
+          },
+          {
+            "name": "mouth.front-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.front-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "review-agent",
+      "technical": "passed",
+      "measurements": {
+        "idle.front": {
+          "headWidth": 147,
+          "headHeight": 134,
+          "headArea": 13778,
+          "headCenter": 128,
+          "headTop": 61,
+          "footY": 344
+        },
+        "idle.back": {
+          "headWidth": 153,
+          "headHeight": 127,
+          "headArea": 13589,
+          "headCenter": 128,
+          "headTop": 67,
+          "footY": 344
+        },
+        "sit.back": {
+          "headWidth": 148,
+          "headHeight": 128,
+          "headArea": 13506,
+          "headCenter": 128.5,
+          "headTop": 128,
+          "footY": 377
+        },
+        "pose.rise-1": {
+          "headWidth": 153,
+          "headHeight": 127,
+          "headArea": 13589,
+          "headCenter": 128,
+          "headTop": 93,
+          "footY": 370
+        },
+        "pose.rise-3": {
+          "headWidth": 153,
+          "headHeight": 126,
+          "headArea": 13508,
+          "headCenter": 128,
+          "headTop": 79,
+          "footY": 357
+        },
+        "talk.seated-right": {
+          "headWidth": 157,
+          "headHeight": 127,
+          "headArea": 14329,
+          "headCenter": 128,
+          "headTop": 122,
+          "footY": 377
+        }
+      },
+      "quality": {
+        "schemaVersion": 1,
+        "id": "review-agent",
+        "digest": "cb38469f57dd6339955760f829f1b2cf284a403d2bb4164e3e71dfce8d9922ef",
+        "passed": false,
+        "issues": [
+          {
+            "code": "registration.scale",
+            "message": "stand-up.back must use one import scale across its frames"
+          },
+          {
+            "code": "continuity.jump",
+            "message": "stand-up.back: maxSilhouetteChangeRatio 0.3596 exceeds 0.35",
+            "clip": "stand-up.back"
+          },
+          {
+            "code": "registration.scale",
+            "message": "sit-down.back must use one import scale across its frames"
+          },
+          {
+            "code": "continuity.jump",
+            "message": "sit-down.back: maxSilhouetteChangeRatio 0.3596 exceeds 0.35",
+            "clip": "sit-down.back"
+          }
+        ],
+        "actions": [
+          {
+            "name": "idle.front",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "sit.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.front",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.0061821580044568725,
+            "maxSilhouetteChangeRatio": 0.08093211752786221
+          },
+          {
+            "name": "talk.seated-right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.wave",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 1,
+            "maxHeadAreaStepRatio": 0.028490664286245693,
+            "maxSilhouetteChangeRatio": 0.08933772079125535
+          },
+          {
+            "name": "emote.thinking",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.surprised",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.right",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 1,
+            "maxHeadAreaStepRatio": 0.00959787025360792,
+            "maxSilhouetteChangeRatio": 0.20140834950061076
+          },
+          {
+            "name": "work.quiet-back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-1",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-2",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-3",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-4",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "stand-up.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.006958839206396172,
+            "maxSilhouetteChangeRatio": 0.35958030361015436
+          },
+          {
+            "name": "sit-down.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.006910748419350132,
+            "maxSilhouetteChangeRatio": 0.35958030361015436
+          },
+          {
+            "name": "mouth.front-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.front-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "data-agent",
+      "technical": "passed",
+      "measurements": {
+        "idle.front": {
+          "headWidth": 161,
+          "headHeight": 143,
+          "headArea": 17395,
+          "headCenter": 128,
+          "headTop": 66,
+          "footY": 344
+        },
+        "idle.back": {
+          "headWidth": 166,
+          "headHeight": 135,
+          "headArea": 17471,
+          "headCenter": 128.5,
+          "headTop": 73,
+          "footY": 344
+        },
+        "sit.back": {
+          "headWidth": 172,
+          "headHeight": 137,
+          "headArea": 17531,
+          "headCenter": 128.5,
+          "headTop": 136,
+          "footY": 377
+        },
+        "pose.rise-1": {
+          "headWidth": 166,
+          "headHeight": 133,
+          "headArea": 17257,
+          "headCenter": 128.5,
+          "headTop": 87,
+          "footY": 370
+        },
+        "pose.rise-3": {
+          "headWidth": 167,
+          "headHeight": 133,
+          "headArea": 17219,
+          "headCenter": 128,
+          "headTop": 86,
+          "footY": 357
+        },
+        "talk.seated-right": {
+          "headWidth": 156,
+          "headHeight": 131,
+          "headArea": 15594,
+          "headCenter": 128.5,
+          "headTop": 145,
+          "footY": 377
+        }
+      },
+      "quality": {
+        "schemaVersion": 1,
+        "id": "data-agent",
+        "digest": "5b4e8a31676eef1a893626d311a6b60b1e27af3fbc9ed49aa879f133a69679c6",
+        "passed": false,
+        "issues": [
+          {
+            "code": "pixels.static",
+            "message": "work.quiet-back/frames/work-quiet-back-2.png: 25348 pixels changed outside allowed regions",
+            "clip": "work.quiet-back",
+            "file": "frames/work-quiet-back-2.png"
+          },
+          {
+            "code": "pixels.static",
+            "message": "work.quiet-back/frames/work-quiet-back-3.png: 25764 pixels changed outside allowed regions",
+            "clip": "work.quiet-back",
+            "file": "frames/work-quiet-back-3.png"
+          },
+          {
+            "code": "pixels.static",
+            "message": "work.quiet-back/frames/work-quiet-back-4.png: 25861 pixels changed outside allowed regions",
+            "clip": "work.quiet-back",
+            "file": "frames/work-quiet-back-4.png"
+          },
+          {
+            "code": "registration.scale",
+            "message": "stand-up.back must use one import scale across its frames"
+          },
+          {
+            "code": "continuity.jump",
+            "message": "stand-up.back: maxSilhouetteChangeRatio 0.4095 exceeds 0.35",
+            "clip": "stand-up.back"
+          },
+          {
+            "code": "registration.scale",
+            "message": "sit-down.back must use one import scale across its frames"
+          },
+          {
+            "code": "continuity.jump",
+            "message": "sit-down.back: maxSilhouetteChangeRatio 0.4095 exceeds 0.35",
+            "clip": "sit-down.back"
+          }
+        ],
+        "actions": [
+          {
+            "name": "idle.front",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "idle.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "sit.back",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.front",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.0030381198051017133,
+            "maxSilhouetteChangeRatio": 0.07830106905518636
+          },
+          {
+            "name": "talk.seated-right",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.wave",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.back",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 1,
+            "maxHeadAreaStepRatio": 0.0012041284403669916,
+            "maxSilhouetteChangeRatio": 0.08897580053776583
+          },
+          {
+            "name": "emote.thinking",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "emote.surprised",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "walk.right",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 2,
+            "maxHeadAreaStepRatio": 0.0022158498435870255,
+            "maxSilhouetteChangeRatio": 0.24079972890545578
+          },
+          {
+            "name": "work.quiet-back",
+            "frames": 4,
+            "outsideChanges": 76973,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-1",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-2",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-3",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "pose.rise-4",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "stand-up.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.01587761488091788,
+            "maxSilhouetteChangeRatio": 0.40946625833971345
+          },
+          {
+            "name": "sit-down.back",
+            "frames": 6,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0.5,
+            "maxHeadAreaStepRatio": 0.015629456391535013,
+            "maxSilhouetteChangeRatio": 0.40946625833971345
+          },
+          {
+            "name": "mouth.front-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.front-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-closed",
+            "frames": 1,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          },
+          {
+            "name": "mouth.right-speaking",
+            "frames": 4,
+            "outsideChanges": 0,
+            "maxHeadStepPx": 0,
+            "maxHeadAreaStepRatio": 0,
+            "maxSilhouetteChangeRatio": 0
+          }
+        ]
+      }
+    }
+  ]
+}

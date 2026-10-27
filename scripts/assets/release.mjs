@@ -4,7 +4,7 @@ import { readAssetCatalogFiles } from './export-pack.mjs'
 
 const shared = ['LICENSE.txt', 'THIRD_PARTY_NOTICES.txt', 'pixoffice-config.js']
 const branding = ['brand/logo.png', 'brand/title.png', 'favicon.svg', 'site/icon.png', 'site/wordmark.webp',
-  'site/office-scene.webp', 'site/office-preview.webp', 'site/classroom-preview.webp', 'site/farm-preview.webp']
+  'site/office-scene.webp', 'site/office-preview.webp', 'site/classroom-preview.webp', 'site/farm-preview.webp', 'site/civic-preview.webp']
 
 /** Publish current catalog entries, never the contents of an old generated directory. */
 export async function collectReleaseAssets(directory, product = 'website') {
@@ -32,6 +32,7 @@ export async function collectReleaseAssets(directory, product = 'website') {
   for (const scene of product === 'website' ? ['classroom', 'farm'] : ['classroom', 'farm'].filter(scene => scene === product)) {
     await catalog(`${scene}-assets/asset-pack.json`, `${scene}-assets`)
   }
+  if (product === 'website') await catalog('civic-assets/asset-pack.json', 'civic-assets')
   return files
 }
 
