@@ -34,6 +34,10 @@ export async function collectReleaseAssets(directory, product = 'website') {
   }
   if (product === 'website') {
     await add('site/customization-contact.jpg')
+    await add('site/public-security.png')
+    await add('site/analytics-config.js')
+    await add('site/analytics.js')
+    await add('site/sponsor-contact.png')
     await catalog('civic-assets/asset-pack.json', 'civic-assets')
   }
   return files

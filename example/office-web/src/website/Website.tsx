@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork, GraduationCap, Landmark, Menu, MessageCircle, Monitor, Sprout, Terminal, X } from 'lucide-react'
 import { websiteContent, websiteReadme, websiteRepository as repository, websiteSnippets } from './content.ts'
 import { readWebsiteLocale, rememberWebsiteLocale, type WebsiteLocale } from './locale.ts'
+import { CodexPromotion } from './CodexPromotion.tsx'
 
 const base = import.meta.env.BASE_URL
 const docs = `${repository}/blob/main/docs/architecture/README.md`
@@ -65,6 +66,7 @@ export function Website() {
     }}>
       <div className="site-header-inner">
         <a className="site-brand" href={homeHref} aria-label={t.nav.homeLabel}><img src={`${base}site/wordmark.webp`} width="480" height="160" alt="PixOffice" /></a>
+        <CodexPromotion label={t.promotion.label} title={t.promotion.title} locale={locale} />
         <nav id="site-navigation" aria-label={t.nav.label} className={menuOpen ? 'site-nav is-open' : 'site-nav'} onClick={() => setMenuOpen(false)}>
           <a href={homeHref} aria-current="page">{t.nav.home}</a>
           <button type="button" onClick={openContact}><MessageCircle size={15} /> {t.contact.action}</button>
@@ -155,6 +157,12 @@ export function Website() {
       </div>
     </dialog>
 
-    <footer className="site-footer"><div className="site-container"><a className="site-brand" href={homeHref} aria-label={t.nav.returnHome}><img src={`${base}site/wordmark.webp`} width="480" height="160" loading="lazy" alt="PixOffice" /></a><p>{t.footer.tagline}</p><nav aria-label={t.footer.resources}><a href={readmeHref} target="_blank" rel="noreferrer">GitHub</a><a href={docs} target="_blank" rel="noreferrer">{t.nav.docs}</a><a href={`${base}LICENSE.txt`} target="_blank" rel="noreferrer">{t.footer.license}</a><a href={`${base}THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">{t.footer.notices}</a></nav></div></footer>
+    <footer className="site-footer">
+      <div className="site-container"><a className="site-brand" href={homeHref} aria-label={t.nav.returnHome}><img src={`${base}site/wordmark.webp`} width="480" height="160" loading="lazy" alt="PixOffice" /></a><p>{t.footer.tagline}</p><nav aria-label={t.footer.resources}><a href={readmeHref} target="_blank" rel="noreferrer">GitHub</a><a href={docs} target="_blank" rel="noreferrer">{t.nav.docs}</a><a href={`${base}LICENSE.txt`} target="_blank" rel="noreferrer">{t.footer.license}</a><a href={`${base}THIRD_PARTY_NOTICES.txt`} target="_blank" rel="noreferrer">{t.footer.notices}</a></nav></div>
+      <div id="website-filings" className="site-container site-legal" aria-label={t.footer.filing}>
+        <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2022031958号-5</a>
+        <a href="https://beian.mps.gov.cn/#/query/webSearch?code=11011402013434" target="_blank" rel="noopener noreferrer"><img src={`${base}site/public-security.png`} width="20" height="20" alt="" /><span>京公网安备11011402013434号</span></a>
+      </div>
+    </footer>
   </div>
 }

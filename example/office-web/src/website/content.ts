@@ -11,6 +11,7 @@ const zh = {
     label: '官网导航', homeLabel: 'PixOffice 首页', returnHome: '返回 PixOffice 首页',
     openMenu: '打开导航菜单', closeMenu: '关闭导航菜单', language: '网站语言', skip: '跳至主要内容',
   },
+  promotion: { label: '广告', title: 'Codex 低价折扣' },
   examples: {
     title: 'PixOffice 场景',
     description: '选择一个场景，看看协作如何发生。',
@@ -37,7 +38,7 @@ const zh = {
     gateway: 'Fastify · 场景消息转发', message: '一起核对这份数据。',
   },
   footer: {
-    tagline: '让每一次协作，都有一个看得见的空间。', resources: '项目资源', license: '项目许可', notices: '第三方声明',
+    tagline: '让每一次协作，都有一个看得见的空间。', resources: '项目资源', license: '项目许可', notices: '第三方声明', filing: '网站备案信息',
   },
 }
 
@@ -52,6 +53,7 @@ const en: typeof zh = {
     label: 'Main navigation', homeLabel: 'PixOffice home', returnHome: 'Back to PixOffice home',
     openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu', language: 'Website language', skip: 'Skip to main content',
   },
+  promotion: { label: 'Ad', title: 'Codex Low-price Deals' },
   examples: {
     title: 'PixOffice Scenes',
     description: 'Choose a scene and see collaboration in motion.',
@@ -78,7 +80,7 @@ const en: typeof zh = {
     gateway: 'Fastify · Scene message relay', message: "Let's review this data together.",
   },
   footer: {
-    tagline: 'A visible space for every collaboration.', resources: 'Project resources', license: 'Project license', notices: 'Third-party notices',
+    tagline: 'A visible space for every collaboration.', resources: 'Project resources', license: 'Project license', notices: 'Third-party notices', filing: 'Website registrations',
   },
 }
 
