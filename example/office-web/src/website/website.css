@@ -151,7 +151,7 @@ body:has(.site-contact-dialog[open]) { overflow: hidden; }
 
 /* Shared advertising partnership dialog, matching the HelloWorld contact entry. */
 body:has(.site-sponsor-dialog[open]) { overflow: hidden; }
-.site-sponsor-dialog { position: fixed; width: min(400px, calc(100% - 36px)); max-height: calc(100dvh - 36px); box-sizing: border-box; margin: auto; padding: 37px 30px 27px; border: 0; border-top: 4px solid #2454ff; border-radius: 0; background: #f8f7f4; color: #141414; font: inherit; text-align: center; overflow: auto; box-shadow: 0 25px 100px #080e2640; }
+.site-sponsor-dialog { position: fixed; width: min(560px, calc(100% - 36px)); max-height: calc(100dvh - 36px); box-sizing: border-box; margin: auto; padding: 37px 30px 27px; border: 0; border-top: 4px solid #2454ff; border-radius: 0; background: #f8f7f4; color: #141414; font: inherit; text-align: center; overflow: auto; box-shadow: 0 25px 100px #080e2640; }
 .site-sponsor-dialog::backdrop { background: #0b10249c; backdrop-filter: blur(7px); }
 .site-sponsor-close { position: absolute; top: 6px; right: 7px; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 0; background: transparent; color: #696964; cursor: pointer; }
 .site-sponsor-close:hover { background: #e9e9e5; color: #141414; }
@@ -159,7 +159,7 @@ body:has(.site-sponsor-dialog[open]) { overflow: hidden; }
 .site-sponsor-dialog .site-sponsor-eyebrow { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 7px; line-height: 1.4; letter-spacing: .6px; margin: 7px 0 18px; color: #2454ff; }
 .site-sponsor-dialog h2 { margin: 0 0 13px; color: #141414; font-size: 30px; font-weight: 600; line-height: 1.4; letter-spacing: -1px; white-space: pre-line; }
 .site-sponsor-dialog .site-sponsor-description { margin: 0; color: #696964; font-size: 11px; line-height: 1.8; }
-.site-sponsor-qr { display: block; width: min(210px, 100%); height: auto; box-sizing: border-box; padding: 8px; margin: 24px auto 20px; border: 1px solid #d7d7d1; background: white; }
+.site-sponsor-qr { display: block; width: min(210px, 100%); height: auto; box-sizing: border-box; padding: 8px; margin: 0 auto; border: 1px solid #d7d7d1; background: white; }
 .site-sponsor-dialog .site-sponsor-note { margin: 0; color: #696964; font-size: 9px; line-height: 1.8; }
 @media (max-width: 600px) {
   .site-promotion-contact { font-size: 10px; gap: 7px; padding-inline: 9px; }
@@ -171,4 +171,19 @@ body:has(.site-sponsor-dialog[open]) { overflow: hidden; }
 @media (max-width: 360px) {
   .site-promotion { gap: 6px; }
   .site-promotion-contact { font-size: 9px; gap: 6px; padding-inline: 8px; }
+}
+
+.site-sponsor-channels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 24px 0 18px; }
+.site-sponsor-code { margin: 0; min-width: 0; }
+.site-sponsor-code > a { display: block; max-width: 210px; margin-inline: auto; }
+.site-sponsor-code figcaption { margin-top: 10px; color: #141414; font-size: 12px; font-weight: 600; line-height: 1.5; }
+.site-sponsor-dialog .site-sponsor-hint { margin: 0 0 12px; color: #696964; font-size: 10px; line-height: 1.8; }
+@media (max-width: 600px) {
+  .site-sponsor-channels { gap: 14px; margin-top: 22px; }
+  .site-sponsor-code figcaption { font-size: 11px; }
+  .site-sponsor-dialog .site-sponsor-hint { font-size: 9px; }
+}
+@media (max-width: 360px) {
+  .site-sponsor-channels { gap: 10px; }
+  .site-sponsor-dialog { padding-inline: 18px; }
 }

@@ -6,7 +6,7 @@
 - `wordmark.webp`: reduced-size web copy of the selected `public/brand/title.png` brand asset.
 - `icon.png`: small browser icon derived from the selected `public/brand/logo.png` mascot.
 - `public-security.png`: official public-security filing icon, copied from the HelloWorld homepage asset and originally downloaded from <https://beian.mps.gov.cn/img/ghs.png>. The website footer displays 京ICP备2022031958号-5 and 京公网安备11011402013434号, with links to the MIIT filing system and the matching public-security record. This icon is included in the website release asset list.
-- `sponsor-contact.png`: the same author WeChat QR code used by HelloWorld's advertising partnership dialog, originally from `docs/wechat-qr.png`. The header's “Advertise” link opens a matching, localized dialog alongside the Codex promotion. The native dialog supports its close button, Escape, backdrop dismissal, and focus return; modified link clicks open the QR image directly. This asset is included in the website release list.
+- `sponsor-wechat.png` / `sponsor-whatsapp.png`: optimized 480×480 contact QR images (33,284 / 15,523 bytes), shared with HelloWorld and PlantBox. WeChat comes from `docs/wechat-qr.png`; WhatsApp comes from the user-provided QR image. Both are included in the release asset list. The localized partnership dialog shows both channels, loads the small images eagerly, and supports click-to-enlarge, close, Escape, backdrop dismissal, and focus return. Modified partnership-link clicks open the WeChat image directly. Offline decoding confirms the compressed images preserve the original QR payloads.
 
 These assets reuse the project's existing artwork. The website does not load the scene runtime or character atlases.
 

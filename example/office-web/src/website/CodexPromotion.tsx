@@ -7,6 +7,6 @@ export function CodexPromotion({ label, title, locale }: { label: string; title:
     <a className="site-promotion-link" href="https://aivojet.link/" target="_blank" rel="sponsored noopener" data-analytics-event="codex-ad-click">
       <span>{title}</span><ArrowUpRight size={18} strokeWidth={1.6} aria-hidden="true" />
     </a>
-    <SponsorContact locale={locale} qrSrc={`${import.meta.env.BASE_URL}site/sponsor-contact.png`} />
+    <SponsorContact locale={locale} wechatSrc={`${import.meta.env.BASE_URL}site/sponsor-wechat.png`} whatsappSrc={`${import.meta.env.BASE_URL}site/sponsor-whatsapp.png`} />
   </div>
 }
