@@ -3,6 +3,7 @@ import { ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork
 import { websiteContent, websiteReadme, websiteRepository as repository, websiteSnippets } from './content.ts'
 import { readWebsiteLocale, rememberWebsiteLocale, type WebsiteLocale } from './locale.ts'
 import { CodexPromotion } from './CodexPromotion.tsx'
+import { ContactQrCodes } from './ContactQrCodes.tsx'
 
 const base = import.meta.env.BASE_URL
 const docs = `${repository}/blob/main/docs/architecture/README.md`
@@ -110,8 +111,9 @@ export function Website() {
             </a>
             <article id="customization" className="site-contact-card">
               <div className="site-contact-preview">
-                <button className="site-qr-button" type="button" aria-label={t.contact.enlarge} title={t.contact.enlarge} onClick={openContact}>
-                  <img src={`${base}site/customization-contact.jpg`} width="638" height="637" loading="lazy" alt={t.contact.qrAlt} />
+                <button className="site-qr-button site-contact-preview-codes" type="button" aria-label={t.contact.enlarge} title={t.contact.enlarge} onClick={openContact}>
+                  <span><img src={`${base}site/author-wechat.png`} width="480" height="480" loading="lazy" alt={t.contact.qrAlt} /><span>{t.contact.wechatLabel}</span></span>
+                  <span><img src={`${base}site/sponsor-whatsapp.png`} width="480" height="480" loading="lazy" alt={t.contact.whatsappAlt} /><span>WhatsApp</span></span>
                 </button>
               </div>
               <div className="site-example-copy">
@@ -152,7 +154,7 @@ export function Website() {
           <form method="dialog"><button className="site-contact-close" aria-label={t.contact.close} title={t.contact.close}><X size={20} /></button></form>
         </div>
         <p id="contact-description">{t.contact.description}</p>
-        <img className="site-contact-qr" src={`${base}site/customization-contact.jpg`} width="638" height="637" alt={t.contact.qrAlt} />
+        <ContactQrCodes locale={locale} wechatSrc={`${base}site/author-wechat.png`} whatsappSrc={`${base}site/sponsor-whatsapp.png`} />
         <p className="site-contact-channel">{t.contact.channel}</p>
       </div>
     </dialog>

@@ -1,5 +1,6 @@
 # Website Media
 
+- `author-wechat.png`: optimized author contact QR (480×480), preserving the original `customization-contact.jpg` payload. The navigation contact button, scene customization preview, and contact dialog offer WeChat and WhatsApp using the shared `ContactQrCodes` component. The original JPEG remains as a legacy asset.
 - `office-scene.webp`: screenshot of the running minimal office example, captured without browser chrome or navigation.
 - `office-preview.webp`: optimized copy of the existing `docs/page-preview.jpeg` product screenshot.
 - `classroom-preview.webp`: screenshot of the running classroom example with enlarged characters and furniture, captured from `/classroom/`.

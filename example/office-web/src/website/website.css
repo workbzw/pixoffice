@@ -60,7 +60,7 @@ a.site-text-link:hover, button.site-text-link:hover { text-decoration: underline
 .site-contact-preview { display: flex; align-items: center; justify-content: center; background: #f2f7f3; border-bottom-color: #dce8df; padding: 16px; }
 .site-qr-button { display: flex; width: 176px; max-width: 100%; aspect-ratio: 1; padding: 0; border: 0; background: #fff; }
 .site-qr-button img { display: block; width: 100%; height: 100%; object-fit: contain; }
-.site-contact-dialog { width: min(420px, calc(100% - 32px)); max-height: calc(100svh - 32px); padding: 0; border: 1px solid #dce6df; border-radius: 8px; background: #fff; color: #283a2f; box-shadow: 0 20px 80px #12261b2e; overflow: auto; }
+.site-contact-dialog { width: min(560px, calc(100% - 32px)); max-height: calc(100svh - 32px); padding: 0; border: 1px solid #dce6df; border-radius: 8px; background: #fff; color: #283a2f; box-shadow: 0 20px 80px #12261b2e; overflow: auto; }
 .site-contact-dialog::backdrop { background: #172b2366; }
 body:has(.site-contact-dialog[open]) { overflow: hidden; }
 .site-contact-dialog-content { padding: 24px; }
@@ -69,7 +69,6 @@ body:has(.site-contact-dialog[open]) { overflow: hidden; }
 .site-contact-dialog p { color: #6c7970; font-size: 13px; line-height: 1.8; }
 .site-contact-close { display: flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 5px; background: #f1f4f2; color: #63736a; }
 .site-contact-close:hover { background: #e7ede9; color: #264c36; }
-.site-contact-qr { display: block; width: 316px; height: auto; margin: 24px auto 16px; }
 .site-contact-dialog .site-contact-channel { text-align: center; font-size: 12px; }
 .site-start { background: #f4f6f3; border-top: 1px solid #e9ede7; }
 .site-start-grid { display: grid; grid-template-columns: .8fr 1.2fr; gap: 70px; align-items: center; }
@@ -159,7 +158,7 @@ body:has(.site-sponsor-dialog[open]) { overflow: hidden; }
 .site-sponsor-dialog .site-sponsor-eyebrow { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 7px; line-height: 1.4; letter-spacing: .6px; margin: 7px 0 18px; color: #2454ff; }
 .site-sponsor-dialog h2 { margin: 0 0 13px; color: #141414; font-size: 30px; font-weight: 600; line-height: 1.4; letter-spacing: -1px; white-space: pre-line; }
 .site-sponsor-dialog .site-sponsor-description { margin: 0; color: #696964; font-size: 11px; line-height: 1.8; }
-.site-sponsor-qr { display: block; width: min(210px, 100%); height: auto; box-sizing: border-box; padding: 8px; margin: 0 auto; border: 1px solid #d7d7d1; background: white; }
+.site-contact-code-image { display: block; width: min(210px, 100%); height: auto; box-sizing: border-box; padding: 8px; margin: 0 auto; border: 1px solid #d7d7d1; background: white; }
 .site-sponsor-dialog .site-sponsor-note { margin: 0; color: #696964; font-size: 9px; line-height: 1.8; }
 @media (max-width: 600px) {
   .site-promotion-contact { font-size: 10px; gap: 7px; padding-inline: 9px; }
@@ -173,17 +172,22 @@ body:has(.site-sponsor-dialog[open]) { overflow: hidden; }
   .site-promotion-contact { font-size: 9px; gap: 6px; padding-inline: 8px; }
 }
 
-.site-sponsor-channels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 24px 0 18px; }
-.site-sponsor-code { margin: 0; min-width: 0; }
-.site-sponsor-code > a { display: block; max-width: 210px; margin-inline: auto; }
-.site-sponsor-code figcaption { margin-top: 10px; color: #141414; font-size: 12px; font-weight: 600; line-height: 1.5; }
-.site-sponsor-dialog .site-sponsor-hint { margin: 0 0 12px; color: #696964; font-size: 10px; line-height: 1.8; }
+.site-contact-channels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin: 24px 0 18px; }
+.site-contact-code { margin: 0; min-width: 0; }
+.site-contact-code > a { display: block; max-width: 210px; margin-inline: auto; }
+.site-contact-code figcaption { margin-top: 10px; color: #141414; font-size: 12px; font-weight: 600; line-height: 1.5; }
+.site-contact-dialog .site-contact-hint, .site-sponsor-dialog .site-contact-hint { margin: 0 0 12px; color: #696964; font-size: 10px; line-height: 1.8; }
 @media (max-width: 600px) {
-  .site-sponsor-channels { gap: 14px; margin-top: 22px; }
-  .site-sponsor-code figcaption { font-size: 11px; }
-  .site-sponsor-dialog .site-sponsor-hint { font-size: 9px; }
+  .site-contact-channels { gap: 14px; margin-top: 22px; }
+  .site-contact-code figcaption { font-size: 11px; }
+  .site-contact-dialog .site-contact-hint, .site-sponsor-dialog .site-contact-hint { font-size: 9px; }
 }
 @media (max-width: 360px) {
-  .site-sponsor-channels { gap: 10px; }
+  .site-contact-channels { gap: 10px; }
   .site-sponsor-dialog { padding-inline: 18px; }
 }
+
+.site-qr-button.site-contact-preview-codes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: min(280px, 100%); aspect-ratio: auto; background: transparent; }
+.site-contact-preview-codes > span { display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; font-size: 11px; line-height: 1.4; font-weight: 600; color: #42614a; }
+.site-contact-preview-codes img { width: min(116px, 100%); height: auto; aspect-ratio: 1; }
+@media (max-width: 360px) { .site-contact-preview { padding: 12px; } .site-qr-button.site-contact-preview-codes { gap: 12px; } }

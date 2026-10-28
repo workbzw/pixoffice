@@ -24,8 +24,9 @@ const zh = {
   },
   contact: {
     label: '专属场景', title: '场景定制', description: '扫码联系作者，聊聊你的场景与人物需求。',
-    action: '联系作者', enlarge: '放大联系作者二维码', qrAlt: '场景定制联系作者的微信二维码',
-    dialogTitle: '场景定制 · 联系作者', close: '关闭联系窗口', channel: '微信扫码联系作者',
+    action: '联系作者', enlarge: '查看微信和 WhatsApp 联系方式', qrAlt: '场景定制联系作者的微信二维码',
+    wechatLabel: '微信', whatsappAlt: '场景定制联系作者的 WhatsApp 二维码',
+    dialogTitle: '场景定制 · 联系作者', close: '关闭联系窗口', channel: '微信 / WhatsApp 均可联系',
   },
   developer: {
     eyebrow: '面向开发者', title: '你的业务逻辑。\n你的可视化办公室。',
@@ -66,8 +67,9 @@ const en: typeof zh = {
   },
   contact: {
     label: 'Made for you', title: 'Custom Scenes', description: 'Scan to contact the author about your scene and character needs.',
-    action: 'Contact the author', enlarge: 'Enlarge the contact QR code', qrAlt: 'WeChat QR code for custom scene inquiries',
-    dialogTitle: 'Custom Scenes · Contact', close: 'Close contact window', channel: 'Scan with WeChat to contact the author',
+    action: 'Contact the author', enlarge: 'View WeChat and WhatsApp contact codes', qrAlt: 'WeChat QR code for custom scene inquiries',
+    wechatLabel: 'WeChat', whatsappAlt: 'WhatsApp QR code for custom scene inquiries',
+    dialogTitle: 'Custom Scenes · Contact', close: 'Close contact window', channel: 'Contact via WeChat or WhatsApp',
   },
   developer: {
     eyebrow: 'Built for developers', title: 'Your business logic.\nYour visual workspace.',

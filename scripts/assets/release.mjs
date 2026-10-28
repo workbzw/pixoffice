@@ -39,6 +39,7 @@ export async function collectReleaseAssets(directory, product = 'website') {
     await add('site/analytics.js')
     await add('site/sponsor-wechat.png')
     await add('site/sponsor-whatsapp.png')
+    await add('site/author-wechat.png')
     await catalog('civic-assets/asset-pack.json', 'civic-assets')
   }
   return files
