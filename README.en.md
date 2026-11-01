@@ -10,7 +10,7 @@ PixOffice is a 2D interactive scene project built with Vite, React, and PixiJS. 
 
 ## Live Demo
 
-[Website](https://pixoffice.online/?lang=en) · [Full Office](https://pixoffice.online/office/) · [Minimal Example](https://pixoffice.online/minimal/) · [Classroom](https://pixoffice.online/classroom/) · [Farm](https://pixoffice.online/farm/) · [Public Service Preview](https://pixoffice.online/civic/)
+[Website](https://pixoffice.online/?lang=en) · [Full Office](https://pixoffice.online/office/) · [Minimal Example](https://pixoffice.online/minimal/) · [Classroom](https://pixoffice.online/classroom/) · [Farm](https://pixoffice.online/farm/) · [Public Service Preview](https://pixoffice.online/civic/) · [Collaboration Office](https://pixoffice.online/collaboration/)
 
 ![PixOffice office: task whiteboard, walking characters and desk conversations](./docs/office-demo.gif)
 
@@ -21,6 +21,8 @@ The top-right demo menu also offers an all-member action showcase: four-directio
 Switch between classic and member layouts with the top-left layout control. The member sidebar retains each person's task activity. [View the full-page high-resolution screenshot](./docs/page-preview.jpeg).
 
 The public service scene at `/civic/` uses six uniformed characters and defaults to the member layout. Its independent community-service story covers individual task handoffs, plan approval, on-site coordination, follow-up and archiving, including matching profiles, boards, tasks and chat. Character artwork is still a preview, with an explicit review-pending notice.
+
+The collaboration office at `/collaboration/` has an adaptive panoramic background with a pure-white floor, a continuous flat rear wall, persistent right-hand windows, filing cabinets, a water dispenser and a noticeboard on the left, plus window-side office storage and coffee equipment. A separate large whiteboard sits above the centered workstations, with floating chat and scene controls. Its default farm-inspired rounded layout includes the member sidebar and current-conversation task statistics. Scenes and layouts remain independent: classic, members and rounded layouts are available without replacing the runtime. Its local directory, map and chat records are stored separately from other entries.
 
 <a id="quick-start"></a>
 

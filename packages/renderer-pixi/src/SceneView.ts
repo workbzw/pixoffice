@@ -11,7 +11,7 @@ import type { AnimationRegistry } from './animation/AnimationRegistry.ts'
 import { AnimationResources } from './presentation/AnimationResources.ts'
 import { ActorView } from './ActorView.ts'
 import type { PropView, PropViewRegistry } from './PropViewRegistry.ts'
-import type { SceneAmbientView, ScenePresentationPack } from './ScenePresentationPack.ts'
+import type { SceneAmbientView, SceneBackdrop, ScenePresentationPack } from './ScenePresentationPack.ts'
 import { renderResolution, watchPixelDensity } from './pixelDensity.ts'
 import type { SceneProjection } from '@pixoffice/contracts/projection'
 import { createOrthogonalProjection, pickGridCell } from './projection.ts'
@@ -19,6 +19,8 @@ import { createOrthogonalProjection, pickGridCell } from './projection.ts'
 export type SceneLoadProgress = { completed: number; total: number }
 export type SceneActionProgress = SceneLoadProgress & { ready: boolean; error?: string }
 export interface SceneViewOptions {
+  /** Read-only, manually sampled views can share one offscreen renderer. */
+  previewRenderer?: Application
   runtime: SceneReadPort
   onStep?: (elapsedMs: number) => void
   dispatchCommand?: (command: SceneCommand) => CommandResult
@@ -48,6 +50,7 @@ export class SceneView {
   private agentEntities = new Map<string, ActorView>()
   private propViews = new Map<string, PropView>()
   private ambientViews: SceneAmbientView[] = []
+  private backdrop?: SceneBackdrop
   private propViewTemplates = new Map<string, Template>()
   private viewRegistry: PropViewRegistry
   private pack: ScenePresentationPack
@@ -68,6 +71,7 @@ export class SceneView {
   private firstFrameReady = false
   private actionPreparation?: Promise<void>
   private initialization?: Promise<void>
+  private previewStage?: Container
 
   constructor(options: SceneViewOptions) {
     this.options = options
@@ -75,6 +79,12 @@ export class SceneView {
     this.projection = options.pack.projection ?? createOrthogonalProjection(options.pack.cellPixels)
     this.viewRegistry = options.propViews ?? options.pack.createPropViews()
     this.runtime = options.runtime
+    this.renderingSuspended = !!options.previewRenderer
+  }
+  private get stage() { return this.previewStage ?? this.app?.stage }
+  private render() {
+    if (this.previewStage) this.app?.renderer.render({ container: this.previewStage, clear: true })
+    else this.app?.render()
   }
   protected onReady() {}
   protected onRevision() {}
@@ -96,23 +106,26 @@ export class SceneView {
     // Observe failures immediately, even while the renderer is still initializing.
     const backgroundReady = Promise.resolve().then(() => this.pack.loadBackground()).then(
       value => ({ status: 'fulfilled' as const, value }), reason => ({ status: 'rejected' as const, reason }))
-    const app = new Application()
+    const shared = this.options.previewRenderer
+    const app = shared ?? new Application()
     try {
-      await app.init({ width, height, backgroundColor: this.pack.rendering?.backgroundColor ?? 0xffffff,
+      if (!shared) await app.init({ width, height, backgroundColor: this.pack.rendering?.backgroundColor ?? 0xffffff,
         antialias: this.pack.rendering?.antialias ?? true, roundPixels: this.pack.rendering?.roundPixels ?? false, resolution: renderResolution(), autoDensity: true })
     } catch (error) {
-      try { if (app.renderer) app.destroy(true, { children: true }); else app.stage.destroy({ children: true }) }
+      try { if (!shared) { if (app.renderer) app.destroy({ removeView: true, releaseGlobalResources: false }, { children: true }); else app.stage.destroy({ children: true }) } }
       catch (reason) { console.warn('[SceneView] partial application cleanup failed', reason) }
       throw error
     }
-    if (this.destroyed) { app.destroy(true, { children: true }); return }
+    if (this.destroyed) { if (!shared) app.destroy({ removeView: true, releaseGlobalResources: false }, { children: true }); return }
     // Keep the simulation ticker alive when a modal hides the scene.
-    app.ticker.remove(app.render, app)
-    app.ticker.maxFPS = 60
-    this.app = app; host.appendChild(app.canvas)
-    this.world = new Container(); app.stage.addChild(this.world)
+    if (!shared) { app.ticker.remove(app.render, app); app.ticker.maxFPS = 60 }
+    this.app = app
+    if (shared) this.previewStage = new Container()
+    else host.appendChild(app.canvas)
+    const stage = this.stage!
+    this.world = new Container(); stage.addChild(this.world)
     this.resize(width, height)
-    this.unwatchPixelDensity = watchPixelDensity(() => this.resize(app.screen.width, app.screen.height))
+    if (!shared) this.unwatchPixelDensity = watchPixelDensity(() => this.resize(app.screen.width, app.screen.height))
     const initialActors = this.pack.projectActors(this.runtime)
     const characterIds = [...new Set(initialActors.map(actor => actor.appearanceId))]
     const total = this.pack.resourceCount + characterIds.length, completed = new Set<string>()
@@ -126,15 +139,19 @@ export class SceneView {
       if (this.destroyed) return
       if (result.status === 'rejected') throw result.reason
       const background = result.value
-      if (background) {
+      if (background && this.pack.createBackdrop) {
+        this.backdrop = this.pack.createBackdrop(background)
+        this.backdrop.resize(app.screen.width, app.screen.height)
+        stage.addChildAt(this.backdrop.root, 0)
+      } else if (background) {
         const bounds = this.sceneBounds(), w = bounds.right - bounds.left, h = bounds.bottom - bounds.top
         const sprite = new Sprite(background), scale = Math.min(w / background.width, h / background.height)
         sprite.scale.set(scale); sprite.position.set(bounds.left + (w - background.width * scale) / 2, bounds.top + (h - background.height * scale) / 2)
         this.world!.addChild(sprite)
       }
-      app.render()
+      this.render()
       report('background')
-      performance.mark('pixoffice:background-visible')
+      if (!shared) performance.mark('pixoffice:background-visible')
     })
     const charactersReady = (async () => {
       const resources = await AnimationResources.load(initialActors, this.options.animations, this.options.resolveAppearance, this.abort.signal, id => report(`character:${id}`))
@@ -170,24 +187,40 @@ export class SceneView {
     })
     this.ambientViews = this.pack.createAmbientViews?.(this.runtime) ?? []
     for (const view of this.ambientViews) this.layer.addChild(...view.roots)
-    app.stage.eventMode = 'static'
-    app.stage.on('pointertap', (event: FederatedPointerEvent) => {
-      if (event.target !== app.stage || !this.actionsReady || this.runtime.isEditing) return
+    stage.eventMode = shared ? 'none' : 'static'
+    stage.on('pointertap', (event: FederatedPointerEvent) => {
+      if (event.target !== stage || !this.actionsReady || this.runtime.isEditing) return
       this.selectedActorId = undefined
       const cell = this.screenToCell(event.global)
       if (cell) this.options.onCellClick?.({ cell, clientX: event.clientX, clientY: event.clientY })
     })
     this.resize(app.screen.width, app.screen.height)
-    this.unsubscribe = this.runtime.subscribe(() => this.syncProps())
-    this.syncProps(); this.syncActors(0)
-    if (!this.renderingSuspended) app.render()
-    app.ticker.add(this.onTick)
+    if (!shared) this.unsubscribe = this.runtime.subscribe(() => this.syncProps())
+    this.syncProps(true); this.syncActors(0)
+    // A covered scene still needs a complete first frame before it can be revealed.
+    this.render()
+    if (!await this.whenFrameReady()) return
+    if (!shared) app.ticker.add(this.onTick)
     this.firstFrameReady = true
-    performance.mark('pixoffice:scene-ready')
+    if (!shared) performance.mark('pixoffice:scene-ready')
     void this.prepareActions()
   }
 
   get areActionsReady() { return this.actionsReady }
+  renderPreview(elapsedSeconds = 0) {
+    if (!this.options.previewRenderer || !this.firstFrameReady || this.destroyed) return false
+    this.syncProps(true)
+    if (elapsedSeconds > 0) this.syncActors(Math.min(1, elapsedSeconds))
+    for (const view of this.propViews.values()) view.updateFrame?.(Math.min(1, elapsedSeconds))
+    this.render()
+    return true
+  }
+  async whenFrameReady() {
+    await Promise.all([...this.propViews.values()].map(view => view.whenReady?.()))
+    if (this.destroyed) return false
+    this.render()
+    return true
+  }
   selectActor(id?: string) {
     this.selectedActorId = id && this.runtime.readActors().some(actor => actor.id === id) ? id : undefined
     this.refresh()
@@ -211,7 +244,7 @@ export class SceneView {
       if (this.destroyed) return
       this.actionsReady = true
       this.onReady(); report()
-      performance.mark('pixoffice:actions-ready')
+      if (!this.options.previewRenderer) performance.mark('pixoffice:actions-ready')
     }
     if (resources.isComplete) { finish(); return Promise.resolve() }
     this.actionsReady = false; report()
@@ -304,11 +337,11 @@ export class SceneView {
       })
     }
   }
-  private syncProps() {
-    if (this.renderingSuspended) return
+  private syncProps(force = false) {
+    if (this.renderingSuspended && !force) return
     if (!this.runtime.isEditing) this.editorPreview = undefined
     const world = this.viewWorld()
-    if (this.runtime.isEditing) this.beforeEditing()
+    if (this.runtime.isEditing && !this.options.previewRenderer) this.beforeEditing()
     if (this.layer) {
       for (const [id, view] of this.propViews) if (!world.props.some(p => p.id === id && p.templateId === this.propViewTemplates.get(id)?.id)) {
         view.roots.forEach(root => root.destroy({ children: true })); this.propViews.delete(id); this.propViewTemplates.delete(id)
@@ -414,14 +447,17 @@ export class SceneView {
   resize(width: number, height: number) {
     if (!this.app || !this.world) return
     const bounds = this.sceneBounds(), w = bounds.right - bounds.left, h = bounds.bottom - bounds.top
-    const scale = Math.min(width / w, height / h)
-    const resolution = renderResolution(), x = (width - w * scale) / 2 - bounds.left * scale, y = (height - h * scale) / 2 - bounds.top * scale
+    const viewport = this.pack.viewportBounds?.(width, height) ?? { left: 0, top: 0, right: width, bottom: height }
+    const scale = Math.min((viewport.right - viewport.left) / w, (viewport.bottom - viewport.top) / h)
+    const resolution = this.options.previewRenderer ? 1 : renderResolution(), x = viewport.left + (viewport.right - viewport.left - w * scale) / 2 - bounds.left * scale,
+      y = viewport.top + (viewport.bottom - viewport.top - h * scale) / 2 - bounds.top * scale
     const viewportChanged = this.app.screen.width !== width || this.app.screen.height !== height || this.app.renderer.resolution !== resolution
     const transformChanged = this.world.scale.x !== scale || this.world.scale.y !== scale || this.world.x !== x || this.world.y !== y
     if (!viewportChanged && !transformChanged && this.layer) return
     if (viewportChanged) this.app.renderer.resize(width, height, resolution)
-    this.app.stage.hitArea = new Rectangle(0, 0, width, height)
+    this.stage!.hitArea = new Rectangle(0, 0, width, height)
     this.world.scale.set(scale); this.world.position.set(x, y)
+    this.backdrop?.resize(width, height)
     Object.assign(this.app.canvas.style, { display: 'block', width: '100%', height: '100%', imageRendering: this.pack.rendering?.pixelArt ? 'pixelated' : 'auto' })
     // Resizing clears the drawing buffer; repaint now instead of exposing a blank frame until the next tick.
     if (!this.renderingSuspended) this.app.render()
@@ -439,11 +475,19 @@ export class SceneView {
     cleanup('scene hook', () => this.onDestroy())
     for (const view of this.ambientViews) cleanup('ambient view', () => view.dispose?.())
     this.ambientViews = []
-    cleanup('ticker', () => this.app?.ticker.remove(this.onTick))
-    cleanup('application', () => this.app?.destroy(true, { children: true }))
+    if (this.options.previewRenderer) cleanup('preview stage', () => this.previewStage?.destroy({ children: true }))
+    else {
+      cleanup('ticker', () => this.app?.ticker.remove(this.onTick))
+      // Other offices and previews may still hold textures from Pixi's global pools.
+      const app = this.app, pending = [...this.propViews.values()].flatMap(view => view.whenReady ? [view.whenReady()] : [])
+      cleanup('scene stage', () => app?.stage?.destroy({ children: true }))
+      const release = () => cleanup('application', () => app?.destroy({ removeView: true, releaseGlobalResources: false }, { children: true }))
+      if (pending.length) void Promise.allSettled(pending).then(release)
+      else release()
+    }
     cleanup('grid', () => { if (!this.grid.destroyed) this.grid.destroy({ children: true }) })
     cleanup('overlays', () => { if (!this.overlays.destroyed) this.overlays.destroy({ children: true }) })
     cleanup('animation resources', () => this.characterLease?.release()); this.characterLease = undefined
-    this.app = null; this.world = null; this.layer = null; this.agentEntities.clear(); this.propViews.clear(); this.propViewTemplates.clear()
+    this.app = null; this.previewStage = undefined; this.world = null; this.layer = null; this.backdrop = undefined; this.agentEntities.clear(); this.propViews.clear(); this.propViewTemplates.clear()
   }
 }

@@ -89,6 +89,16 @@ test('member shell renders the selected employee, real task statistics and the r
   assert.doesNotMatch(html, /不应混入|今日产出|本周完成/)
 })
 
+test('member layout opts into a fixed office frame without changing unconfigured or editing scenes', () => {
+  const fixed = renderMemberShell({ sceneAspectRatio: 1100 / 950 })
+  assert.match(fixed, /data-fixed-scene="true"/)
+  assert.match(fixed, /--member-scene-ratio:1\.1578947368421053/)
+  assert.match(fixed, /class="member-scene-frame"><div id="existing-office-scene"/)
+  for (const html of [renderMemberShell(), renderMemberShell({ sceneAspectRatio: 1100 / 950, editing: true })]) {
+    assert.doesNotMatch(html, /data-fixed-scene|member-scene-frame/)
+  }
+})
+
 test('member profile shows the role under the name and status only as a dot', () => {
   const html = renderMemberShell()
   const heading = html.match(/<header class="member-profile-heading">([\s\S]*?)<\/header>/)?.[1] ?? ''

@@ -21,9 +21,10 @@ import { requestOfficeLayout } from '../application/requestOfficeLayout.ts'
 import type { OfficeLayoutControl } from './officeLayout.ts'
 import { OfficeLayoutSwitch } from './OfficeLayoutSwitch.tsx'
 import { MemberOfficeShell } from './MemberOfficeShell.tsx'
+import { RoundedOfficeShell } from './RoundedOfficeShell.tsx'
 
 export function ConnectedOfficeWorkspace({ baseUrl, renderOffice, environment = officeEnvironment }: { baseUrl: string; environment?: OfficeEnvironment; renderOffice: (props: {
-  session: OfficeTeamSession; teamSelection: OfficeTeamSelection; layout: LayoutMode; pageLayout: OfficeLayoutControl; decisionOpenToken: number; integrationError: string | null
+  session: OfficeTeamSession; previewSessions: ReadonlyMap<string, OfficeTeamSession>; teamSelection: OfficeTeamSelection; layout: LayoutMode; pageLayout: OfficeLayoutControl; decisionOpenToken: number; integrationError: string | null
 }) => ReactNode }) {
   const [chatSource] = useState(() => new HttpChatSource(`${baseUrl.replace(/\/$/, '')}${chatPath}`))
   const [integration] = useState(() => new OfficeIntegrationSession({
@@ -59,19 +60,20 @@ export function ConnectedOfficeWorkspace({ baseUrl, renderOffice, environment = 
   }, [integration])
   const [layout] = useState<LayoutMode>(() => new URLSearchParams(location.search).get('layout') === 'scene' ? 'scene' : 'full')
   const sessions = useMemo(() => state.offices.map(office => office.session), [state.offices])
+  const previewSessions = useMemo(() => new Map(state.offices.map(office => [office.id, office.session])), [state.offices])
   useOfficeTeamHost(sessions)
   const options = useOfficeTeamDirectory(state.offices, sessions)
   const office = state.offices.find(office => office.id === activeId) ?? state.offices[0]
   if (!office) {
     const scene = <OfficeEmptyState message="等待后端初始化办公室" />
     if (layout === 'scene') return <SceneOnlyLayout>{scene}</SceneOnlyLayout>
-    const Shell = pageLayout.value === 'members' ? MemberOfficeShell : OfficeShell
+    const Shell = pageLayout.value === 'rounded' ? RoundedOfficeShell : pageLayout.value === 'members' ? MemberOfficeShell : OfficeShell
     return <Shell connection={state.connection} dashboard={null} dashboardError={state.error} sceneLinkError={null} dataMode="push"
       hasOffice={false} canExecuteActions={false} executeAction={async () => { throw new Error('暂无办公室') }} pendingTaskIds={[]} actionError={null}
       layoutControl={<OfficeLayoutSwitch value={pageLayout.value} onChange={pageLayout.onChange} disabled={pageLayout.busy} />}
       appearanceIds={{}} scene={scene} editing={false} canRecoverLayout={false} recoverLayout={() => {}} exportCapabilities={() => {}} exportSnapshot={() => {}} renderScenePanel={() => null} />
   }
-  return renderOffice({ session: office.session, layout, pageLayout, decisionOpenToken, integrationError: state.error,
+  return renderOffice({ session: office.session, previewSessions, layout, pageLayout, decisionOpenToken, integrationError: state.error,
     teamSelection: { teams: options, activeId: office.id, focusedDecisionTeamId, select: selectTeam,
       openDecisions: id => {
         const session = state.offices.find(item => item.id === id)?.session

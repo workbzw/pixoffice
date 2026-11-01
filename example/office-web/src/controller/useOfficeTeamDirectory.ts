@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from 'react'
 import type { OfficeTeamSession } from '../application/OfficeTeamSession.ts'
 import type { OfficeTeamOption } from '../ui/TeamSwitcher.tsx'
+import { officeActivityOverview } from '../dashboard/officeOverview.ts'
 
 const readAppearances = (session: OfficeTeamSession) => Object.fromEntries(session.runtime.readActors().map(actor => [actor.id, actor.templateId]))
 const sameAppearances = (a: Record<string, string>, b: Record<string, string>) => Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(id => a[id] === b[id])
@@ -36,14 +37,17 @@ export function useOfficeTeamDirectory(teams: readonly OfficeTeamOption[], sessi
   const store = useMemo(() => createTeamDirectoryStore(sessions), [sessions])
   const states = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot)
   return useMemo(() => teams.map(team => {
-    const state = states[sessions.findIndex(session => session.runtime.sceneId === team.id)]
+    const session = sessions.find(session => session.runtime.sceneId === team.id)
+    const state = states[sessions.findIndex(item => item === session)]
     const decisionCount = state?.decisions?.pending.length ?? 0
     const pendingDecision = state?.decisions?.pending[0]
     const decisionState = { decisionCount, pendingDecision, decisionSubmittingId: state?.decisions?.submittingIds?.find(id => id === pendingDecision?.id),
       decisionError: state?.decisions?.errorDecisionId === pendingDecision?.id ? state?.decisions?.error ?? '' : '' }
     const dashboard = state?.dashboard
-    if (!dashboard) return { ...team, ...decisionState }
-    return { ...team, ...decisionState, name: dashboard.workspace.name, memberCount: dashboard.employees.length,
+    const activity = officeActivityOverview(session?.source?.getConversations?.() ?? [], dashboard ?? null, decisionCount,
+      Boolean(state?.dashboardError))
+    if (!dashboard) return { ...team, ...decisionState, activity }
+    return { ...team, ...decisionState, activity, name: dashboard.workspace.name, memberCount: dashboard.employees.length,
       workingCount: new Set(dashboard.tasks.filter(task => task.status === 'running' && task.assigneeId).map(task => task.assigneeId)).size,
       pendingCount: dashboard.tasks.filter(task => ['queued', 'blocked', 'failed'].includes(task.status)).length,
       avatarIds: dashboard.employees.flatMap(employee => employee.sceneActorId && state.appearances[employee.sceneActorId] ? [state.appearances[employee.sceneActorId]] : []).slice(0, 4),

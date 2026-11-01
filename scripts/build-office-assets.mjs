@@ -5,7 +5,7 @@ import sharp from 'sharp'
 
 const root = fileURLToPath(new URL('../public/assets/office/', import.meta.url))
 export const OFFICE_WORK_EFFECT_SOURCE = fileURLToPath(new URL('../art/office/work-crafting-v1/spritesheet-white-cloud-soft.png', import.meta.url))
-export const OFFICE_IMAGES = ['office', 'desk', 'chair', 'workstation-trial-v1/desk', 'workstation-trial-v1/chair', 'workstation-trial-v1/computer', 'reference-v1/room-whiteboard-v3', 'reference-v1/conference-table', 'reference-v1/desk-accessories', 'effects/work-crafting-lite-v1']
+export const OFFICE_IMAGES = ['office', 'desk', 'chair', 'workstation-trial-v1/desk', 'workstation-trial-v1/chair', 'workstation-trial-v1/computer', 'reference-v1/room-whiteboard-v4', 'reference-v1/room-workplace-v1', 'reference-v1/whiteboard-adaptive-v1', 'reference-v1/conference-table', 'reference-v1/desk-accessories', 'effects/work-crafting-lite-v1']
 
 export async function buildOfficeCraftingAtlas(source) {
   const { width, height, hasAlpha } = await sharp(source).metadata()

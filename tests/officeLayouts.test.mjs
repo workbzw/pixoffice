@@ -21,7 +21,7 @@ test('layout discovery works before initialization and reports each layout data 
   assert.equal(response.statusCode, 200)
   const info = officeLayoutInfoSchema.parse(response.json().data)
   assert.equal(info.currentLayoutId, 'classic'); assert.equal(info.revision, 0)
-  assert.deepEqual(info.layouts.map(layout => layout.id), ['classic', 'members'])
+  assert.deepEqual(info.layouts.map(layout => layout.id), ['classic', 'members', 'rounded'])
   for (const layout of info.layouts) {
     assert.equal(layout.dataMessageType, 'office.snapshot')
     assert.equal(layout.dataSchema.type, 'object')
@@ -56,6 +56,11 @@ test('offline initialization and layout selection share state without resetting 
   assert.equal((await post(app, { type: 'office.read' })).json().data.state.offices[0].snapshot.seq, 2)
   const repeated = await post(app, { type: 'office.layout.set', layoutId: 'classic' })
   assert.equal(repeated.json().data.revision, 2, 'retries do not create a second layout change')
+  const rounded = await post(app, { type: 'office.layout.set', layoutId: 'rounded' })
+  assert.equal(rounded.statusCode, 202)
+  assert.equal(rounded.json().data.currentLayoutId, 'rounded')
+  assert.equal(rounded.json().data.revision, 3)
+  assert.equal((await post(app, { type: 'office.read' })).json().data.state.offices[0].snapshot.seq, 2)
 })
 
 test('browser layout controls use the same state with same-origin checks and no external API key', async t => {

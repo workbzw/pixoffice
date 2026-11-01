@@ -9,6 +9,7 @@ export interface PropView {
   hitTarget: Container
   update(prop: Prop, template: Template, actors: PresentedActor[]): void
   updateFrame?(elapsedSeconds: number): void
+  whenReady?(): Promise<void>
 }
 export type PropViewFactory = (prop: Prop, template: Template) => PropView
 

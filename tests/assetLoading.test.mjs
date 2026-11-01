@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
 import { Application, Assets, Texture, TextureSource } from 'pixi.js'
-import { readFile } from 'node:fs/promises'
+import { readFile, readdir } from 'node:fs/promises'
 import sharp from 'sharp'
 import { AssetLoadQueue } from '@pixoffice/animation-frame/AssetLoadQueue'
 import { buildOfficeAssets, OFFICE_IMAGES } from '../scripts/build-office-assets.mjs'
@@ -14,16 +14,63 @@ const deferred = () => {
 }
 const settle = () => new Promise(resolve => setImmediate(resolve))
 
+test('office artwork directories retain only the current background and effect sources', async () => {
+  const files = await readdir(new URL('../public/assets/office/reference-v1/', import.meta.url))
+  const expected = OFFICE_IMAGES.filter(name => name.startsWith('reference-v1/'))
+    .flatMap(name => ['png', 'webp'].map(extension => `${name.slice('reference-v1/'.length)}.${extension}`))
+  assert.deepEqual(files.filter(name => /\.(png|webp)$/.test(name)).sort(), expected.sort())
+  const effects = await readdir(new URL('../art/office/work-crafting-v1/', import.meta.url))
+  assert.deepEqual(effects.filter(name => name.endsWith('.png')), ['spritesheet-white-cloud-soft.png'])
+})
+
 test('the live office background keeps its calibrated camera dimensions and furniture retains transparency', async () => {
   const asset = name => new URL(`../public/assets/office/reference-v1/${name}.png`, import.meta.url)
-  const room = await sharp(await readFile(asset('room-whiteboard-v3'))).metadata()
+  const room = await sharp(await readFile(asset('room-whiteboard-v4'))).metadata()
   assert.deepEqual({ width: room.width, height: room.height }, { width: 1424, height: 1105 })
+  const panorama = await sharp(await readFile(asset('room-workplace-v1'))).metadata()
+  assert.deepEqual({ width: panorama.width, height: panorama.height }, { width: 1774, height: 887 })
+  const board = await sharp(await readFile(asset('whiteboard-adaptive-v1'))).metadata()
+  assert.deepEqual({ width: board.width, height: board.height, alpha: board.hasAlpha }, { width: 2097, height: 750, alpha: true })
   for (const name of ['conference-table', 'desk-accessories']) {
     const { data, info } = await sharp(await readFile(asset(name))).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
     const alpha = (x, y) => data[(y * info.width + x) * 4 + 3]
     for (const [x, y] of [[0, 0], [info.width - 1, 0], [0, info.height - 1], [info.width - 1, info.height - 1]]) assert.equal(alpha(x, y), 0)
     assert(data.some((value, index) => index % 4 === 3 && value >= 250), `${name}: visible artwork`)
   }
+})
+
+test('the active boxed room keeps its two front wall-top corners level', async () => {
+  const name = OFFICE_IMAGES.find(name => /^reference-v1\/room-whiteboard-v\d+$/.test(name))
+  assert(name, 'one boxed-room background must be selected')
+  const { data, info } = await sharp(new URL(`../public/assets/office/${name}.png`, import.meta.url).pathname)
+    .removeAlpha().raw().toBuffer({ resolveWithObject: true })
+  const brightness = (x, y) => {
+    const offset = (y * info.width + x) * info.channels
+    return (data[offset] + data[offset + 1] + data[offset + 2]) / 3
+  }
+  const frontCorner = x => {
+    let edge = { y: -1, drop: 0 }
+    for (let y = 500; y < 850; y++) {
+      const drop = brightness(x, y - 1) - brightness(x, y)
+      if (drop > edge.drop) edge = { y, drop }
+    }
+    assert(edge.drop > 20, `front wall edge must be visible at x=${x}`)
+    return edge.y
+  }
+  const left = frontCorner(30), right = frontCorner(info.width - 19)
+  assert(Math.abs(left - right) <= 2, `front wall tops must align: left=${left}, right=${right}`)
+})
+
+test('ordinary and panorama offices load their separate approved backgrounds', async t => {
+  const server = await createTestServer(); t.after(() => server.close())
+  const { loadReferenceOfficeBackground, loadPanoramaOfficeBackground } = await server.ssrLoadModule('/packages/scene-office/src/pixi/assets/loadReferenceOfficeAssets.ts')
+  const texture = new Texture({ source: new TextureSource({ width: 10, height: 10 }) }), requested = []
+  t.after(() => texture.destroy(true))
+  t.mock.method(Assets, 'load', async alias => { requested.push(alias); return texture })
+  await loadReferenceOfficeBackground(); await loadPanoramaOfficeBackground()
+  assert.deepEqual(requested, ['office-reference-room-whiteboard-v4-aligned', 'office-reference-room-workplace-v1'])
+  assert.match(Assets.resolver.resolve(requested[0]).src, /reference-v1\/room-whiteboard-v4\.webp$/)
+  assert.match(Assets.resolver.resolve(requested[1]).src, /reference-v1\/room-workplace-v1\.webp$/)
 })
 
 test('texture queue runs in parallel, bounds concurrency and continues after synchronous or async failure', async () => {

@@ -222,7 +222,9 @@ Content-Type: application/json
 
 ## 页面布局查询与切换
 
-页面布局决定导航、成员和业务面板的排列，不改变办公室内部地图、人物身份或任务状态。目前提供 `classic`（经典布局）和 `members`（成员布局）。
+页面布局决定导航、成员和业务面板的排列，不改变办公室内部地图、人物身份或任务状态。目前提供 `classic`（经典布局）、`members`（成员布局）和 `rounded`（圆角布局）。布局与场景独立，普通办公室和公务场景均可选择这三种布局。
+
+圆角布局保留成员侧栏，并在顶部展示当前所选会话的进行中、已完成、需关注任务数量及办公室状态。需关注包含阻塞和失败任务；场景左上角提示来自当前会话的白板标题。它继续接收 `office.snapshot`，不要求外部系统增加统计接口或动画回执。
 
 ### 获取当前布局与可选目录
 
@@ -247,7 +249,7 @@ Content-Type: application/json
 | `layouts[].ui.actions` | 字符串数组 | 该布局可产生的用户操作，对应 `ui.actionSchema` |
 | `layouts[].ui.localControls` | 字符串数组 | 浏览器本地交互，不是外部后端可发送的命令 |
 
-初始化与全局 `office.read` 将动态选择放在 `data.state.layout`，可选目录放在 `data.capabilities.layouts`；独立 `office.capabilities` 返回 `data.layouts`。目录由同一份协议定义生成。经典布局支持人物悬停统计，成员布局不提供人物悬停统计，而使用成员侧栏；相同业务数据不代表两套布局的交互完全一致。
+初始化与全局 `office.read` 将动态选择放在 `data.state.layout`，可选目录放在 `data.capabilities.layouts`；独立 `office.capabilities` 返回 `data.layouts`。目录由同一份协议定义生成。经典布局支持人物悬停统计，成员布局和圆角布局不提供人物悬停统计，而使用成员侧栏；相同业务数据不代表不同布局的交互完全一致。
 
 ### 初始化指定与运行中切换
 

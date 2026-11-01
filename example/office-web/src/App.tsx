@@ -11,6 +11,7 @@ import { browserChatPersistence } from './chat/persistence.ts'
 import type { ComponentType } from 'react'
 import type { LayoutMode } from '../../shared/scene/layout.tsx'
 import type { OfficeShellProps } from './ui/OfficeShell.tsx'
+import type { OfficeWorkspaceToolsProps } from './ui/OfficeWorkspaceTools.ts'
 import type { OfficeTeamSelection } from './ui/TeamSwitcher.tsx'
 import { DemoOfficeDirectory } from './dashboard/demoOfficeDirectory.ts'
 import type { OfficeCreationInput, OfficeTeamCreator, OfficeTeamDefinition } from './dashboard/officeDirectory.ts'
@@ -33,7 +34,7 @@ function createTeamRuntime(sceneId: string) {
   return officeEnvironment.createRuntime(sceneId, true)
 }
 
-export function OfficeApp({ dataSource, runtime: suppliedRuntime, simulation, session: suppliedSession, chatSource: suppliedChatSource, layout, pageLayout, shell, teamSelection, decisionOpenToken, integrationError }: { layout?: LayoutMode; pageLayout?: OfficeLayoutControl; shell?: ComponentType<OfficeShellProps>; dataSource: OfficeDataSource; runtime?: SceneRuntime; simulation?: OfficeSimulation; session?: OfficeTeamSession; chatSource?: OfficeChatSource; teamSelection?: OfficeTeamSelection; decisionOpenToken?: number; integrationError?: string | null }) {
+export function OfficeApp({ dataSource, runtime: suppliedRuntime, simulation, session: suppliedSession, chatSource: suppliedChatSource, layout, pageLayout, shell, workspaceTools, previewSessions, teamSelection, decisionOpenToken, integrationError, presentation, layoutStorageKey }: { layout?: LayoutMode; pageLayout?: OfficeLayoutControl; shell?: ComponentType<OfficeShellProps>; workspaceTools?: ComponentType<OfficeWorkspaceToolsProps>; previewSessions?: ReadonlyMap<string, OfficeTeamSession>; dataSource: OfficeDataSource; runtime?: SceneRuntime; simulation?: OfficeSimulation; session?: OfficeTeamSession; chatSource?: OfficeChatSource; teamSelection?: OfficeTeamSelection; decisionOpenToken?: number; integrationError?: string | null; presentation?: OfficeEnvironment['presentation']; layoutStorageKey?: string }) {
   const [defaultChatSource] = useState<OfficeChatSource>(() => new PreviewChatSource())
   const chatSource = suppliedSession?.chat.source ?? suppliedChatSource ?? defaultChatSource
   const decisionPreview = dataSource.kind === 'example' && chatSource.kind === 'preview'
@@ -46,17 +47,18 @@ export function OfficeApp({ dataSource, runtime: suppliedRuntime, simulation, se
   const ownedSessions = useMemo(() => suppliedSession ? [] : [session], [suppliedSession, session])
   useOfficeTeamHost(ownedSessions)
   const { dashboard, dashboardError, connection, sceneLinkError, pendingTaskIds, actionError } = useSyncExternalStore(session.subscribe, session.getSnapshot, session.getSnapshot)
-  return <RuntimeWorkspace simulation={session.simulation} whiteboardProgress={session.whiteboardProgress} teamSelection={teamSelection} layout={layout} pageLayout={pageLayout} shell={shell} runtime={session.runtime} connection={connection} dashboard={dashboard} dashboardError={integrationError ?? dashboardError} sceneLinkError={sceneLinkError} dataMode={session.source.kind} canExecuteActions={session.ui.enabled || session.source.canExecute !== false} executeAction={session.execute}
+  return <RuntimeWorkspace previewSessions={previewSessions} layoutStorageKey={layoutStorageKey} workspaceTools={workspaceTools} presentation={presentation} simulation={session.simulation} whiteboardProgress={session.whiteboardProgress} teamSelection={teamSelection} layout={layout} pageLayout={pageLayout} shell={shell} runtime={session.runtime} connection={connection} dashboard={dashboard} dashboardError={integrationError ?? dashboardError} sceneLinkError={sceneLinkError} dataMode={session.source.kind} canExecuteActions={session.ui.enabled || session.source.canExecute !== false} executeAction={session.execute}
     createEmployee={session.canCreateEmployee ? session.createEmployee : undefined} memberCreation={session.memberCreation}
     pendingTaskIds={pendingTaskIds} actionError={actionError} chatSession={session.chat} decisionSession={session.decisions} uiSession={session.ui} decisionOpenToken={decisionOpenToken} />
 }
 
-export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layout = 'full', environment = officeEnvironment }: {
+export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layout = 'full', environment = officeEnvironment, workspaceTools }: {
   initialTeams: readonly OfficeTeamDefinition[]
   createTeam?: OfficeTeamCreator
   chatSource: OfficeChatSource
   layout?: LayoutMode
   environment?: OfficeEnvironment
+  workspaceTools?: ComponentType<OfficeWorkspaceToolsProps>
 }) {
   const createEntry = (team: OfficeTeamDefinition) => {
     const runtime = environment.createRuntime(team.id, true)
@@ -108,12 +110,12 @@ export function OfficeTeamWorkspace({ initialTeams, createTeam, chatSource, layo
       hasOffice={false} executeAction={async () => { throw new Error('暂无办公室') }} pendingTaskIds={[]} actionError={null} appearanceIds={{}} scene={scene} editing={false}
       canRecoverLayout={false} recoverLayout={() => {}} exportCapabilities={() => {}} exportSnapshot={() => {}} renderScenePanel={() => null} />
   }
-  return <OfficeApp dataSource={activeSession.source} session={activeSession} chatSource={chatSource} decisionOpenToken={decisionOpenToken}
+  return <OfficeApp previewSessions={sessions} layoutStorageKey={environment.layoutStorageKey} workspaceTools={workspaceTools} presentation={environment.presentation} dataSource={activeSession.source} session={activeSession} chatSource={chatSource} decisionOpenToken={decisionOpenToken}
     teamSelection={{ teams: teamOptions, activeId, focusedDecisionTeamId, select, openDecisions, create,
       resolveDecision: (teamId, decisionId, choiceId) => { void sessions.get(teamId)?.decisions.choose(teamId, decisionId, choiceId) } }} layout={layout} />
 }
 
-function DemoApp({ environment }: { environment: OfficeEnvironment }) {
+function DemoApp({ environment, workspaceTools }: { environment: OfficeEnvironment; workspaceTools?: ComponentType<OfficeWorkspaceToolsProps> }) {
   const [dataSource] = useState(() => environment.demo?.createSource() ?? createOfficeDataSource())
   const [chatSource] = useState(() => environment.demo?.createChatSource() ?? new PreviewChatSource())
   const [directory] = useState(() => dataSource.kind === 'example' ? new DemoOfficeDirectory(dataSource, environment.storage, environment.demo) : undefined)
@@ -121,13 +123,13 @@ function DemoApp({ environment }: { environment: OfficeEnvironment }) {
     const teams = directory?.list() ?? []
     return teams.length ? teams : [{ id: 'office-1', name: '办公室', sceneLabel: '办公室', source: dataSource }]
   })
-  return <OfficeTeamWorkspace initialTeams={initialTeams} createTeam={directory?.create} chatSource={chatSource} environment={environment}
+  return <OfficeTeamWorkspace workspaceTools={workspaceTools} initialTeams={initialTeams} createTeam={directory?.create} chatSource={chatSource} environment={environment}
     layout={new URLSearchParams(location.search).get('layout') === 'scene' ? 'scene' : 'full'} />
 }
 
-function App({ environment = officeEnvironment }: { environment?: OfficeEnvironment }) {
+function App({ environment = officeEnvironment, workspaceTools }: { environment?: OfficeEnvironment; workspaceTools?: ComponentType<OfficeWorkspaceToolsProps> }) {
   const relayUrl = sceneRelayUrl()
-  return relayUrl ? <ConnectedOfficeWorkspace baseUrl={relayUrl} environment={environment} renderOffice={props => <OfficeApp dataSource={props.session.source} {...props} />} /> : <DemoApp environment={environment} />
+  return relayUrl ? <ConnectedOfficeWorkspace baseUrl={relayUrl} environment={environment} renderOffice={props => <OfficeApp layoutStorageKey={environment.layoutStorageKey} workspaceTools={workspaceTools} presentation={environment.presentation} dataSource={props.session.source} {...props} />} /> : <DemoApp environment={environment} workspaceTools={workspaceTools} />
 }
 
 export default App

@@ -42,6 +42,31 @@ test('all thirty directed desk visits complete without crossing furniture or sha
   } finally { runtime.dispose() }
 })
 
+test('collaboration keeps one enlarged body scale through rising, walking and sitting without changing paths', () => {
+  const runtime = create(), ordinary = createReferenceOfficePresentation()
+  const collaboration = createReferenceOfficePresentation({ presentation: 'panorama' })
+  try {
+    const [visitor, host] = runtime.readActors()
+    assert.equal(runtime.submit(visit('scaled-visit', visitor.id, host.id)).status, 'running')
+    const actions = new Set()
+    for (let i = 0; i < 1200; i++) {
+      runtime.tick(50)
+      const normal = ordinary.projectActors(runtime), enlarged = collaboration.projectActors(runtime)
+      enlarged.forEach((actor, index) => {
+        assert.equal(actor.displayHeight, 157.5)
+        assert.deepEqual(actor.position, normal[index].position)
+        assert.deepEqual(actor.intent, normal[index].intent)
+        assert.equal(actor.depth, normal[index].depth)
+        assert.equal(actor.label.placement, actor.furniture.seated && !actor.furniture.transitioning ? 'beside' : 'above')
+      })
+      actions.add(enlarged.find(actor => actor.id === visitor.id).intent.actionId)
+    }
+    for (const action of ['core.stand-up', 'core.walk', 'core.sit-down']) assert(actions.has(action), action)
+    assert(runtime.readActors().every(actor => actor.posture === 'seated' && !actor.seatTransition && !actor.motion))
+    noClaims(runtime)
+  } finally { runtime.dispose() }
+})
+
 test('reference office separates visual activity progress from reported task progress', () => {
   const runtime = create()
   try {

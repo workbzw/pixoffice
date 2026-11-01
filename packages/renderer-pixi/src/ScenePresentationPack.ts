@@ -12,6 +12,11 @@ export interface SceneAmbientView {
   dispose?(): void
 }
 
+export interface SceneBackdrop {
+  readonly root: Container
+  resize(width: number, height: number): void
+}
+
 export interface ScenePresentationPack {
   readonly id: string
   readonly cellPixels: number
@@ -19,6 +24,9 @@ export interface ScenePresentationPack {
   readonly projection?: SceneProjection
   readonly rendering?: SceneRenderProfile
   contentBounds?(world: World): ScreenBounds
+  /** Optional screen-space backdrop and safe camera area, independent of world coordinates. */
+  createBackdrop?(texture: Texture): SceneBackdrop
+  viewportBounds?(width: number, height: number): ScreenBounds
   readonly resourceCount: number
   loadBackground(): Promise<Texture | null>
   loadObjects(report: (resource: string) => void): Promise<void>

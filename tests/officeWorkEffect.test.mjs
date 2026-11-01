@@ -18,7 +18,7 @@ after(() => server?.close())
 function fixture() {
   const world = { actors: [{ id: 'worker', position: { x: 13, y: 7 }, homeId: 'desk', posture: 'seated' }],
     props: [{ id: 'desk', templateId: 'office.reference-workstation', position: { x: 12, y: 5 } }] }
-  const actor = { id: 'worker', depth: 365, status: 'working', intent: { view: 'back' }, furniture: { seated: true, transitioning: false },
+  const actor = { id: 'worker', displayHeight: 126, depth: 365, status: 'working', intent: { view: 'back' }, furniture: { seated: true, transitioning: false },
     task: { id: 'task', title: 'Development', status: 'running' } }
   return { world, actor, runtime: { isEditing: false } }
 }
@@ -145,6 +145,25 @@ test('work clouds reach full opacity and only fade during entry, interruption an
     }
     assert.equal(root.visible, false)
   } finally { view.dispose(); root.destroy({ children: true }); texture.destroy(true) }
+})
+
+test('work clouds scale with larger collaboration actors around the same seat', () => {
+  const { world, actor, runtime } = fixture(), texture = atlas()
+  actor.displayHeight *= 1.25
+  const view = effect.createOfficeWorkEffects(texture, runtime, ['worker'], () => [actor], () => false)
+  try {
+    view.update(.05, world)
+    const root = view.roots[0]
+    assert.equal(root.scale.x, 1.25)
+    assert.equal(root.scale.y, 1.25)
+    assert.equal(root.x, 700)
+    assert.equal(root.y, 365 - 32 * 1.25)
+    assert.equal(root.zIndex, actor.depth - .5)
+    actor.displayHeight = 126
+    view.update(.05, world)
+    assert.equal(root.scale.x, 1)
+    assert.equal(root.y, 333)
+  } finally { view.dispose(); view.roots.forEach(root => root.destroy({ children: true })); texture.destroy(true) }
 })
 
 test('work effect sorts above the desk but behind the seated worker and chair', () => {
@@ -332,12 +351,13 @@ test('connected offices enable all workstation effects without requiring the loc
   const { createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts')
   const { OfficeScene } = await server.ssrLoadModule('/example/office-web/src/application/OfficeScene.ts')
   const { OfficeSimulation } = await server.ssrLoadModule('/example/office-web/src/application/OfficeSimulation.ts')
+  const { createReferenceOfficePresentation } = await server.ssrLoadModule('/packages/scene-office/src/pixi/index.ts')
   const runtime = createOfficeRuntime({ referenceLayout: true }), simulation = new OfficeSimulation(runtime)
   const scene = new OfficeScene({ runtime, simulation })
   t.after(() => { scene.destroy(); runtime.dispose() })
   assert.equal(simulation.canDemo, false)
   assert.equal(typeof scene.pack.createAmbientViews, 'function')
-  assert.equal(scene.pack.resourceCount, 9, 'all workers add only one shared image resource')
+  assert.equal(scene.pack.resourceCount, createReferenceOfficePresentation().resourceCount + 1, 'all workers add only one shared image resource')
   for (const actor of runtime.readActors()) {
     const manifest = await scene.options.resolveAppearance(actor.templateId)
     assert.equal(manifest.source.bindings['office.type.seated.back'].clip, 'work.typing-back')

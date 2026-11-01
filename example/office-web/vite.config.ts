@@ -39,6 +39,8 @@ export default defineConfig({
         classroom: path.resolve(root, 'classroom/index.html'),
         farm: path.resolve(root, 'farm/index.html'),
         civic: path.resolve(root, 'civic/index.html'),
+        collaboration: path.resolve(root, 'collaboration/index.html'),
+        dispatch: path.resolve(root, 'dispatch/index.html'),
       },
     },
   },

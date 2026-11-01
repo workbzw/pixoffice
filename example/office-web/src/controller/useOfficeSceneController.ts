@@ -10,6 +10,7 @@ import type { DashboardSnapshot } from '@pixoffice/protocol/dashboard'
 import { officeActorTasks } from '../dashboard/actorTasks.ts'
 import { WhiteboardProgress } from '@pixoffice/scene-office/whiteboard'
 import { ActorInsightInteraction } from '../application/ActorInsightInteraction.ts'
+import type { OfficePresentation } from '@pixoffice/scene-office/pixi'
 
 type AgentMenuState = {
   agent: Agent
@@ -20,7 +21,7 @@ type AgentMenuState = {
   pickingTarget: boolean
 }
 
-export function useOfficeSceneController(runtime: SceneRuntime, covered = false, simulation?: OfficeSimulation, dashboard: DashboardSnapshot | null = null, onInspect?: (actorId: string) => void, suppliedWhiteboardProgress?: WhiteboardProgress, onInspectEmployee?: (employeeId: string) => void, onSelectActor?: (actorId: string) => boolean, actorInsightsEnabled = true) {
+export function useOfficeSceneController(runtime: SceneRuntime, covered = false, simulation?: OfficeSimulation, dashboard: DashboardSnapshot | null = null, onInspect?: (actorId: string) => void, suppliedWhiteboardProgress?: WhiteboardProgress, onInspectEmployee?: (employeeId: string) => void, onSelectActor?: (actorId: string) => boolean, actorInsightsEnabled = true, presentation?: OfficePresentation) {
   useSyncExternalStore(runtime.subscribe, runtime.getRevision)
   const [host] = useState(() => new SceneHost())
   const [insightInteraction] = useState(() => new ActorInsightInteraction())
@@ -45,7 +46,8 @@ export function useOfficeSceneController(runtime: SceneRuntime, covered = false,
   const [demoStatus, setDemoStatus] = useState('')
   const [demoScenarioLabel, setDemoScenarioLabel] = useState(simulation?.scenarioLabel ?? '工位协作')
   const [notice, setNotice] = useState<string | null>(null)
-  const [loaded, setLoaded] = useState(false)
+  const [readyRuntime, setReadyRuntime] = useState<SceneRuntime>()
+  const loaded = readyRuntime === runtime
   const [progress, setProgress] = useState<SceneLoadProgress>({ completed: 0, total: 0 })
   const [actions, setActions] = useState<SceneActionProgress>({ completed: 0, total: 0, ready: false })
   const [thumbnails, setThumbnails] = useState<Record<string, string>>({})
@@ -82,7 +84,7 @@ export function useOfficeSceneController(runtime: SceneRuntime, covered = false,
     }
 
     let active = true
-    const scene = new OfficeScene({ runtime, simulation, onAgentClick: handleAgentClick, onDraftChange: setNotice,
+    const scene = new OfficeScene({ runtime, simulation, presentation, onAgentClick: handleAgentClick, onDraftChange: setNotice,
       onDemoChange: (running, mode, status) => { setDemo(running); setDemoMode(mode); setDemoStatus(status) },
       onActorHover: event => {
         if (!insightsEnabledRef.current) return
@@ -103,12 +105,12 @@ export function useOfficeSceneController(runtime: SceneRuntime, covered = false,
 
       if (!readyRef.current) {
         readyRef.current = true
-        setLoaded(false)
+        setReadyRuntime(undefined)
         setProgress({ completed: 0, total: 0 })
         setActions({ completed: 0, total: 0, ready: false })
         void scene.init(element, width, height).then(async () => {
           if (!active) return
-          setLoaded(true); setDemo(scene.isDemoRunning)
+          setReadyRuntime(runtime); setDemo(scene.isDemoRunning)
           setDemoMode(scene.demoMode); setDemoStatus(scene.demoStatus); setDemoScenarioLabel(scene.demoScenarioLabel)
           const previews: Record<string, string> = {}
           for (const template of runtime.templates()) {
@@ -135,7 +137,7 @@ export function useOfficeSceneController(runtime: SceneRuntime, covered = false,
       scene.destroy()
       sceneRef.current = null
     }
-  }, [runtime, host, simulation, insightInteraction, whiteboardProgress, onInspect])
+  }, [runtime, host, simulation, insightInteraction, whiteboardProgress, onInspect, presentation])
 
   useEffect(() => {
     sceneRef.current?.setRenderingSuspended(covered || whiteboardId !== null)

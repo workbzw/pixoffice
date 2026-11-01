@@ -54,7 +54,7 @@ test('wall progress rows reveal the board material while the expanded reader kee
   }
 })
 
-test('the scene whiteboard adds only dynamic text, preserving the room artwork as its sole physical frame', async () => {
+test('the scene whiteboard overlays only transparent content within the approved background frame', async () => {
   const { createReferenceOfficePropViews } = await server.ssrLoadModule('/packages/scene-office/src/pixi/views/referenceOffice.ts')
   const { createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts')
   const runtime = createOfficeRuntime({ referenceLayout: true })
@@ -62,12 +62,54 @@ test('the scene whiteboard adds only dynamic text, preserving the room artwork a
   const view = createReferenceOfficePropViews().create(prop, template)
   try {
     assert.equal(view.roots.length, 1)
-    assert.deepEqual(view.roots[0].children.map(child => child.constructor.name), ['HTMLText'])
+    assert.deepEqual(view.roots[0].children.map(child => child.constructor.name), ['WhiteboardContent'])
     view.update(prop, template, [])
     const text = view.roots[0].children[0]
     assert(text.text.includes('background:transparent'))
-    assert.deepEqual({ x: text.x, y: text.y }, { x: 71, y: -157 })
+    assert.deepEqual({ x: text.x, y: text.y }, { x: 48, y: -160 })
     assert.equal(text.scale.x, text.scale.y)
+    const area = view.hitTarget.hitArea
+    assert(area.contains(text.x, text.y))
+    assert(area.contains(text.x + previewLayout.width * text.scale.x, text.y + previewLayout.height * text.scale.y))
+  } finally { view.roots.forEach(root => root.destroy({ children: true })); runtime.dispose() }
+})
+
+test('panorama enlarges the live whiteboard and team without changing runtime coordinates', async () => {
+  const { createReferenceOfficePresentation } = await server.ssrLoadModule('/packages/scene-office/src/pixi/index.ts')
+  const { createOfficeRuntime } = await server.ssrLoadModule('/example/office-web/src/application/createOfficeRuntime.ts')
+  const runtime = createOfficeRuntime({ referenceLayout: true })
+  const classic = createReferenceOfficePresentation(), panorama = createReferenceOfficePresentation({ presentation: 'panorama' })
+  const world = runtime.readWorld(), prop = world.props.find(item => item.id === 'whiteboard-1'), template = runtime.template(prop.templateId)
+  const view = panorama.createPropViews().create(prop, template)
+  try {
+    const normalActors = classic.projectActors(runtime)
+    panorama.projectActors(runtime).forEach((actor, index) => {
+      const normal = normalActors[index]
+      assert.equal(actor.displayHeight, normal.displayHeight * 1.25)
+      assert(actor.taskAnchor.x > normal.taskAnchor.x)
+      assert(actor.taskAnchor.y < normal.taskAnchor.y)
+      assert.equal(actor.label.placement, 'beside')
+      const geometryIndependent = ({ displayHeight, taskAnchor, label, ...rest }) => rest
+      assert.deepEqual(geometryIndependent(actor), geometryIndependent(normal))
+    })
+    assert.equal(classic.createBackdrop, undefined)
+    assert.equal(classic.viewportBounds, undefined)
+    assert.equal(panorama.id, 'pixoffice.office.panorama')
+    assert.equal(typeof panorama.createBackdrop, 'function')
+    assert.deepEqual(panorama.contentBounds(world), { left: 0, top: -100, right: 1100, bottom: 850 })
+    assert.deepEqual(panorama.viewportBounds(1600, 950), { left: 250, top: 0, right: 1350, bottom: 950 })
+    view.update(prop, template, [])
+    const text = view.roots[0].children[0], area = view.hitTarget.hitArea
+    assert.equal(text.scale.x, text.scale.y)
+    assert(text.text.includes('width:920px;height:314px'))
+    assert(text.text.includes('font-size:28px'))
+    assert.equal(text.scale.x, .9)
+    assert.deepEqual([area.width, area.height], [900, 302])
+    assert(area.contains(text.x, text.y))
+    assert(area.contains(text.x + 920 * text.scale.x, text.y + 314 * text.scale.y))
+    assert(area.width * area.height > 472 * 181 * 2)
+    assert(text.scale.x * 28 > 435 / 778 * 26)
+    assert.deepEqual(runtime.readWorld(), world)
   } finally { view.roots.forEach(root => root.destroy({ children: true })); runtime.dispose() }
 })
 

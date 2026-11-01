@@ -90,7 +90,7 @@ test('the overview directory observes background sessions and cleans up subscrip
 
 test('the scene trigger suspends presentation without stopping the team host', async () => {
   const workspace = await readFile(new URL('../example/office-web/src/components/RuntimeWorkspace.tsx', import.meta.url), 'utf8')
-  assert.match(workspace, /useOfficeSceneController\(runtime, covered \|\| teamPickerOpen, simulation, dashboard(?:,|\))/)
+  assert.match(workspace, /useOfficeSceneController\(runtime, covered \|\| teamPickerOpen \|\| workspaceToolsOpen, simulation, dashboard(?:,|\))/)
   assert.match(workspace, /onTeamPickerOpenChange=\{setTeamPickerOpen\}/)
   const app = await readFile(new URL('../example/office-web/src/App.tsx', import.meta.url), 'utf8')
   assert.match(app, /useOfficeTeamHost\(hostedSessions\)/)

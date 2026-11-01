@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork, GraduationCap, Landmark, Menu, MessageCircle, Monitor, Sprout, Terminal, X } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Blocks, BookOpen, Check, Code2, Copy, GitFork, GraduationCap, Landmark, LayoutDashboard, Menu, MessageCircle, Monitor, Sprout, Terminal, X } from 'lucide-react'
 import { websiteContent, websiteReadme, websiteRepository as repository, websiteSnippets } from './content.ts'
 import { readWebsiteLocale, rememberWebsiteLocale, type WebsiteLocale } from './locale.ts'
 import { CodexPromotion } from './CodexPromotion.tsx'
@@ -108,6 +108,14 @@ export function Website() {
             <a className="site-example" href={`${base}civic/`}>
               <div className="site-example-image"><img src={`${base}site/civic-preview.webp`} width="1440" height="1050" loading="lazy" alt={t.examples.civic.alt} /></div>
               <div className="site-example-copy"><span className="site-example-label"><Landmark size={15} /> {t.examples.civic.label}</span><h3>{t.nav.civic} <ArrowUpRight size={23} /></h3><p>{t.examples.civic.description}</p><span className="site-text-link">{t.examples.civic.action} <ArrowRight size={16} /></span></div>
+            </a>
+            <a className="site-example" href={`${base}collaboration/`}>
+              <div className="site-example-image"><img src={`${base}site/collaboration-preview.webp`} width="1440" height="1050" loading="lazy" alt={t.examples.collaboration.alt} /></div>
+              <div className="site-example-copy"><span className="site-example-label"><LayoutDashboard size={15} /> {t.examples.collaboration.label}</span><h3>{t.nav.collaboration} <ArrowUpRight size={23} /></h3><p>{t.examples.collaboration.description}</p><span className="site-text-link">{t.examples.collaboration.action} <ArrowRight size={16} /></span></div>
+            </a>
+            <a className="site-example" href={`${base}dispatch/`}>
+              <div className="site-example-image"><img src={`${base}site/dispatch-preview.webp`} width="1200" height="750" loading="lazy" alt={t.examples.dispatch.alt} /></div>
+              <div className="site-example-copy"><span className="site-example-label"><LayoutDashboard size={15} /> {t.examples.dispatch.label}</span><h3>{t.nav.dispatch} <ArrowUpRight size={23} /></h3><p>{t.examples.dispatch.description}</p><span className="site-text-link">{t.examples.dispatch.action} <ArrowRight size={16} /></span></div>
             </a>
             <article id="customization" className="site-contact-card">
               <div className="site-contact-preview">

@@ -11,7 +11,7 @@ npm ci
 npm run dev:vite
 ```
 
-`dev:vite` 启动纯前端演示，使用本地示例数据。首页 `/` 直接展示场景列表与定制联系方式，场景入口为 `/office/`、`/minimal/`、`/classroom/`、`/farm/` 和 `/civic/`。
+`dev:vite` 启动纯前端演示，使用本地示例数据。首页 `/` 直接展示场景列表与定制联系方式，场景入口为 `/office/`、`/minimal/`、`/classroom/`、`/farm/`、`/civic/` 和 `/collaboration/`。
 
 `npm run dev` 同时启动 Vite 与 Fastify，办公室等待外部业务后端初始化。该模式的运行示例、连接配置和部署要求见[对接指南](../integration/README.md)与[部署文档](../integration/docs/message-relay.md)。
 
@@ -23,6 +23,8 @@ npm run dev:vite
 | --- | --- | --- |
 | [完整办公室](../example/office-web/) | `npm run dev:vite`，打开 `/office/` | `npm run build`，在根目录 `dist/` 中生成官网和五个场景入口 |
 | [公务场景](../example/office-web/civic/) | `npm run dev:vite`，打开 `/civic/` | 随官网构建，使用独立的公务演示、存档与制服人物预览资源 |
+| [协作办公室](../example/office-web/collaboration/) | `npm run dev:vite`，打开 `/collaboration/` | 常驻窗景、自适应背景与独立大白板，默认圆角布局，复用办公室交互与电商流程，本地办公室目录、地图和聊天记录独立保存 |
+| [调度办公室](../example/office-web/dispatch/) | `npm run dev:vite`，打开 `/dispatch/` | 独立存档的格子办公室，提供环形运行数量、响应式办公室总览与运行提示，详见[场景说明](./dispatch-office.md) |
 | [最小办公室](../example/minimal-vanilla/) | 官网的 `/minimal/`，或 `npm run dev -w @pixoffice/example-minimal-vanilla` | 只通过公共包入口装配，不依赖 React |
 | [独立人物场景](../example/isolated-scene/) | `npm run dev:isolated` | `npm run build:isolated`，不依赖办公室包 |
 | [教室](../example/classroom/) | `npm run dev:classroom` | `npm run build:classroom`，不携带办公室资源 |

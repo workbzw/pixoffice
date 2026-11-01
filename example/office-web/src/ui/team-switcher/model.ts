@@ -1,6 +1,7 @@
 import type { CSSProperties } from 'react'
 import type { OfficeCreationInput } from '../../dashboard/officeDirectory.ts'
 import type { DecisionRequest } from '../../application/decisions/DecisionSession.ts'
+import type { OfficeActivityOverview } from '../../dashboard/officeOverview.ts'
 
 const accents = ['#52866b', '#607daf', '#ae7953', '#8c739c', '#53858c', '#a36c77']
 export function teamAccent(index: number): CSSProperties { return { '--team-accent': accents[index % accents.length] } as CSSProperties }
@@ -19,6 +20,7 @@ export type OfficeTeamOption = {
   decisionSubmittingId?: string
   decisionError?: string
   avatarIds?: readonly string[]
+  activity?: OfficeActivityOverview
 }
 export type OfficeTeamSelection = {
   teams: readonly OfficeTeamOption[]

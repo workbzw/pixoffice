@@ -49,6 +49,6 @@ test('civic directory, runtime and chat saves do not overwrite ordinary office d
 test('civic defaults to members while preserving explicit layouts and deployment URLs', () => {
   assert.equal(civicEntryUrl('https://test.invalid/preview/civic/?candidate=abc#scene').href,
     'https://test.invalid/preview/civic/?candidate=abc&shell=members#scene')
-  for (const shell of ['classic', 'members']) assert.equal(civicEntryUrl(`https://test.invalid/civic/?shell=${shell}`).search, `?shell=${shell}`)
+  for (const shell of ['classic', 'members', 'rounded']) assert.equal(civicEntryUrl(`https://test.invalid/civic/?shell=${shell}`).search, `?shell=${shell}`)
   assert.equal(civicEntryUrl('https://test.invalid/civic/?shell=unknown').search, '?shell=members')
 })

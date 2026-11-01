@@ -39,6 +39,7 @@ test('workstation accessories use separate cropped contact bases, not the transp
   await loadOfficeAssets(); await loadReferenceOfficeObjects(() => {}); await loadWorkstationTrialAssets()
   const prop = { id: 'desk', position: { x: 5, y: 5 } }
   const view = views.referenceWorkstationView(prop)
+  const enlarged = views.createReferenceWorkstationView(1.875)(prop)
   try {
     view.update(prop, {}, [])
     const indicator = view.roots[3]
@@ -65,8 +66,27 @@ test('workstation accessories use separate cropped contact bases, not the transp
     const sourceScale = computer.scale.x * desktop.scale.x
     assert(Math.abs(right.x - 6 - (desktop.x + (1233 - 800) * sourceScale)) < 1e-7)
     assert(Math.abs(right.y - (desktop.y + computer.y * desktop.scale.y + (362 - 112) * sourceScale)) < 1e-7)
+    enlarged.update(prop, {}, [])
+    const largeDesk = enlarged.roots[1], largeComputer = largeDesk.children.at(-1)
+    const largeRight = views.referenceMonitorAnchor(prop.position, 'right', 1.875)
+    const largeSourceScale = largeComputer.scale.x * largeDesk.scale.x
+    assert.equal(largeDesk.scale.x / desktop.scale.x, 1.25)
+    assert(Math.abs(largeRight.x - 6 - (largeDesk.x + (1233 - 800) * largeSourceScale)) < 1e-7)
+    assert(Math.abs(largeRight.y - (largeDesk.y + largeComputer.y * largeDesk.scale.y + (362 - 112) * largeSourceScale)) < 1e-7)
+    const largeParts = views.referenceAccessoryPlacements(enlarged.getWorkSurface(), 1.25)
+    enlarged.roots.at(-1).children.forEach((sprite, i) => {
+      assert.equal(sprite.width, group.children[i].width * 1.25)
+      assert.equal(sprite.x + group.x, largeParts[i].x)
+      assert.equal(sprite.y + group.y, largeParts[i].y)
+      assert(largeParts[i].x - largeParts[i].width / 2 >= enlarged.getWorkSurface().bounds.left)
+      assert(largeParts[i].x + largeParts[i].width / 2 <= enlarged.getWorkSurface().bounds.right)
+    })
+    const before = enlarged.roots.map(root => [root.x, root.y, root.scale.x])
+    enlarged.update(prop, {}, [])
+    assert.deepEqual(enlarged.roots.map(root => [root.x, root.y, root.scale.x]), before, 'repeated updates must not compound the scale')
   } finally {
     view.roots.forEach(root => root.destroy({ children: true }))
+    enlarged.roots.forEach(root => root.destroy({ children: true }))
     textures.forEach(texture => texture.destroy(true))
   }
 })

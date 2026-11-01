@@ -10,7 +10,7 @@ PixOffice 是基于 Vite + React + PixiJS 的二维互动场景项目。内置�
 
 ## 在线演示
 
-[官网](https://pixoffice.online/?lang=zh) · [完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/) · [教室](https://pixoffice.online/classroom/) · [农场](https://pixoffice.online/farm/) · [公务预览](https://pixoffice.online/civic/)
+[官网](https://pixoffice.online/?lang=zh) · [完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/) · [教室](https://pixoffice.online/classroom/) · [农场](https://pixoffice.online/farm/) · [公务预览](https://pixoffice.online/civic/) · [协作办公室](https://pixoffice.online/collaboration/)
 
 ![PixOffice 办公室：任务白板、人物走动与工位交流](./docs/office-demo.gif)
 
@@ -21,6 +21,8 @@ PixOffice 是基于 Vite + React + PixiJS 的二维互动场景项目。内置�
 页面支持经典布局和成员布局，成员侧栏按人物保留任务动态，可通过左上角布局按钮切换。[查看完整页面高清截图](./docs/page-preview.jpeg)。
 
 公务场景 `/civic/` 使用六位制服人物，默认成员布局，以“社区便民服务日保障”展示逐人派工、方案确认、现场协同、回访与归档。人物职责、白板、任务与聊天使用独立公务内容；当前人物素材仍为预览状态，页面会显示未验收提示。
+
+协作办公室 `/collaboration/` 使用自适应宽幅背景：纯白地板搭配平整墙面，右侧落地窗常驻，左侧保留档案柜、饮水机和公告栏，窗边设置办公收纳与茶水设备；独立大白板对齐中央工位区，聊天框与工具悬浮在场景上。默认采用农场风格的圆角布局，保留人物侧栏与当前会话任务统计。场景与布局独立，可在经典、成员和圆角布局之间切换；本地目录、地图与聊天存档独立于其他入口。
 
 <a id="quick-start"></a>
 

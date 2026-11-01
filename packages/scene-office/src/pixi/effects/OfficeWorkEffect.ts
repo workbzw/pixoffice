@@ -91,7 +91,9 @@ export function createOfficeWorkEffects(atlas: Texture, runtime: SceneReadPort, 
         clock.update(dt, active, taskKey, Boolean(seat && actor?.task?.status === 'completed'))
         root.visible = Boolean(seat) && (clock.opacity > .001 || clock.completion > 0)
         if (!root.visible || !seat) continue
-        root.position.set(seat.x, seat.y - 32)
+        const scale = actor!.displayHeight / 126
+        root.scale.set(scale)
+        root.position.set(seat.x, seat.y - 32 * scale)
         root.zIndex = seat.y - .5
         const finishing = clock.completion > 0
         const frame = reduced ? 0 : finishing ? Math.min(5, 4 + Math.floor((1 - clock.completion) * 2)) : officeWorkEffectFrame(clock.time + phase)

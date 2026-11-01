@@ -4,15 +4,19 @@ import { seatStepDurationMs } from '@pixoffice/scene-office/pixi/projection'
 import { createOfficeRuntime } from './createOfficeRuntime.ts'
 import { supportsCharacterPose } from './poseSupport.ts'
 import type { DemoOfficeScenario } from '../dashboard/demoTeams.ts'
+import type { OfficePresentation } from '@pixoffice/scene-office/pixi'
 
 export interface OfficeEnvironment {
   readonly demo?: DemoOfficeScenario
+  readonly presentation?: OfficePresentation
+  readonly layoutStorageKey?: string
   createRuntime(sceneId: string, persistent: boolean): SceneRuntime
   readonly storage: Pick<Storage, 'getItem' | 'setItem'>
   chatKey(sourceKey: string): string
 }
 
 export const officeEnvironment: OfficeEnvironment = {
+  presentation: 'reference',
   createRuntime: (sceneId, persistent) => createOfficeRuntime({ sceneId, referenceLayout: true,
     ...(persistent ? { persistence: browserPersistence(localStorage, sceneId) } : {}),
     seatStepDuration: seatStepDurationMs, supportsPose: supportsCharacterPose }),

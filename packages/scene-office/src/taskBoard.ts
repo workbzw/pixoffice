@@ -51,7 +51,7 @@ export function renderWhiteboardContent(state: Record<string, unknown>, surface:
 }
 
 /** The scene retains the reader's columns with denser spacing for larger, legible text. */
-export function renderWhiteboardPreview(state: Record<string, unknown>): string {
-  const { width, height, fontSize } = WHITEBOARD_PREVIEW_LAYOUT
+export function renderWhiteboardPreview(state: Record<string, unknown>, layout: { width: number; height: number; fontSize: number } = WHITEBOARD_PREVIEW_LAYOUT): string {
+  const { width, height, fontSize } = layout
   return `<div style="box-sizing:border-box;width:${width}px;height:${height}px;padding:8px 24px 16px;font-size:${fontSize}px;line-height:1.6;color:#343b36;background:transparent;border-radius:8px;overflow:hidden;white-space:normal;overflow-wrap:anywhere">${renderWhiteboardContent(state, 'wall')}</div>`
 }

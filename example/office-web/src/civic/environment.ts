@@ -6,6 +6,7 @@ import type { ScenePack } from '@pixoffice/runtime/scenePack'
 import type { OfficeEnvironment } from '../application/officeEnvironment.ts'
 import { supportsCharacterPose } from '../application/poseSupport.ts'
 import { civicDemoScenario } from './demo.ts'
+import { officeLayoutIdSchema } from '@pixoffice/protocol/office-integration'
 
 export const civicScenePack: ScenePack = {
   ...referenceOfficeScenePack,
@@ -14,7 +15,7 @@ export const civicScenePack: ScenePack = {
 
 export function civicEntryUrl(href: string): URL {
   const url = new URL(href)
-  if (!['classic', 'members'].includes(url.searchParams.get('shell') ?? '')) url.searchParams.set('shell', 'members')
+  if (!officeLayoutIdSchema.safeParse(url.searchParams.get('shell')).success) url.searchParams.set('shell', 'members')
   return url
 }
 

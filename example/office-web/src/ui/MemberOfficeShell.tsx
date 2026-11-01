@@ -1,10 +1,12 @@
 import { useEffect, useId, useRef, useState } from 'react'
+import type { CSSProperties } from 'react'
 import { ArrowRight, Braces, Download, Ellipsis, FileJson, PanelLeftClose, PanelLeftOpen, Plug, Plus, SlidersHorizontal, UserRound, X } from 'lucide-react'
 import type { DashboardTask } from '@pixoffice/protocol/dashboard'
 import { maxOfficeMembers, officeMemberLimitMessage } from '@pixoffice/protocol/dashboard'
 import type { ScenePanel } from '../components/SceneControlPanel.tsx'
 import { CharacterAvatar } from '../components/CharacterArtwork.tsx'
 import { memberOverview, memberProgress, memberTaskStatuses, memberTime } from '../dashboard/memberSelectors.ts'
+import { officeOverview } from '../dashboard/officeOverview.ts'
 import type { OfficeShellProps } from './OfficeShell.tsx'
 import { AddOfficeMemberDialog } from './AddOfficeMemberDialog.tsx'
 import '../components/RuntimeWorkspace.css'
@@ -15,9 +17,13 @@ function TaskProgress({ task }: { task: DashboardTask }) {
     <span>{task.status === 'completed' ? '100%' : task.progress === undefined || task.progress < 0 ? memberTaskStatuses[task.status] : `${Math.round(memberProgress(task))}%`}</span></div>
 }
 
-export function MemberOfficeShell({ dashboard, appearanceIds, scene, layoutControl, officeSwitcherRef, selectedEmployeeId, onSelectEmployee,
+export function MemberOfficeShell(props: OfficeShellProps) {
+  return <MemberOfficeWorkspace {...props} />
+}
+
+export function MemberOfficeWorkspace({ dashboard, appearanceIds, scene, sceneAspectRatio, layoutControl, officeSwitcherRef, selectedEmployeeId, onSelectEmployee,
   dashboardError, sceneLinkError, persistenceError, actionError, canRecoverLayout, recoverLayout, renderScenePanel, exportCapabilities, exportSnapshot,
-  onInspectEmployee, executeAction, pendingTaskIds, canExecuteActions = true, hasOffice = true, editing, createEmployee, memberActors = [], memberCreationBlockReason = '' }: OfficeShellProps) {
+  onInspectEmployee, executeAction, pendingTaskIds, canExecuteActions = true, hasOffice = true, editing, createEmployee, memberActors = [], memberCreationBlockReason = '', variant = 'members' }: OfficeShellProps & { variant?: 'members' | 'rounded' }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [addingMember, setAddingMember] = useState(false)
   const [panel, setPanel] = useState<ScenePanel | 'profile' | ''>('')
@@ -26,6 +32,7 @@ export function MemberOfficeShell({ dashboard, appearanceIds, scene, layoutContr
   const sidebar = useRef<HTMLElement>(null)
   const detailScroll = useRef<HTMLDivElement>(null)
   const drawerTrigger = useRef<HTMLButtonElement>(null)
+  const previousDrawerOpen = useRef(false)
   const titleId = useId()
   const sidebarId = useId()
   const employees = dashboard?.employees ?? []
@@ -35,9 +42,18 @@ export function MemberOfficeShell({ dashboard, appearanceIds, scene, layoutContr
   const appearanceId = employee?.sceneActorId ? appearanceIds[employee.sceneActorId] : undefined
   const errors = [dashboardError, sceneLinkError, persistenceError, actionError, recoveryError].filter(Boolean)
   const runAction = (action: Parameters<OfficeShellProps['executeAction']>[0]) => { void executeAction(action).catch(() => {}) }
+  const rounded = variant === 'rounded'
+  const fixedScene = !rounded && !editing && !!sceneAspectRatio
+  const office = officeOverview(dashboard)
+  const brand = <header className="member-brand-row"><a href={import.meta.env.BASE_URL} title="PixOffice 首页"><img src={`${import.meta.env.BASE_URL}brand/title.png`} alt="PixOffice" width={2172} height={724} /></a>
+    {layoutControl}<div className="member-office-control" ref={officeSwitcherRef} /><button type="button" className="member-icon-button member-drawer-close" title="收起成员侧栏" aria-label="收起成员侧栏" onClick={() => setDrawerOpen(false)}><PanelLeftClose size={18} /></button></header>
 
   useEffect(() => { if (detailScroll.current) detailScroll.current.scrollTop = 0 }, [employee?.id, dashboard?.conversationId])
   useEffect(() => { setAddingMember(false) }, [dashboard?.conversationId])
+  useEffect(() => {
+    if (previousDrawerOpen.current && !drawerOpen) drawerTrigger.current?.focus()
+    previousDrawerOpen.current = drawerOpen
+  }, [drawerOpen])
 
   useEffect(() => {
     if (panel) dialog.current?.showModal()
@@ -48,7 +64,7 @@ export function MemberOfficeShell({ dashboard, appearanceIds, scene, layoutContr
     const root = sidebar.current
     const focusable = () => [...(root?.querySelectorAll<HTMLElement>('button:not(:disabled), a[href], select, [tabindex="0"]') ?? [])]
     focusable()[0]?.focus()
-    const close = () => { setDrawerOpen(false); drawerTrigger.current?.focus() }
+    const close = () => setDrawerOpen(false)
     const keydown = (event: KeyboardEvent) => {
       if (document.querySelector('dialog[open]')) return
       if (event.key === 'Escape') close()
@@ -64,11 +80,21 @@ export function MemberOfficeShell({ dashboard, appearanceIds, scene, layoutContr
     return () => { document.removeEventListener('keydown', keydown); media.removeEventListener('change', resize) }
   }, [drawerOpen])
 
-  return <div className={`member-workspace${editing ? ' map-editing' : ''}`} data-drawer-open={drawerOpen}>
-    {drawerOpen && <button className="member-drawer-backdrop" type="button" aria-label="关闭成员侧栏" onClick={() => { setDrawerOpen(false); drawerTrigger.current?.focus() }} />}
+  return <div className={`member-workspace${rounded ? ' rounded-workspace' : ''}${editing ? ' map-editing' : ''}`} data-drawer-open={drawerOpen}
+    data-fixed-scene={fixedScene || undefined} style={fixedScene ? { '--member-scene-ratio': sceneAspectRatio } as CSSProperties : undefined}>
+    {rounded && <>
+      <section className="rounded-office-heading" aria-label="办公室概览" inert={drawerOpen}>{brand}<div><h1 title={dashboard?.workspace.name ?? '协作办公室'}>{dashboard?.workspace.name ?? '协作办公室'}</h1><span>{employees.length} 位成员 · 当前会话</span></div></section>
+      <section className="rounded-office-stats" aria-label="当前会话办公室统计" inert={drawerOpen}>
+        <div><span>进行中</span><strong>{office.running}<small> / {office.total}</small></strong></div>
+        <div><span>已完成</span><strong>{office.completed}</strong></div>
+        <div><span>需关注</span><strong>{office.attention}</strong></div>
+        <div><span>办公室状态</span><strong className="rounded-status-value">{office.status}</strong></div>
+      </section>
+    </>}
+    {drawerOpen && <button className="member-drawer-backdrop" type="button" aria-label="关闭成员侧栏" onClick={() => setDrawerOpen(false)} />}
     <aside className="member-sidebar" ref={sidebar} id={sidebarId} aria-label="办公室成员" role={drawerOpen ? 'dialog' : undefined} aria-modal={drawerOpen || undefined}>
-      <header className="member-brand-row"><a href={import.meta.env.BASE_URL} title="PixOffice 首页"><img src={`${import.meta.env.BASE_URL}brand/title.png`} alt="PixOffice" width={2172} height={724} /></a>
-        {layoutControl}<div className="member-office-control" ref={officeSwitcherRef} /><button type="button" className="member-icon-button member-drawer-close" title="收起成员侧栏" aria-label="收起成员侧栏" onClick={() => { setDrawerOpen(false); drawerTrigger.current?.focus() }}><PanelLeftClose size={18} /></button></header>
+      {!rounded && brand}
+      {rounded && <button type="button" className="member-icon-button member-drawer-close rounded-drawer-close" title="收起成员侧栏" aria-label="收起成员侧栏" onClick={() => setDrawerOpen(false)}><PanelLeftClose size={18} /></button>}
       <section className="member-roster" aria-labelledby={`${sidebarId}-title`}><div className="member-roster-heading"><h2 id={`${sidebarId}-title`}>团队成员 <span>（{employees.length}）</span></h2><button className="member-add-button" type="button" title={addMemberBlocked || '添加成员'} aria-label="添加成员" disabled={!hasOffice || !createEmployee || !memberActors.length || !!addMemberBlocked} onClick={() => setAddingMember(true)}><Plus size={15} strokeWidth={1.8} /></button></div>
         <div className="member-roster-grid">{employees.map(item => <button className="member-roster-person" type="button" key={item.id} aria-label={`查看${item.name}的资料`} aria-pressed={item.id === employee?.id}
           title={item.name} onClick={() => onSelectEmployee?.(item.id)}><span className="member-portrait"><CharacterAvatar height={46} crop="head" appearanceId={item.sceneActorId ? appearanceIds[item.sceneActorId] : undefined} /><i className={`member-presence ${item.online === true ? 'online' : ''}`} title={item.online === undefined ? '状态未知' : item.online ? '在线' : '离线'} /></span><strong>{item.name}</strong></button>)}</div>
@@ -97,9 +123,10 @@ export function MemberOfficeShell({ dashboard, appearanceIds, scene, layoutContr
       </section>
     </aside>
     <div className="member-scene-area" inert={drawerOpen}>
+      {rounded && !editing && <div className="rounded-scene-caption" title={office.goal}><i /><span>{office.goal}</span></div>}
       <button ref={drawerTrigger} className="member-drawer-open member-icon-button" type="button" title="展开成员侧栏" aria-label="展开成员侧栏" aria-expanded={drawerOpen} aria-controls={sidebarId} onClick={() => setDrawerOpen(true)}><PanelLeftOpen size={19} /></button>
       {!!errors.length && <div className="runtime-alert" role="alert"><span>{errors.join('；')}</span>{canRecoverLayout && <button type="button" onClick={() => { try { recoverLayout(); setRecoveryError('') } catch (cause) { setRecoveryError(String(cause)) } }}>备份并恢复布局</button>}</div>}
-      {scene}
+      {fixedScene ? <div className="member-scene-frame">{scene}</div> : scene}
     </div>
     {addingMember && createEmployee && <AddOfficeMemberDialog key={dashboard?.conversationId} actors={memberActors} appearanceIds={appearanceIds} create={createEmployee} onClose={() => setAddingMember(false)} />}
     <dialog ref={dialog} className="member-profile-dialog" aria-labelledby={titleId} onClose={() => setPanel('')}>

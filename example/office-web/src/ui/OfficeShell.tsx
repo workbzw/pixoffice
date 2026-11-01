@@ -30,6 +30,7 @@ export interface OfficeShellProps {
   actionError: string | null
   appearanceIds: Readonly<Record<string, string>>
   scene: ReactNode
+  sceneAspectRatio?: number
   editing: boolean
   persistenceError?: string | null
   canRecoverLayout: boolean

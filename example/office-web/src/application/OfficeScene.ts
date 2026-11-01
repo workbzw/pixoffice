@@ -6,6 +6,7 @@ import { AnimationRegistry } from '@pixoffice/renderer-pixi/animation/AnimationR
 import { characterAssets } from '@pixoffice/assets-office/frame/resources'
 import { FrameAdapter } from '@pixoffice/animation-frame/FrameAdapter'
 import { createOfficePresentation, createReferenceOfficePresentation } from '@pixoffice/scene-office/pixi'
+import type { OfficePresentation } from '@pixoffice/scene-office/pixi'
 import { resolveOfficeAppearance } from './officeFrames.ts'
 import { supportsOfficePose } from '@pixoffice/scene-office/core/poseSupport'
 import type { VisualAssetManifest } from '@pixoffice/contracts/animation'
@@ -20,9 +21,10 @@ import type { WhiteboardProgress } from '@pixoffice/scene-office/whiteboard'
 
 export type { SceneLoadProgress, SceneActionProgress }
 export type OfficeAgentClick = { agent: Agent; rosterNo: number; clientX: number; clientY: number }
-export type OfficeSceneOptions = Partial<Pick<SceneViewOptions, 'animations' | 'resolveAppearance' | 'propViews' | 'onPropClick' | 'onActorHover'>> & {
+export type OfficeSceneOptions = Partial<Pick<SceneViewOptions, 'animations' | 'resolveAppearance' | 'propViews' | 'onPropClick' | 'onActorHover' | 'previewRenderer'>> & {
   runtime?: SceneRuntime
   simulation?: OfficeSimulation
+  presentation?: OfficePresentation
   onAgentClick?: (event: OfficeAgentClick) => void
   taskForActor?: (id: string) => ActorTaskPresentation | undefined
   whiteboardProgress?: WhiteboardProgress
@@ -53,7 +55,7 @@ export class OfficeScene extends SceneView {
       ...options, runtime,
       onStep: options.simulation ? undefined : elapsedMs => { simulation.tick(elapsedMs); simulation.demoSource?.tick(elapsedMs) },
       dispatchCommand: command => runtime.submit(command),
-      pack: referenceOffice ? createReferenceOfficePresentation({ taskForActor: options.taskForActor, whiteboardProgress: options.whiteboardProgress, workEffects: true }) : createOfficePresentation(() => artwork.enabled),
+      pack: referenceOffice ? createReferenceOfficePresentation({ presentation: options.presentation, taskForActor: options.taskForActor, whiteboardProgress: options.whiteboardProgress, workEffects: true }) : createOfficePresentation(() => artwork.enabled),
       animations: options.animations ?? new AnimationRegistry<Container>().register(new FrameAdapter(manifest => characterAssets.acquire(manifest.asset.id, manifest.source.uri))),
       resolveAppearance: async id => {
         const manifest = await (options.resolveAppearance ? options.resolveAppearance(id) : resolveOfficeAppearance(id, { energeticWork: referenceOffice }))

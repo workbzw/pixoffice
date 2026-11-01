@@ -21,11 +21,15 @@ import { SceneOnlyLayout } from '../../../shared/scene/layout.tsx'
 import type { LayoutMode } from '../../../shared/scene/layout.tsx'
 import type { WhiteboardProgress } from '@pixoffice/scene-office/whiteboard'
 import { MemberOfficeShell } from '../ui/MemberOfficeShell.tsx'
+import { RoundedOfficeShell } from '../ui/RoundedOfficeShell.tsx'
 import { OfficeLayoutSwitch } from '../ui/OfficeLayoutSwitch.tsx'
 import { readOfficeShell, saveOfficeShell } from '../ui/officeLayout.ts'
 import type { OfficeLayoutControl } from '../ui/officeLayout.ts'
 import type { OfficeLayoutId } from '@pixoffice/protocol/office-integration'
 import { employeeForActor } from '../dashboard/memberSelectors.ts'
+import type { OfficePresentation } from '@pixoffice/scene-office/pixi'
+import type { OfficeWorkspaceToolsProps } from '../ui/OfficeWorkspaceTools.ts'
+import type { OfficeTeamSession } from '../application/OfficeTeamSession.ts'
 
 function download(value: unknown, filename: string) {
   const url = URL.createObjectURL(new Blob([stringifyDocumentObject(value, 2)], { type: 'application/json' }))
@@ -33,7 +37,8 @@ function download(value: unknown, filename: string) {
   link.href = url; link.download = filename; link.click(); URL.revokeObjectURL(url)
 }
 
-export function RuntimeWorkspace({ runtime, simulation, whiteboardProgress, connection, dashboard, dashboardError, sceneLinkError, dataMode, canExecuteActions = true, executeAction, createEmployee, memberCreation, pendingTaskIds, actionError, chatSession, decisionSession, uiSession, decisionOpenToken = 0, teamSelection, layout = 'full', pageLayout, shell: suppliedShell }: {
+export function RuntimeWorkspace({ runtime, simulation, whiteboardProgress, connection, dashboard, dashboardError, sceneLinkError, dataMode, canExecuteActions = true, executeAction, createEmployee, memberCreation, pendingTaskIds, actionError, chatSession, decisionSession, uiSession, decisionOpenToken = 0, teamSelection, layout = 'full', pageLayout, shell: suppliedShell, presentation, workspaceTools: WorkspaceTools, previewSessions, layoutStorageKey }: {
+  presentation?: OfficePresentation
   simulation?: OfficeSimulation
   whiteboardProgress?: WhiteboardProgress
   teamSelection?: OfficeTeamSelection
@@ -56,20 +61,24 @@ export function RuntimeWorkspace({ runtime, simulation, whiteboardProgress, conn
   layout?: LayoutMode
   pageLayout?: OfficeLayoutControl
   shell?: ComponentType<OfficeShellProps>
+  workspaceTools?: ComponentType<OfficeWorkspaceToolsProps>
+  previewSessions?: ReadonlyMap<string, OfficeTeamSession>
+  layoutStorageKey?: string
 }) {
   const revision = useSyncExternalStore(runtime.subscribe, runtime.getRevision)
   const snapshot = useMemo(() => { void revision; return runtime.snapshot() }, [runtime, revision])
   const [mapView, setMapView] = useState(initialMapView)
   const [chatExpanded, setChatExpanded] = useState(false)
   const [teamPickerOpen, setTeamPickerOpen] = useState(false)
+  const [workspaceToolsOpen, setWorkspaceToolsOpen] = useState(false)
   const [officeSwitcherTarget, setOfficeSwitcherTarget] = useState<HTMLDivElement | null>(null)
-  const [shellKind, setShellKind] = useState(readOfficeShell)
+  const [shellKind, setShellKind] = useState(() => readOfficeShell(layoutStorageKey))
   const [selection, setSelection] = useState({ teamId: '', employeeId: '' })
   const employees = dashboard?.employees ?? []
   const selectedEmployee = employees.find(employee => selection.teamId === runtime.sceneId && employee.id === selection.employeeId) ?? employees[0]
   const selectedLayout = pageLayout?.value ?? shellKind
-  const memberLayout = layout === 'full' && !suppliedShell && selectedLayout === 'members'
-  const Shell = suppliedShell ?? (memberLayout ? MemberOfficeShell : OfficeShell)
+  const memberLayout = layout === 'full' && !suppliedShell && selectedLayout !== 'classic'
+  const Shell = suppliedShell ?? (selectedLayout === 'rounded' ? RoundedOfficeShell : memberLayout ? MemberOfficeShell : OfficeShell)
   const selectEmployee = useCallback((employeeId: string) => setSelection({ teamId: runtime.sceneId, employeeId }), [runtime])
   const selectActor = useCallback((actorId: string) => {
     if (!memberLayout) return false
@@ -80,13 +89,13 @@ export function RuntimeWorkspace({ runtime, simulation, whiteboardProgress, conn
   }, [dashboard, memberLayout, selectEmployee, selectedEmployee?.id])
   const changeShell = (kind: OfficeLayoutId) => {
     if (pageLayout) pageLayout.onChange(kind)
-    else { setShellKind(kind); saveOfficeShell(kind) }
+    else { setShellKind(kind); saveOfficeShell(kind, layoutStorageKey) }
   }
   useEffect(() => { setChatExpanded(false) }, [runtime, decisionOpenToken])
   const covered = layout === 'full' && chatExpanded && !snapshot.editor
   const inspectActor = useCallback((actorId: string) => { void uiSession?.request({ action: 'actor.inspect', actorId }).catch(() => {}) }, [uiSession])
   const inspectEmployee = useCallback((employeeId: string) => { void uiSession?.request({ action: 'employee.inspect', employeeId }).catch(() => {}) }, [uiSession])
-  const controller = useOfficeSceneController(runtime, covered || teamPickerOpen, simulation, dashboard, uiSession?.enabled ? inspectActor : undefined, whiteboardProgress, uiSession?.enabled ? inspectEmployee : undefined, selectActor, !memberLayout)
+  const controller = useOfficeSceneController(runtime, covered || teamPickerOpen || workspaceToolsOpen, simulation, dashboard, uiSession?.enabled ? inspectActor : undefined, whiteboardProgress, uiSession?.enabled ? inspectEmployee : undefined, selectActor, !memberLayout, presentation)
   useEffect(() => {
     controller.sceneRef.current?.selectActor(memberLayout ? selectedEmployee?.sceneActorId : undefined)
   }, [memberLayout, selectedEmployee?.sceneActorId, controller.loaded, controller.sceneRef, runtime])
@@ -99,9 +108,10 @@ export function RuntimeWorkspace({ runtime, simulation, whiteboardProgress, conn
   if (layout === 'scene') return <SceneOnlyLayout>{canvas}{uiSession && <OfficeUiPanel session={uiSession} />}</SceneOnlyLayout>
   const appearanceIds = Object.fromEntries(snapshot.world.actors.map(actor => [actor.id, actor.templateId]))
   const leader = snapshot.world.actors.find(actor => actor.id === employees[0]?.sceneActorId) ?? snapshot.world.actors[0]
-  return <Shell key={runtime.sceneId} connection={connection} dashboard={dashboard} dashboardError={dashboardError} sceneLinkError={sceneLinkError}
+  return <><Shell key={runtime.sceneId} connection={connection} dashboard={dashboard} dashboardError={dashboardError} sceneLinkError={sceneLinkError}
     pendingTaskIds={pendingTaskIds} actionError={actionError} appearanceIds={appearanceIds}
     dataMode={dataMode} canExecuteActions={canExecuteActions} executeAction={executeAction} editing={!!snapshot.editor} persistenceError={snapshot.persistenceError}
+    sceneAspectRatio={presentation === 'reference' ? 1100 / 950 : undefined}
     onInspectEmployee={uiSession?.enabled ? inspectEmployee : undefined}
     createEmployee={createEmployee} memberCreationBlockReason={memberCreation?.blockedReason}
     memberActors={snapshot.world.actors.filter(actor => memberCreation ? memberCreation.availableActorIds.includes(actor.id) : !employees.some(employee => employee.sceneActorId === actor.id)).map(actor => ({ id: actor.id, name: actor.name }))}
@@ -111,7 +121,7 @@ export function RuntimeWorkspace({ runtime, simulation, whiteboardProgress, conn
     exportCapabilities={() => download(runtime.describe(), 'scene-capabilities.json')}
     exportSnapshot={() => download(runtime.snapshot(), 'scene-snapshot.json')}
     renderScenePanel={panel => <SceneControlPanel key={runtime.sceneId} runtime={runtime} snapshot={snapshot} panel={panel} />}
-    scene={<main className={`office-main${snapshot.world.props.some(prop => prop.templateId === 'office.wall-whiteboard') && !snapshot.editor ? ' office-main-reference' : ''}`} aria-label="PixOffice 场景">
+    scene={<main className={`office-main${snapshot.world.props.some(prop => prop.templateId === 'office.wall-whiteboard') && !snapshot.editor ? ' office-main-reference' : ''}${presentation === 'panorama' && !snapshot.editor ? ' office-main-panorama' : ''}`} aria-label="PixOffice 场景">
       <div className="office-stage" inert={covered}>{canvas}</div>
       {uiSession && <OfficeUiPanel session={uiSession} />}
       <OfficeChat key={runtime.sceneId} session={chatSession} expanded={covered} onExpandedChange={setChatExpanded} hidden={!!snapshot.editor}
@@ -121,4 +131,6 @@ export function RuntimeWorkspace({ runtime, simulation, whiteboardProgress, conn
         leaderAppearanceId={leader?.templateId}
         leaderName={employees[0]?.name ?? leader?.name ?? '办公室负责人'} />
     </main>} />
+    {WorkspaceTools && !snapshot.editor && <WorkspaceTools previewSessions={previewSessions} layoutId={selectedLayout} teamSelection={teamSelection} sceneReady={controller.loaded} onOpenChange={setWorkspaceToolsOpen} />}
+  </>
 }

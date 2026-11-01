@@ -7,7 +7,7 @@ const zh = {
     socialDescription: '选择一个场景，看看协作如何发生。办公室、教室、农场与公务场景，以及场景定制。',
   },
   nav: {
-    home: '场景', office: '完整办公室', minimal: '最小装配', classroom: '教室', farm: '农场', civic: '公务', docs: '文档',
+    home: '场景', office: '完整办公室', minimal: '最小装配', classroom: '教室', farm: '农场', civic: '公务', collaboration: '协作办公室', dispatch: '调度办公室', docs: '文档',
     label: '官网导航', homeLabel: 'PixOffice 首页', returnHome: '返回 PixOffice 首页',
     openMenu: '打开导航菜单', closeMenu: '关闭导航菜单', language: '网站语言', skip: '跳至主要内容',
   },
@@ -20,6 +20,8 @@ const zh = {
     minimal: { label: '轻量装配', alt: '最小装配中独立呈现的办公室场景', description: '不含外围界面的独立办公室，适合作为集成起点。', action: '打开最小装配' },
     farm: { label: '种植日常', alt: '农场中的菜地、农夫与生长中的蔬菜', description: '多人协作，完成播种、照料与收获。', action: '进入农场' },
     civic: { label: '公务场景预览', alt: '公务场景中的六位制服成员、成员侧栏与便民服务保障白板', description: '便民服务保障、现场协同与回访归档。人物动作仍在验收中。', action: '进入公务场景' },
+    collaboration: { label: '圆角工作空间', alt: '协作办公室中的圆角统计面板、人物列表与开放办公室', description: '开放办公室、团队成员与会话任务，一起呈现在圆角工作空间中。', action: '进入协作办公室' },
+    dispatch: { label: '独立体验场景', alt: '调度办公室复用的格子办公室与人物工位', description: '以页面缩略图浏览多个办公室的运行状态与待确认事项。', action: '进入调度办公室' },
     note: '示例界面目前为中文，任务与指标为演示数据；真实业务和模型服务由你的系统接入。',
   },
   contact: {
@@ -50,7 +52,7 @@ const en: typeof zh = {
     socialDescription: 'Choose a scene and see collaboration in motion. Explore office, classroom, farm and public service scenes, or request a custom scene.',
   },
   nav: {
-    home: 'Scenes', office: 'Full Office', minimal: 'Minimal Example', classroom: 'Classroom', farm: 'Farm', civic: 'Public Service', docs: 'Docs',
+    home: 'Scenes', office: 'Full Office', minimal: 'Minimal Example', classroom: 'Classroom', farm: 'Farm', civic: 'Public Service', collaboration: 'Collaboration Office', dispatch: 'Office Dispatch', docs: 'Docs',
     label: 'Main navigation', homeLabel: 'PixOffice home', returnHome: 'Back to PixOffice home',
     openMenu: 'Open navigation menu', closeMenu: 'Close navigation menu', language: 'Website language', skip: 'Skip to main content',
   },
@@ -63,6 +65,8 @@ const en: typeof zh = {
     minimal: { label: 'Lightweight setup', alt: 'The standalone office scene in the minimal example', description: 'A standalone office without the surrounding interface. A starting point for integration.', action: 'Open the minimal example' },
     farm: { label: 'Life on the farm', alt: 'Farmers tending vegetable beds at different growth stages', description: 'Work together to plant, tend and harvest.', action: 'Enter the farm' },
     civic: { label: 'Public service preview', alt: 'Six uniformed members, the member sidebar and a community service board', description: 'Community service planning, on-site coordination and follow-up. Character animation review is in progress.', action: 'Enter public service' },
+    collaboration: { label: 'Rounded workspace', alt: 'Rounded statistics, the member roster and an open collaboration office', description: 'An open office, team members and conversation tasks in a rounded workspace.', action: 'Enter collaboration office' },
+    dispatch: { label: 'Separate preview scene', alt: 'The boxed office and character workstations reused by Office Dispatch', description: 'Browse office page previews, running states and pending decisions in one overview.', action: 'Enter office dispatch' },
     note: 'The examples currently use a Chinese interface and sample task data. Connect your own backend and model services for real workflows.',
   },
   contact: {

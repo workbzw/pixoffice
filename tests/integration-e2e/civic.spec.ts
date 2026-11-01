@@ -16,16 +16,16 @@ test.afterEach(async () => { await app?.close(); expect(errors).toEqual([]) })
 test('homepage places civic after farm in both languages and fits narrow screens', async ({ page }, testInfo) => {
   for (const locale of ['zh', 'en']) {
     await page.goto(`${url}/?lang=${locale}`)
-    await expect(page.locator('.site-example')).toHaveCount(5)
+    await expect(page.locator('.site-example')).toHaveCount(6)
     expect(await page.locator('.site-example').evaluateAll(nodes => nodes.map(node => new URL((node as HTMLAnchorElement).href).pathname)))
-      .toEqual(['/office/', '/classroom/', '/minimal/', '/farm/', '/civic/'])
+      .toEqual(['/office/', '/classroom/', '/minimal/', '/farm/', '/civic/', '/collaboration/'])
     await expect(page.locator('main > section').first()).toHaveAttribute('id', 'examples')
     await expect(page.locator('#customization')).toHaveCount(1)
     for (const width of [1440, 1281, 1100, 800, 640, 390, 320]) {
       await page.setViewportSize({ width, height: 900 })
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
       const firstCard = await page.locator('.site-example').first().boundingBox()
-      expect(firstCard!.y).toBeLessThan(240)
+      expect(firstCard!.y).toBeLessThan(900 / 3)
       expect(firstCard!.y + firstCard!.height).toBeLessThan(900)
       const columns = await page.locator('.site-example-grid').evaluate(node => getComputedStyle(node).gridTemplateColumns.split(' ').length)
       expect(columns).toBe(width > 1050 ? 3 : width > 600 ? 2 : 1)
@@ -40,6 +40,73 @@ test('homepage places civic after farm in both languages and fits narrow screens
       await testInfo.attach(`homepage-${locale}-${width}`, { body: await page.screenshot(), contentType: 'image/png' })
     }
   }
+})
+
+test('published collaboration entry defaults to rounded and keeps all three layout choices', async ({ page }, testInfo) => {
+  await page.goto(`${url}/?lang=zh`)
+  await page.locator('.site-example[href="/collaboration/"]').click()
+  await expect(page).toHaveURL(/\/collaboration\/\?shell=rounded$/)
+  await expect(page.locator('.rounded-workspace')).toBeVisible()
+  await expect(page.locator('.office-main-panorama')).toBeVisible()
+  await expect(page.locator('.office-loading')).toHaveCount(0, { timeout: 30000 })
+  const pixels = await sharp(await page.locator('canvas').screenshot()).stats()
+  expect(pixels.channels[0].stdev).toBeGreaterThan(10)
+  for (const [label, selector] of [['经典布局', '.runtime-workspace'], ['成员布局', '.member-workspace:not(.rounded-workspace)'], ['圆角布局', '.rounded-workspace']]) {
+    await page.getByRole('button', { name: '切换页面布局', exact: true }).click()
+    await page.getByRole('button', { name: label, exact: true }).click()
+    await expect(page.locator(selector)).toBeVisible()
+    await expect(page.locator('canvas')).toHaveCount(1)
+    await expect(page.locator('.office-main-panorama')).toBeVisible()
+  }
+  for (const size of [{ width: 1920, height: 1080 }, { width: 1492, height: 707 }, { width: 1000, height: 900 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(size)
+    await expect.poll(() => page.locator('canvas').evaluate(node => Math.abs((node as HTMLCanvasElement).width - node.clientWidth * devicePixelRatio) < 3)).toBe(true)
+    const canvas = await page.locator('canvas').boundingBox(), main = await page.locator('.office-main-panorama').boundingBox()
+    const stats = await page.locator('.rounded-office-stats').boundingBox()
+    expect(Math.abs(main!.width - stats!.width)).toBeLessThan(2)
+    expect(Math.abs(canvas!.height - main!.height)).toBeLessThan(2)
+    expect(Math.abs(canvas!.y - main!.y)).toBeLessThan(2)
+    const scale = Math.min(canvas!.width / 1600, canvas!.height / 950)
+    expect(main!.y + main!.height).toBeCloseTo(size.height - (size.width <= 760 ? 10 : size.height <= 740 ? 12 : size.width <= 1100 ? 14 : 20), 0)
+    if (size.width > 1100) {
+      const caption = await page.locator('.rounded-scene-caption').boundingBox()
+      const boardLeft = canvas!.x + (canvas!.width - 1100 * scale) / 2 + 100 * scale
+      expect(caption!.x + caption!.width).toBeLessThan(boardLeft)
+    }
+    const screenshot = await page.locator('canvas').screenshot(), metadata = await sharp(screenshot).metadata()
+    for (const top of [12, metadata.height! - 24]) {
+      const edge = await sharp(screenshot).extract({ left: Math.round(metadata.width! / 2), top, width: 8, height: 8 }).stats()
+      expect(edge.channels.slice(0, 3).reduce((sum, channel) => sum + channel.mean, 0) / 3).toBeLessThan(253)
+    }
+    const pixelScale = scale * metadata.width! / canvas!.width
+    // Sample the inner window pane, clear of the mobile toolbar and the larger board.
+    const { data, info } = await sharp(screenshot).extract({
+      left: Math.floor(metadata.width! - 310 * pixelScale), top: Math.floor(120 * pixelScale),
+      width: Math.floor(70 * pixelScale), height: Math.floor(180 * pixelScale),
+    }).removeAlpha().raw().toBuffer({ resolveWithObject: true })
+    let skyPixels = 0
+    for (let offset = 0; offset < data.length; offset += info.channels) {
+      if (data[offset + 2] > data[offset] + 12 && data[offset + 2] > 180) skyPixels++
+    }
+    expect(skyPixels / (info.width * info.height), 'blue sky remains inside the right-hand window').toBeGreaterThan(.08)
+    await testInfo.attach(`panorama-${size.width}`, { body: await page.screenshot(), contentType: 'image/png' })
+  }
+  await page.setViewportSize({ width: 390, height: 844 })
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+  const frame = await page.locator('.member-scene-area').boundingBox()
+  expect(frame!.y + frame!.height).toBeCloseTo(834, 0)
+  const toolbar = await page.locator('.runtime-scene-toolbar').boundingBox()
+  expect(toolbar!.y).toBeLessThan(frame!.y + 30)
+  expect(toolbar!.width).toBeLessThan(40)
+  const canvas = await page.locator('canvas').boundingBox()
+  const scale = Math.min(canvas!.width / 1600, canvas!.height / 950)
+  await page.mouse.click(canvas!.x + canvas!.width / 2, canvas!.y + 140 * scale)
+  await expect(page.getByRole('dialog', { name: '协作白板', exact: true })).toBeVisible()
+  await page.getByRole('button', { name: '关闭白板', exact: true }).click()
+  await page.getByRole('button', { name: '展开对话', exact: true }).click()
+  await expect.poll(async () => (await page.locator('.office-chat[data-expanded=true]').boundingBox())!.height).toBeGreaterThan(500)
+  await page.getByRole('button', { name: '收起聊天', exact: true }).click()
+  await testInfo.attach('collaboration-mobile', { body: await page.screenshot(), contentType: 'image/png' })
 })
 
 test('custom scene QR opens, closes and restores focus on desktop and mobile', async ({ page }, testInfo) => {

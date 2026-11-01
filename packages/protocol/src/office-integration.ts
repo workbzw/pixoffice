@@ -35,7 +35,7 @@ export const officeSnapshotSchema = z.strictObject({ schemaVersion: z.literal('1
   if (new Set(snapshot.conversations.map(item => item.id)).size !== snapshot.conversations.length) context.addIssue({ code: 'custom', path: ['conversations'], message: '会话 ID 重复' })
 })
 export type OfficeSnapshot = z.infer<typeof officeSnapshotSchema>
-export const officeLayoutIdSchema = z.enum(['classic', 'members'])
+export const officeLayoutIdSchema = z.enum(['classic', 'members', 'rounded'])
 export type OfficeLayoutId = z.infer<typeof officeLayoutIdSchema>
 export const officeLayoutStateSchema = z.strictObject({ currentLayoutId: officeLayoutIdSchema, revision: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER) })
 export type OfficeLayoutState = z.infer<typeof officeLayoutStateSchema>
@@ -53,6 +53,9 @@ const layoutDefinitions = [
   { id: 'classic' as const, name: '经典布局', dataMessageType: 'office.snapshot' as const, dataSchema: z.toJSONSchema(officeSnapshotSchema, { io: 'input' }),
     ui: { slots: officeUiManifest.slots.map(slot => slot.id), actions: [...officeUiManifest.actions], localControls: ['office.select', 'conversation.select', 'chat.expand', 'chat.collapse', 'actor.insights.pin'] } },
   { id: 'members' as const, name: '成员布局', dataMessageType: 'office.snapshot' as const, dataSchema: z.toJSONSchema(officeSnapshotSchema, { io: 'input' }),
+    ui: { slots: officeUiManifest.slots.filter(slot => slot.id !== 'actor.insights').map(slot => slot.id), actions: officeUiManifest.actions.filter(action => action !== 'actor.inspect'),
+      localControls: ['office.select', 'conversation.select', 'chat.expand', 'chat.collapse', 'employee.select', 'member-sidebar.expand', 'member-sidebar.collapse'] } },
+  { id: 'rounded' as const, name: '圆角布局', dataMessageType: 'office.snapshot' as const, dataSchema: z.toJSONSchema(officeSnapshotSchema, { io: 'input' }),
     ui: { slots: officeUiManifest.slots.filter(slot => slot.id !== 'actor.insights').map(slot => slot.id), actions: officeUiManifest.actions.filter(action => action !== 'actor.inspect'),
       localControls: ['office.select', 'conversation.select', 'chat.expand', 'chat.collapse', 'employee.select', 'member-sidebar.expand', 'member-sidebar.collapse'] } },
 ]

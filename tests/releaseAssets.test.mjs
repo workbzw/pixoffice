@@ -11,13 +11,29 @@ const root = fileURLToPath(new URL('../public', import.meta.url))
 test('website release only includes current catalogs, live fallbacks and selected branding', async () => {
   const files = await collectReleaseAssets(root)
   for (const name of ['brand/logo.png', 'brand/title.png', 'site/office-scene.webp', 'LICENSE.txt', 'THIRD_PARTY_NOTICES.txt',
-    'pixoffice-config.js', 'characters/registry.json', 'assets/office/reference-v1/room-whiteboard-v3.png',
-    'classroom-assets/roster.json', 'farm-assets/chickens.webp', 'site/civic-preview.webp', 'site/customization-contact.jpg',
+    'pixoffice-config.js', 'characters/registry.json', 'assets/office/reference-v1/room-whiteboard-v4.png', 'assets/office/reference-v1/room-whiteboard-v4.webp',
+    'assets/office/reference-v1/room-workplace-v1.png', 'assets/office/reference-v1/room-workplace-v1.webp',
+    'assets/office/reference-v1/whiteboard-adaptive-v1.png', 'assets/office/reference-v1/whiteboard-adaptive-v1.webp',
+    'classroom-assets/roster.json', 'farm-assets/chickens.webp', 'site/civic-preview.webp', 'site/dispatch-preview.webp', 'site/customization-contact.jpg',
     'civic-assets/characters/registry.json', 'civic-assets/audit.json']) assert(files.has(name), name)
   for (const name of files.keys()) {
     assert(!name.startsWith('assets/characters/'), name)
     assert(!/README|prompts|room-rounded-v2|whiteboard-rounded-v2|\.DS_Store/.test(name), name)
   }
+  assert(!files.has('assets/office/reference-v1/room-open-v1.png'), 'open-room comparison artwork is not released')
+  assert(!files.has('assets/office/reference-v1/room-open-v1.webp'), 'open-room comparison WebP is not released')
+  assert(!files.has('assets/office/reference-v1/room-whiteboard-v3.png'), 'previous unequal-wall source is not released')
+  assert(!files.has('assets/office/reference-v1/room-whiteboard-v3.webp'), 'previous unequal-wall WebP is not released')
+  assert(!files.has('assets/office/reference-v1/room-whiteboard-v5.png'), 'rejected over-high left wall is not released')
+  assert(!files.has('assets/office/reference-v1/room-whiteboard-v5.webp'), 'rejected over-high left wall WebP is not released')
+  assert(!files.has('assets/office/reference-v1/room-panorama-v1.png'), 'retained panorama comparison is not released')
+  assert(!files.has('assets/office/reference-v1/room-panorama-v1.webp'), 'retired panorama build is not released')
+  assert(!files.has('assets/office/reference-v1/room-adaptive-v1.png'), 'unfurnished comparison room is not released')
+  assert(!files.has('assets/office/reference-v1/room-adaptive-v1.webp'), 'unfurnished generated background is not released')
+  assert(!files.has('assets/office/reference-v1/room-furnished-v1.png'), 'retired lounge composition is not released')
+  assert(!files.has('assets/office/reference-v1/room-furnished-v1.webp'), 'retired lounge WebP is not released')
+  assert(!files.has('assets/office/reference-v1/room-open-extended-v1.png'), 'rejected enlarged artwork is not released')
+  assert(!files.has('assets/office/reference-v1/whiteboard-open-v1.webp'), 'no replacement board frame is released')
   const registry = JSON.parse(files.get('characters/registry.json'))
   assert(files.get('site/customization-contact.jpg').equals(await readFile(`${root}/site/customization-contact.jpg`)))
   const allowed = new Set(['characters/registry.json'])

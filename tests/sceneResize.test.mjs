@@ -83,6 +83,52 @@ test('a suspended scene stays hidden during resize and repaints when resumed', t
   assert.deepEqual(events, ['resize', 'render'])
 })
 
+test('destroying a scene preserves global texture pools used by other live renderers', t => {
+  const { scene } = fixture(t)
+  const destroy = t.mock.method(scene.app, 'destroy', () => {})
+  scene.destroy()
+  assert.deepEqual(destroy.mock.calls[0].arguments, [{ removeView: true, releaseGlobalResources: false }, { children: true }])
+})
+
+test('teardown removes scene nodes immediately but waits for pending raster work before destroying its renderer', async t => {
+  const { scene } = fixture(t), stage = scene.app.stage
+  let complete
+  const ready = new Promise(resolve => { complete = resolve })
+  scene.propViews.set('board', { roots: [], whenReady: () => ready })
+  const destroy = t.mock.method(scene.app, 'destroy', () => {})
+  scene.destroy()
+  assert.equal(stage.destroyed, true)
+  assert.equal(destroy.mock.callCount(), 0)
+  complete()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(destroy.mock.callCount(), 1)
+})
+
+test('a shared preview samples only its stage without advancing the runtime or destroying its shared renderer', t => {
+  const { scene, ticks } = fixture(t)
+  const application = scene.app, originalStage = application.stage, previewStage = new Container()
+  const frames = [], props = [], elapsed = []
+  application.renderer.render = frame => frames.push(frame)
+  scene.options.previewRenderer = application
+  scene.previewStage = previewStage
+  scene.renderingSuspended = true
+  scene.firstFrameReady = true
+  t.mock.method(scene, 'syncProps', force => props.push(force))
+  t.mock.method(scene, 'syncActors', dt => elapsed.push(dt))
+  const destroy = t.mock.method(application, 'destroy', () => {})
+  assert.equal(scene.renderPreview(.5), true)
+  assert.deepEqual(props, [true])
+  assert.deepEqual(elapsed, [.5])
+  assert.deepEqual(frames, [{ container: previewStage, clear: true }])
+  assert.equal(ticks(), 0)
+  scene.destroy()
+  assert.equal(previewStage.destroyed, true)
+  assert.equal(destroy.mock.callCount(), 0)
+  assert.equal(originalStage.destroyed, false)
+  originalStage.destroy({ children: true })
+  assert.equal(scene.renderPreview(.5), false)
+})
+
 test('prop display frames run while visible but stop when suspended or destroyed', t => {
   const { scene } = fixture(t), updates = []
   scene.runtime.getRevision = () => 0

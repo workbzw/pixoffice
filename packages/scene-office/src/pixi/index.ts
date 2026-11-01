@@ -1,5 +1,5 @@
 import type { ScenePresentationPack } from '@pixoffice/renderer-pixi/ScenePresentationPack'
-import type { ActorIntent, ActorTaskPresentation } from '@pixoffice/contracts/presentation'
+import type { ActorIntent, ActorTaskPresentation, PresentedActor } from '@pixoffice/contracts/presentation'
 import { projectAgents } from '../adapters/office.ts'
 import { apartmentPoseForState } from './posePolicy.ts'
 import { loadOfficeBackground, loadOfficeFurniture } from './assets/loadOfficeAssets.ts'
@@ -7,13 +7,15 @@ import { loadWorkstationTrialAssets } from './assets/loadWorkstationTrialAssets.
 import { createOfficePropViews } from './views/index.ts'
 import { CELL_PIXELS, cellCenter } from './projection.ts'
 import { computeAgentDepthZ } from './depth.ts'
-import { loadReferenceOfficeBackground, loadReferenceOfficeObjects } from './assets/loadReferenceOfficeAssets.ts'
+import { loadAdaptiveWhiteboard, loadPanoramaOfficeBackground, loadReferenceOfficeBackground, loadReferenceOfficeObjects } from './assets/loadReferenceOfficeAssets.ts'
+import { adaptiveOfficeViewport, createAdaptiveOfficeBackdrop } from './adaptiveOffice.ts'
 import { createReferenceOfficePropViews, referenceMonitorAnchor } from './views/referenceOffice.ts'
 import type { WhiteboardProgress } from '../whiteboard.ts'
 import { createOfficeWorkEffects } from './effects/OfficeWorkEffect.ts'
 import { loadOfficeTexture } from './assets/loadOfficeTexture.ts'
 import type { Texture } from 'pixi.js'
 export { configureOfficeAssets } from './assets/loadOfficeTexture.ts'
+export type OfficePresentation = 'reference' | 'panorama'
 
 export function createOfficePresentation(trialEnabled: () => boolean = () => true): ScenePresentationPack {
   return {
@@ -55,19 +57,26 @@ export function createOfficePresentation(trialEnabled: () => boolean = () => tru
   }
 }
 
-export function createReferenceOfficePresentation(options: { taskForActor?: (id: string) => ActorTaskPresentation | undefined; whiteboardProgress?: WhiteboardProgress; workEffects?: boolean } = {}): ScenePresentationPack {
+export function createReferenceOfficePresentation(options: { taskForActor?: (id: string) => ActorTaskPresentation | undefined; whiteboardProgress?: WhiteboardProgress; workEffects?: boolean; presentation?: OfficePresentation } = {}): ScenePresentationPack {
   const base = createOfficePresentation()
+  const panorama = options.presentation === 'panorama'
+  const workstationScale = panorama ? 1.875 : 1.5
   const workEffects = options.workEffects ?? false
   let workEffectTexture: Texture | undefined
-  const pack: ScenePresentationPack = { ...base, id: 'pixoffice.office.reference', resourceCount: workEffects ? 9 : 8,
+  const pack: ScenePresentationPack = { ...base, id: panorama ? 'pixoffice.office.panorama' : 'pixoffice.office.reference', resourceCount: 8 + Number(workEffects) + Number(panorama),
     rendering: { idleFPS: 20, motionFPS: 60 },
-    contentBounds: () => ({ left: 0, top: 0, right: 1100, bottom: 850 }),
-    loadBackground: loadReferenceOfficeBackground,
+    contentBounds: () => ({ left: 0, top: panorama ? -100 : 0, right: 1100, bottom: 850 }),
+    ...(panorama ? { createBackdrop: createAdaptiveOfficeBackdrop, viewportBounds: adaptiveOfficeViewport } : {}),
+    loadBackground: panorama ? loadPanoramaOfficeBackground : loadReferenceOfficeBackground,
     async loadObjects(report) {
       await Promise.all([base.loadObjects(report), loadReferenceOfficeObjects(part => report(`reference:${part}`)),
+        panorama ? loadAdaptiveWhiteboard().then(() => report('reference:whiteboard-adaptive-v1')) : undefined,
         workEffects ? loadOfficeTexture('office-work-crafting-lite-v1', 'effects/work-crafting-lite-v1').then(texture => { workEffectTexture = texture; report('office-work-crafting-lite-v1') }) : undefined])
     },
-    createPropViews: () => createReferenceOfficePropViews(options.whiteboardProgress),
+    createPropViews: () => createReferenceOfficePropViews(options.whiteboardProgress, panorama ? {
+      x: -126, y: -272, scale: .9, frame: { x: -150, y: -285, width: 900, height: 302 }, artwork: 'whiteboard-adaptive-v1',
+      layout: { width: 920, height: 314, fontSize: 28 },
+    } : undefined, workstationScale),
     projectActors(runtime, preview) {
       const world = preview ?? runtime.readWorld(), props = world.props
       return base.projectActors(runtime, world).map(actor => {
@@ -76,8 +85,11 @@ export function createReferenceOfficePresentation(options: { taskForActor?: (id:
           : actor.title ? { title: actor.title, status: actor.status === 'thinking' ? 'blocked' : 'running', progressMode: 'activity' }
           : { title: '待命', status: 'idle' }
         const workstation = props.find(prop => prop.id === actor.furniture?.propId && prop.templateId === 'office.reference-workstation')
-        const presented = { ...actor, displayHeight: 126, label: { placement: 'above' as const, scale: 1.25 }, task,
-          taskAnchor: workstation ? { ...referenceMonitorAnchor(workstation.position, 'right'), placement: 'right' as const } : undefined }
+        const label: PresentedActor['label'] = panorama && actor.furniture?.seated && !actor.furniture.transitioning
+          ? { placement: 'beside', x: -130, y: -30, scale: 1.25 }
+          : { placement: 'above', scale: 1.25 }
+        const presented = { ...actor, displayHeight: 84 * workstationScale, label, task,
+          taskAnchor: workstation ? { ...referenceMonitorAnchor(workstation.position, 'right', workstationScale), placement: 'right' as const } : undefined }
         return presented
       })
     },
