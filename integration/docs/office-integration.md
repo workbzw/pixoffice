@@ -18,6 +18,23 @@ PixOffice 服务端 -- SSE 消息 --> PixOffice 浏览器页面
 外部业务后端 <-- 同一次 HTTP 请求的响应 -- PixOffice 服务端
 ```
 
+## 页面入口与布局选择
+
+页面路径选择前端体验入口；页面布局决定该入口内导航、成员和业务面板的排列。两者独立：
+
+| 页面路径 | 展示能力 |
+| --- | --- |
+| `/office/` | 常规完整办公室，不包含调度圆环与实时缩略图总览 |
+| `/dispatch/` | 独立调度办公室，右上角圆环显示运行中办公室数与总数，点击后打开实时多办公室总览 |
+
+两个入口均支持 `classic`、`members`、`rounded` 布局。`dispatch` 是页面入口，不是布局 ID，也不是 HTTP 消息类型。
+
+本地演示可通过 `shell` URL 参数指定初始布局。例如，`/office/?shell=rounded` 是圆角布局的常规办公室；`/dispatch/?shell=rounded` 才是带调度圆环的圆角布局办公室。改变 `shell` 不会改变页面入口。
+
+接入外部服务时，页面布局以 PixOffice 服务端同步的选择为准；外部业务后端通过 `offices.initialize.layoutId` 或 `office.layout.set` 设置布局，`shell` 参数不会覆盖服务端选择。布局查询与切换格式见下文“页面布局查询与切换”。
+
+调度入口复用本文全部 HTTP 消息和业务快照格式。圆环计数与实时缩略图由浏览器根据已接收的办公室状态生成，不要求外部业务后端新增统计、截图或预览推送接口，也不增加动画回执。连接同一 PixOffice 服务端的两个入口共用该服务端的办公室状态，不会因页面路径不同而创建独立的后端数据副本。浏览器本地存档隔离与预览刷新策略见[调度办公室说明](../../docs/dispatch-office.md)。
+
 ## 完整调用流程
 
 以下流程以服务器部署、浏览器页面在线为例。外部业务后端发送的 `office.capabilities`、`office.layout.read`、`office.layout.set`、`offices.initialize`、`office.snapshot`、`office.read`、`ui.next`、`ui.respond` 和 `decision.request`，均为 `POST /api/pixoffice/messages` 请求体中的 `type`。
@@ -125,7 +142,7 @@ npm install
 npm run dev
 ```
 
-打开启动日志中 Vite 地址的 `/office/` 页面。在另一个终端运行业务接入示例：
+打开启动日志中 Vite 地址的 `/office/` 页面；需要圆环和实时多办公室总览时，打开 `/dispatch/`。在另一个终端运行业务接入示例：
 
 ```sh
 npm run integration-example

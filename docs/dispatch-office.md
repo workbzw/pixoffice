@@ -2,6 +2,12 @@
 
 入口：`/dispatch/`。首页场景列表提供独立入口，原 `/office/` 行为不变。
 
+## 入口与页面布局
+
+`/office/?shell=rounded` 是圆角布局的常规办公室，不显示调度圆环；`/dispatch/?shell=rounded` 才是圆角布局的调度办公室。`shell` 只选择 `classic`、`members` 或 `rounded` 布局，不改变页面入口。未指定有效 `shell` 时，调度入口的本地演示默认使用 `members`。
+
+连接外部服务时，页面采用服务端同步的布局选择；后端通过 `offices.initialize.layoutId` 或 `office.layout.set` 控制布局，URL 参数不会覆盖该选择。调度入口不增加后端接口、消息类型或布局 ID，接入方式见[HTTP 协议中的入口说明](../integration/docs/office-integration.md#页面入口与布局选择)。
+
 ## 当前范围
 
 - 复用格子办公室背景、人物、家具、会话、任务、审批和运行时。

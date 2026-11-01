@@ -10,7 +10,7 @@ PixOffice 是基于 Vite + React + PixiJS 的二维互动场景项目。内置�
 
 ## 在线演示
 
-[官网](https://pixoffice.online/?lang=zh) · [完整办公室](https://pixoffice.online/office/) · [最小装配](https://pixoffice.online/minimal/) · [教室](https://pixoffice.online/classroom/) · [农场](https://pixoffice.online/farm/) · [公务预览](https://pixoffice.online/civic/) · [协作办公室](https://pixoffice.online/collaboration/)
+[官网](https://pixoffice.online/?lang=zh) · [完整办公室](https://pixoffice.online/office/) · [调度办公室](https://pixoffice.online/dispatch/) · [最小装配](https://pixoffice.online/minimal/) · [教室](https://pixoffice.online/classroom/) · [农场](https://pixoffice.online/farm/) · [公务预览](https://pixoffice.online/civic/) · [协作办公室](https://pixoffice.online/collaboration/)
 
 ![PixOffice 办公室：任务白板、人物走动与工位交流](./docs/office-demo.gif)
 
@@ -18,7 +18,9 @@ PixOffice 是基于 Vite + React + PixiJS 的二维互动场景项目。内置�
 
 右上角可选择“电商流程”或“全员动作”再播放。全员动作会展示六人的四向行走、坐起、工作、左右交谈、表情、闲时状态与白板会议，不推进业务任务，也不弹出审批菜单。闲时动作由场景素材决定，当前没有专用素材时保持自然待机。
 
-页面支持经典布局和成员布局，成员侧栏按人物保留任务动态，可通过左上角布局按钮切换。[查看完整页面高清截图](./docs/page-preview.jpeg)。
+页面支持经典（`classic`）、成员（`members`）和圆角（`rounded`）布局，可通过布局按钮切换；成员与圆角布局保留人物侧栏和任务动态。[查看完整页面高清截图](./docs/page-preview.jpeg)。
+
+调度办公室 `/dispatch/` 提供右上角运行数量圆环和实时多办公室总览，可见场景画面最多每秒刷新 2 次。它是独立入口，原 `/office/` 不显示调度圆环；`shell=rounded` 只选择圆角布局。直接体验[圆角调度办公室](https://pixoffice.online/dispatch/?shell=rounded)，功能边界见[调度说明](./docs/dispatch-office.md)。
 
 公务场景 `/civic/` 使用六位制服人物，默认成员布局，以“社区便民服务日保障”展示逐人派工、方案确认、现场协同、回访与归档。人物职责、白板、任务与聊天使用独立公务内容；当前人物素材仍为预览状态，页面会显示未验收提示。
 
@@ -48,6 +50,7 @@ npm run dev:vite
 | 你想做什么 | 阅读入口 |
 | --- | --- |
 | 接入业务后端或智能体 | [对接指南](./integration/README.md) · [HTTP 协议与流程图](./integration/docs/office-integration.md) |
+| 使用圆环与实时办公室总览 | [调度办公室与入口区别](./docs/dispatch-office.md) |
 | 更新任务、员工与白板 | [业务快照与白板字段](./integration/docs/dashboard-integration.md) |
 | 接入流式聊天 | [聊天接口](./integration/docs/chat-integration.md) |
 | 部署服务器、配置连接与鉴权 | [部署与消息通道](./integration/docs/message-relay.md) |

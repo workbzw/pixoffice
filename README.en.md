@@ -10,7 +10,7 @@ PixOffice is a 2D interactive scene project built with Vite, React, and PixiJS. 
 
 ## Live Demo
 
-[Website](https://pixoffice.online/?lang=en) · [Full Office](https://pixoffice.online/office/) · [Minimal Example](https://pixoffice.online/minimal/) · [Classroom](https://pixoffice.online/classroom/) · [Farm](https://pixoffice.online/farm/) · [Public Service Preview](https://pixoffice.online/civic/) · [Collaboration Office](https://pixoffice.online/collaboration/)
+[Website](https://pixoffice.online/?lang=en) · [Full Office](https://pixoffice.online/office/) · [Office Dispatch](https://pixoffice.online/dispatch/) · [Minimal Example](https://pixoffice.online/minimal/) · [Classroom](https://pixoffice.online/classroom/) · [Farm](https://pixoffice.online/farm/) · [Public Service Preview](https://pixoffice.online/civic/) · [Collaboration Office](https://pixoffice.online/collaboration/)
 
 ![PixOffice office: task whiteboard, walking characters and desk conversations](./docs/office-demo.gif)
 
@@ -18,7 +18,9 @@ The default local scenario follows an ecommerce product from preparation and ind
 
 The top-right demo menu also offers an all-member action showcase: four-direction walking, sitting and rising, working, conversations from both sides, expressions, leisure, and whiteboard meetings. It does not advance business tasks or open approval dialogs. Leisure artwork belongs to each scene; the current characters use neutral idle poses until dedicated artwork is provided.
 
-Switch between classic and member layouts with the top-left layout control. The member sidebar retains each person's task activity. [View the full-page high-resolution screenshot](./docs/page-preview.jpeg).
+Use the layout control to switch between classic (`classic`), member (`members`), and rounded (`rounded`) layouts. Member and rounded layouts retain the member sidebar and task activity. [View the full-page high-resolution screenshot](./docs/page-preview.jpeg).
+
+Office Dispatch at `/dispatch/` adds a top-right running-office count ring and a live multi-office overview. Visible scene previews refresh at most twice per second. It is a separate entry: `/office/` does not show the dispatch ring, and `shell=rounded` only selects the rounded layout. Open [Office Dispatch with the rounded layout](https://pixoffice.online/dispatch/?shell=rounded); see the [dispatch guide](./docs/dispatch-office.md) for its scope.
 
 The public service scene at `/civic/` uses six uniformed characters and defaults to the member layout. Its independent community-service story covers individual task handoffs, plan approval, on-site coordination, follow-up and archiving, including matching profiles, boards, tasks and chat. Character artwork is still a preview, with an explicit review-pending notice.
 
@@ -48,6 +50,7 @@ For external integration, run `npm run dev` to start the frontend and Fastify, t
 | Goal | Start Here |
 | --- | --- |
 | Connect a business backend or agent service | [Integration Guide](./integration/README.md) · [HTTP Contract and Flows](./integration/docs/office-integration.md) |
+| Use the count ring and live office overview | [Office Dispatch and Entry Differences](./docs/dispatch-office.md) |
 | Update tasks, employees, and whiteboards | [Business Snapshots and Whiteboard Fields](./integration/docs/dashboard-integration.md) |
 | Connect streaming chat | [Chat API](./integration/docs/chat-integration.md) |
 | Deploy servers and configure connections or authentication | [Deployment and Messaging](./integration/docs/message-relay.md) |

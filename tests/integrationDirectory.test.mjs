@@ -45,3 +45,23 @@ test('both READMEs expose the integration entry and link to the current guides',
     }
   }
 })
+
+test('entry documentation distinguishes dispatch from layouts and exposes current links in both languages', async () => {
+  for (const filename of ['README.md', 'README.en.md']) {
+    const text = await readFile(new URL(filename, root), 'utf8')
+    assert(text.includes('https://pixoffice.online/dispatch/'))
+    assert(text.includes('https://pixoffice.online/dispatch/?shell=rounded'))
+    assert(text.includes('](./docs/dispatch-office.md)'))
+    for (const layout of ['classic', 'members', 'rounded']) assert(text.includes(`\`${layout}\``))
+  }
+  const protocol = await readFile(new URL('docs/office-integration.md', integration), 'utf8')
+  const guide = await readFile(new URL('docs/dispatch-office.md', root), 'utf8')
+  for (const text of [protocol, guide]) {
+    assert(text.includes('/office/?shell=rounded'))
+    assert(text.includes('/dispatch/?shell=rounded'))
+    assert(text.includes('office.layout.set'))
+    assert(text.includes('不会覆盖'))
+  }
+  assert(protocol.includes('不是布局 ID'))
+  assert(protocol.includes('不要求外部业务后端新增统计、截图或预览推送接口'))
+})

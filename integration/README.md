@@ -34,7 +34,7 @@ npm install
 npm run dev
 ```
 
-打开启动日志中 Vite 地址的 `/office/` 页面。在另一个终端初始化办公室、更新任务并等待用户确认：
+打开启动日志中 Vite 地址的 `/office/` 页面；需要右上角圆环和实时多办公室总览时，打开 `/dispatch/`。两者使用相同的 HTTP 协议；`shell=rounded` 只选择布局，不切换入口。完整规则见[页面入口与布局选择](./docs/office-integration.md#页面入口与布局选择)。在另一个终端初始化办公室、更新任务并等待用户确认：
 
 ```sh
 npm run integration-example
