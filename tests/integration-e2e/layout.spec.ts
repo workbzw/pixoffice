@@ -233,6 +233,38 @@ test('dispatch is an isolated entry with live multi-office overview and one shar
   await expect(page.locator('.dispatch-running-frame')).toHaveCount(0)
 })
 
+test('dispatch expands small directories to fill the row and wraps after four cards', async ({ page }, testInfo) => {
+  test.setTimeout(90000)
+  for (const count of [1, 2, 3, 4, 5]) {
+    const states = Array.from({ length: count }, (_, index) => office(`sized-office-${index}`))
+    states.forEach((state, index) => { state.workspace.name = `办公室${index + 1}` })
+    await backend.post({ type: 'offices.initialize', offices: states, layoutId: 'members' })
+    if (count === 1) await page.goto(`${url}/dispatch/`)
+    await page.locator('.dispatch-ring-button').click()
+    const dialog = page.getByRole('dialog', { name: '办公室总览', exact: true })
+    await expect(dialog.locator('.dispatch-office-card')).toHaveCount(count)
+    await expect(dialog).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)')
+    for (const [width, capacity] of [[1440, 4], [1100, 3], [800, 2], [390, 1]]) {
+      await page.setViewportSize({ width, height: 900 })
+      const columns = Math.min(count, capacity)
+      await expect.poll(() => dialog.locator('.dispatch-office-grid').evaluate(element => getComputedStyle(element).gridTemplateColumns.split(' ').filter(track => parseFloat(track) > 0).length)).toBe(columns)
+      const geometry = await dialog.locator('.dispatch-office-grid').evaluate(element => ({
+        width: element.getBoundingClientRect().width, gap: parseFloat(getComputedStyle(element).columnGap),
+        cards: [...element.children].map(card => { const bounds = card.getBoundingClientRect(); return { width: bounds.width, top: bounds.top } }),
+      }))
+      for (const card of geometry.cards) expect(card.width).toBeCloseTo((geometry.width - geometry.gap * (columns - 1)) / columns, 0)
+      if (count > columns) expect(geometry.cards[columns].top).toBeGreaterThan(geometry.cards[0].top)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      if (width === 1440 && count >= 2 && count <= 4) {
+        await expect(dialog.locator('.dispatch-preview canvas[data-frame]')).toHaveCount(count)
+        await testInfo.attach(`dispatch-${count}-columns`, { body: await page.screenshot(), contentType: 'image/png' })
+      }
+    }
+    await page.keyboard.press('Escape')
+    await expect(dialog).toHaveCount(0)
+  }
+})
+
 test('dispatch can enter another office before any thumbnail is ready', async ({ page }, testInfo) => {
   const states = [office('first-office'), office('second-office')]
   states[0].workspace.name = '办公室一'; states[1].workspace.name = '办公室二'

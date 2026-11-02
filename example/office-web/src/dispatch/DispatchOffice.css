@@ -25,7 +25,7 @@
 .dispatch-icon-button { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 6px; color: #a0a0a0; background: transparent; cursor: pointer; }
 .dispatch-icon-button:hover { color: #555; background: #ececec; }
 .dispatch-overview-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 36px 4vw 48px; scrollbar-width: thin; scrollbar-color: #d1d1d1 transparent; }
-.dispatch-office-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 3vw; row-gap: 38px; align-items: start; }
+.dispatch-office-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(calc((100% - 9vw) / 4), 1fr)); column-gap: 3vw; row-gap: 38px; align-items: start; }
 .dispatch-office-card { position: relative; min-width: 0; border: 0; background: transparent; }
 .dispatch-card-enter { display: block; width: 100%; min-width: 0; padding: 0; border: 0; color: inherit; text-align: left; background: transparent; cursor: pointer; }
 .dispatch-card-enter:has([data-preview-state=loading]) { cursor: progress; }
@@ -64,8 +64,8 @@
 .dispatch-entry-status { position: absolute; z-index: 4; bottom: 24px; left: 50%; max-width: calc(100% - 32px); margin: 0; padding: 8px 12px; transform: translateX(-50%); border-radius: 6px; color: #68736d; background: #fffffff0; font-size: 12px; text-align: center; }
 @keyframes dispatch-orbit { to { transform: rotate(360deg); } }
 @keyframes dispatch-breathe { 0%, 100% { opacity: .5; } 50% { opacity: 1; } }
-@media (max-width: 1250px) { .dispatch-office-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 950px) { .dispatch-office-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1250px) { .dispatch-office-grid { grid-template-columns: repeat(auto-fit, minmax(calc((100% - 6vw) / 3), 1fr)); } }
+@media (max-width: 950px) { .dispatch-office-grid { grid-template-columns: repeat(auto-fit, minmax(calc((100% - 3vw) / 2), 1fr)); } }
 @media (max-width: 600px) {
   .dispatch-ring-button { top: 12px; right: 12px; width: 38px; height: 38px; }
   .dispatch-office .runtime-scene-toolbar { right: 58px; }
