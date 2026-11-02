@@ -105,6 +105,39 @@ test('history pagination prepends unique turns and never overwrites a newer over
   assert.equal(session.getSnapshot().hasMoreHistory, false)
 })
 
+for (const latest of [60, 87, 100]) {
+  test(`history pagination fills a gap before the latest ${latest} turns without reordering the cached prefix`, async t => {
+    const records = Array.from({ length: latest }, (_, index) => turn(`opaque-${latest - index}`))
+    const messages = records.filter((_, index) => index < 20 || latest === 87 && index >= 40 && index < 60).flatMap(record => [
+      { id: `${record.id}:user`, role: 'user', content: record.user, state: 'complete' },
+      { id: `${record.id}:assistant`, role: 'assistant', content: record.assistant, state: record.state },
+    ])
+    let saved
+    const session = new ChatSession('team', { kind: 'test', async *stream() {}, history: async request => {
+      const end = request.cursor ? Number(request.cursor) : latest
+      const start = Math.max(0, end - 20)
+      return page(records.slice(start, end), start ? String(start) : '')
+    } }, { persistence: {
+      read: async () => ({ version: 1, teamId: 'team', conversationId: 'chat', draft: '保留草稿', activeTurnId: '', messages }),
+      write: async value => { saved = value },
+    } }); t.after(() => session.dispose())
+    await session.ready
+    while (session.getSnapshot().hasMoreHistory) {
+      await session.loadOlder()
+      const visible = session.getSnapshot().messages.filter(message => message.role === 'user')
+      assert.deepEqual(visible.map(message => message.id), records.filter(record => visible.some(message => message.id === `${record.id}:user`)).map(record => `${record.id}:user`))
+    }
+    const expectedIds = records.flatMap(record => [`${record.id}:user`, `${record.id}:assistant`])
+    assert.deepEqual(session.getSnapshot().messages.map(message => message.id), expectedIds)
+    assert.equal(session.getSnapshot().draft, '保留草稿')
+    assert.equal(session.getSnapshot().hasMoreHistory, false)
+    assert.deepEqual(saved.messages, session.getSnapshot().messages)
+    await session.synchronize(true)
+    await session.loadOlder()
+    assert.deepEqual(session.getSnapshot().messages.map(message => message.id), expectedIds)
+  })
+}
+
 test('refresh recovery preserves drafts and replaces the partial message with the authoritative reply', async t => {
   let saved
   const archive = { version: 1, teamId: 'team', conversationId: 'chat', draft: '还没发送的草稿', activeTurnId: 'a', messages: [

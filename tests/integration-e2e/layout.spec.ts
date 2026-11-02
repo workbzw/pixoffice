@@ -233,6 +233,27 @@ test('dispatch is an isolated entry with live multi-office overview and one shar
   await expect(page.locator('.dispatch-running-frame')).toHaveCount(0)
 })
 
+test('dispatch can enter another office before any thumbnail is ready', async ({ page }, testInfo) => {
+  const states = [office('first-office'), office('second-office')]
+  states[0].workspace.name = '办公室一'; states[1].workspace.name = '办公室二'
+  states[1].conversations[0].tasks[0].title = '不等待缩略图即可进入的任务'
+  await backend.post({ type: 'offices.initialize', offices: states, layoutId: 'members' })
+  await page.goto(`${url}/dispatch/`)
+  await page.waitForFunction(() => performance.getEntriesByName('pixoffice:scene-ready').length > 0)
+  // Suspend only thumbnail sampling, without delaying the actual office scene.
+  await page.evaluate(() => Object.defineProperty(document, 'hidden', { configurable: true, get: () => true }))
+  await page.locator('.dispatch-ring-button').click()
+  const dialog = page.getByRole('dialog', { name: '办公室总览', exact: true })
+  await expect(dialog).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)')
+  await expect(dialog.locator('canvas[data-frame]')).toHaveCount(0)
+  await dialog.getByRole('button', { name: '进入办公室二', exact: true }).click()
+  await expect(dialog.locator('.dispatch-office-zoom')).toBeVisible()
+  await expect(dialog).toHaveCount(0)
+  await expect(page.locator('.member-current-task')).toContainText('不等待缩略图即可进入的任务')
+  await page.evaluate(() => Reflect.deleteProperty(document, 'hidden'))
+  await testInfo.attach('dispatch-entry-without-thumbnail', { body: await page.screenshot(), contentType: 'image/png' })
+})
+
 test('the original members office keeps its frame ratio while the sidebar has bounded flexibility', async ({ page }) => {
   await backend.post({ type: 'offices.initialize', offices: [office()], layoutId: 'members' })
   await page.goto(`${url}/office/`)

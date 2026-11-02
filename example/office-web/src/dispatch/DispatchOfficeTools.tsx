@@ -53,7 +53,7 @@ export function DispatchOverviewDialog({ id, selection, onClose, trigger, sceneR
   }
 
   const enter = (team: OfficeTeamOption, preview?: HTMLElement | null, decisions = false) => {
-    if (busy || closing.current || isOpening || !preview || (!preview.querySelector('canvas[data-frame]') && !preview.querySelector('[data-preview-state=error]'))) return
+    if (busy || closing.current || isOpening || !preview) return
     const origin = readOverviewOrigin(preview, parseFloat(getComputedStyle(preview).borderTopLeftRadius))
     if (!origin) return
     closing.current = true

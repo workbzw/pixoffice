@@ -28,6 +28,7 @@ export class ChatSession {
   private persisted: unknown
   private activeTurnId = ''
   private historyCursor = ''
+  private historyAnchor = ''
   private synchronized = false
   private historyInvalidated = false
   private syncFlight?: Promise<void>
@@ -157,6 +158,7 @@ export class ChatSession {
       const page = chatHistoryPageSchema.parse(await this.source.history!({ version: '1.0', type: 'history', teamId: this.teamId, conversationId: this.conversationId, cursor: '', limit: 20 }, AbortSignal.any([controller.signal, AbortSignal.timeout(15000)])))
       if (controller.signal.aborted) return
       this.synchronized = true; this.historyCursor = page.nextCursor; this.activeTurnId = page.activeTurnId
+      this.historyAnchor = page.turns.length ? messageId(page.turns[0].id, 'user') : ''
       this.update({ ...this.snapshot, syncing: false, historyError: null, error: null, phase: page.activeTurnId ? 'thinking' : 'idle', hasMoreHistory: page.hasMore, messages: mergeHistory(this.snapshot.messages, page.turns) })
       await this.flush()
       if (page.activeTurnId && this.activeTurnId === page.activeTurnId && !this.snapshot.canceling && this.source.resume) void this.resume(page.activeTurnId)
@@ -172,8 +174,10 @@ export class ChatSession {
       const page = chatHistoryPageSchema.parse(await this.source.history({ version: '1.0', type: 'history', teamId: this.teamId, conversationId: this.conversationId, cursor, limit: 20 }, AbortSignal.any([controller.signal, AbortSignal.timeout(15000)])))
       if (controller.signal.aborted) return
       if (page.hasMore && page.nextCursor === cursor) throw new Error('聊天历史游标未前进')
+      const messages = mergeHistory(this.snapshot.messages, page.turns, true, this.historyAnchor)
       this.historyCursor = page.nextCursor
-      this.update({ ...this.snapshot, loadingOlder: false, hasMoreHistory: page.hasMore, messages: mergeHistory(this.snapshot.messages, page.turns, true) })
+      if (page.turns.length) this.historyAnchor = messageId(page.turns[0].id, 'user')
+      this.update({ ...this.snapshot, loadingOlder: false, hasMoreHistory: page.hasMore, messages })
       await this.flush()
     } catch (error) {
       if (!controller.signal.aborted) this.update({ ...this.snapshot, loadingOlder: false, olderError: error instanceof Error ? error.message : '较早记录加载失败' }, false)
@@ -281,7 +285,7 @@ export class ChatSession {
     }
     return Promise.resolve(true)
   }
-  clear() { this.stop(); this.syncController?.abort(); this.olderController?.abort(); this.synchronized = false; this.historyCursor = ''; this.conversationId = crypto.randomUUID(); this.update({ ...this.snapshot, draft: '', messages: [], phase: 'idle', error: null, historyError: null, syncing: false, loadingOlder: false, hasMoreHistory: false, olderError: null, canceling: false }); void this.flush() }
+  clear() { this.stop(); this.syncController?.abort(); this.olderController?.abort(); this.synchronized = false; this.historyCursor = ''; this.historyAnchor = ''; this.conversationId = crypto.randomUUID(); this.update({ ...this.snapshot, draft: '', messages: [], phase: 'idle', error: null, historyError: null, syncing: false, loadingOlder: false, hasMoreHistory: false, olderError: null, canceling: false }); void this.flush() }
   detach() {
     this.synchronized = false; this.historyInvalidated = false
     this.syncController?.abort(); this.olderController?.abort(); this.cancelController?.abort()
