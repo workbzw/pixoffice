@@ -10,7 +10,7 @@ const root = fileURLToPath(new URL('../public', import.meta.url))
 
 test('website release only includes current catalogs, live fallbacks and selected branding', async () => {
   const files = await collectReleaseAssets(root)
-  for (const name of ['brand/logo.png', 'brand/title.png', 'site/office-scene.webp', 'LICENSE.txt', 'THIRD_PARTY_NOTICES.txt',
+  for (const name of ['brand/logo.png', 'brand/title.png', 'brand/kunlunmeta.png', 'site/office-scene.webp', 'LICENSE.txt', 'THIRD_PARTY_NOTICES.txt',
     'pixoffice-config.js', 'characters/registry.json', 'assets/office/reference-v1/room-whiteboard-v4.png', 'assets/office/reference-v1/room-whiteboard-v4.webp',
     'assets/office/reference-v1/room-workplace-v1.png', 'assets/office/reference-v1/room-workplace-v1.webp',
     'assets/office/reference-v1/whiteboard-adaptive-v1.png', 'assets/office/reference-v1/whiteboard-adaptive-v1.webp',
@@ -36,6 +36,7 @@ test('website release only includes current catalogs, live fallbacks and selecte
   assert(!files.has('assets/office/reference-v1/whiteboard-open-v1.webp'), 'no replacement board frame is released')
   const registry = JSON.parse(files.get('characters/registry.json'))
   assert(files.get('site/customization-contact.jpg').equals(await readFile(`${root}/site/customization-contact.jpg`)))
+  assert(files.get('brand/kunlunmeta.png').equals(await readFile(`${root}/brand/kunlunmeta.png`)))
   const allowed = new Set(['characters/registry.json'])
   for (const character of registry.characters) {
     const catalog = JSON.parse(await readFile(`${root}/asset-packs/${character.id}.json`, 'utf8'))
@@ -46,6 +47,7 @@ test('website release only includes current catalogs, live fallbacks and selecte
 
 test('standalone release selection cannot include another scene or historical generated files', async () => {
   const office = await collectReleaseAssets(root, 'office')
+  assert(office.get('brand/kunlunmeta.png').equals(await readFile(`${root}/brand/kunlunmeta.png`)))
   assert(!office.has('site/customization-contact.jpg'))
   assert(![...office.keys()].some(name => /^(farm|classroom|civic)-assets\//.test(name)))
   for (const product of ['classroom', 'farm']) {

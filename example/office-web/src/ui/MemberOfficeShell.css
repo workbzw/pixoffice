@@ -4,9 +4,10 @@
 .member-workspace button:disabled, .member-profile-dialog button:disabled { cursor: not-allowed; opacity: .45; }
 .member-workspace :is(button, a, summary, select):focus-visible, .member-profile-dialog :is(button, select, textarea):focus-visible { outline: 2px solid #488f6b; outline-offset: 3px; }
 .member-sidebar { --member-section-gap: 12px; display: flex; flex-direction: column; gap: var(--member-section-gap); min-width: 0; min-height: 0; padding: 16px 18px 14px; border-right: 1px solid #e5ebe7; background: #f6f8f9; }
-.member-brand-row { display: flex; align-items: center; gap: 6px; min-height: 56px; }
-.member-brand-row > a { flex: 1; min-width: 0; }
-.member-brand-row img { display: block; width: 188px; max-width: 100%; height: auto; }
+.member-brand-row { display: flex; align-items: center; flex: 0 0 auto; gap: 6px; min-height: 56px; }
+.member-brand-identity { display: flex; flex-direction: column; align-items: flex-start; flex: 1; gap: 1px; min-width: 0; }
+.member-brand-identity > a { display: block; max-width: 100%; }
+.member-product-logo { display: block; width: 156px; max-width: 100%; height: auto; }
 .member-office-control { display: flex; align-items: center; flex: 0 0 34px; min-height: 34px; }
 .member-office-control .team-space-trigger { width: 34px; height: 34px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #61716a; cursor: pointer; }
 .member-office-control .team-space-trigger:hover:not(:disabled), .member-office-control .team-space-trigger[aria-expanded=true] { background: #e9efec; }
@@ -110,7 +111,7 @@
   .member-workspace { display: flex; }
   .member-sidebar { position: fixed; z-index: 80; top: 0; bottom: 0; left: 0; width: min(320px, calc(100vw - 32px)); visibility: hidden; transform: translateX(-100%); transition: transform .2s ease, visibility .2s; }
   .member-workspace[data-drawer-open=true] .member-sidebar { visibility: visible; transform: translateX(0); }
-  .member-brand-row img { width: 158px; }
+  .member-product-logo { width: 144px; }
   .member-scene-area { flex: 1; padding: 4px; }
   .member-scene-frame { align-items: flex-start; }
   .member-drawer-open { display: grid; position: absolute; z-index: 8; top: 12px; left: 12px; width: 40px; height: 40px; border: 1px solid #e2e6e2; background: #fffffff0; }

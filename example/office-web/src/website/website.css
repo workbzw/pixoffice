@@ -37,7 +37,9 @@ p, h1, h2, h3 { margin: 0; }
 .site-eyebrow { color: #69786d; font-size: 12px; line-height: 1.6; font-weight: 500; }
 .site-section h2 { font-size: 28px; font-weight: 600; line-height: 1.5; }
 .site-examples { padding-top: 36px; padding-bottom: 40px; }
-.site-scene-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
+.site-scene-heading { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.site-scene-heading-copy { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 20px; min-width: 0; }
+.site-scene-heading > .sponsor-credit { padding-left: 24px; border-left: 1px solid #e0e7e2; }
 .site-scene-heading h1 { font-size: 30px; line-height: 1.4; font-weight: 650; }
 .site-scene-heading p { color: #69766e; font-size: 13px; line-height: 1.8; }
 .site-example-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
@@ -107,7 +109,7 @@ body:has(.site-contact-dialog[open]) { overflow: hidden; }
 @media (max-width: 1050px) {
   .site-header-inner, .site-container { width: calc(100% - 48px); }
   .site-example-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .site-scene-heading { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .site-scene-heading-copy { flex-direction: column; align-items: flex-start; }
   .site-start-grid { gap: 35px; }
   .site-footer > div { flex-wrap: wrap; gap: 16px; }
   .site-footer nav { width: 100%; }
@@ -126,7 +128,8 @@ body:has(.site-contact-dialog[open]) { overflow: hidden; }
   .site-nav .site-github { padding-left: 10px; border-left: 0; border-top: 1px solid #edf0ea; margin-top: 5px; }
   .site-section { padding-block: 44px; }
   .site-examples { padding-top: 28px; padding-bottom: 32px; }
-  .site-scene-heading { margin-bottom: 24px; }
+  .site-scene-heading { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 24px; }
+  .site-scene-heading > .sponsor-credit { padding-left: 0; border-left: 0; }
   .site-scene-heading h1 { font-size: 26px; }
   .site-section h2 { font-size: 24px; }
   .site-contact-card h2 { font-size: 21px; }

@@ -11,9 +11,10 @@
   border-radius: 18px;
   background: #fff;
 }
-.rounded-office-heading { display: flex; flex-direction: column; justify-content: center; padding: 10px 18px; }
+.rounded-office-heading { display: flex; flex-direction: column; justify-content: center; padding: 9px 18px; }
 .rounded-office-heading .member-brand-row { min-height: 30px; gap: 4px; }
-.rounded-office-heading .member-brand-row img { width: 116px; }
+.rounded-office-heading .member-product-logo { width: 102px; }
+.rounded-office-heading .sponsor-credit { --sponsor-logo-width: 72px; --sponsor-label-size: 9px; gap: 4px; }
 .rounded-office-heading > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-top: 4px; }
 .rounded-office-heading h1 { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 650; }
 .rounded-office-heading > div > span { flex: 0 0 auto; color: #8b988f; font-size: 10px; }
@@ -45,13 +46,14 @@
 .rounded-drawer-close { align-self: flex-end; }
 @media (min-width: 761px) and (max-width: 1100px) {
   .rounded-workspace { grid-template-columns: 272px minmax(0, 1fr); gap: 12px; padding: 14px; }
-  .rounded-office-heading { padding: 10px 12px; }
+  .rounded-office-heading { padding: 9px 12px; }
   .rounded-office-stats { gap: 8px; }
   .rounded-office-stats > div { padding: 12px; }
   .rounded-office-stats .rounded-status-value { font-size: 15px; }
 }
 @media (max-height: 740px) and (min-width: 761px) {
   .rounded-workspace { grid-template-rows: 78px minmax(0, 1fr); gap: 12px; padding: 12px; }
+  .rounded-office-heading { padding-block: 0; }
   .rounded-workspace .member-sidebar { padding: 12px; }
   .rounded-office-stats > div { gap: 4px; padding-top: 10px; padding-bottom: 10px; }
   .rounded-office-stats strong { font-size: 24px; }
@@ -59,7 +61,7 @@
 }
 @media (max-width: 760px) {
   .rounded-workspace { display: grid; grid-template-columns: minmax(0, 1fr); grid-template-rows: 80px 76px minmax(0, 1fr); gap: 10px; padding: 10px; }
-  .rounded-office-heading { padding: 7px 14px; border-radius: 14px; }
+  .rounded-office-heading { padding: 1px 14px; border-radius: 14px; }
   .rounded-office-heading .member-drawer-close { display: none; }
   .rounded-office-stats { gap: 6px; }
   .rounded-office-stats > div { gap: 5px; padding: 9px; border-radius: 14px; }

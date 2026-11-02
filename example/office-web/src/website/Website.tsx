@@ -4,6 +4,7 @@ import { websiteContent, websiteReadme, websiteRepository as repository, website
 import { readWebsiteLocale, rememberWebsiteLocale, type WebsiteLocale } from './locale.ts'
 import { CodexPromotion } from './CodexPromotion.tsx'
 import { ContactQrCodes } from './ContactQrCodes.tsx'
+import { SponsorCredit } from '../components/SponsorCredit.tsx'
 
 const base = import.meta.env.BASE_URL
 const docs = `${repository}/blob/main/docs/architecture/README.md`
@@ -87,7 +88,7 @@ export function Website() {
     <main id="main">
       <section id="examples" className="site-examples site-section" aria-labelledby="scenes-title">
         <div className="site-container">
-          <div className="site-scene-heading"><h1 id="scenes-title">{t.examples.title}</h1><p>{t.examples.description}</p></div>
+          <div className="site-scene-heading"><div className="site-scene-heading-copy"><h1 id="scenes-title">{t.examples.title}</h1><p>{t.examples.description}</p></div><SponsorCredit locale={locale} /></div>
           <div className="site-example-grid">
             <a className="site-example" href={`${base}office/`}>
               <div className="site-example-image"><img src={`${base}site/office-preview.webp`} width="1200" height="750" fetchPriority="high" alt={t.examples.office.alt} /></div>

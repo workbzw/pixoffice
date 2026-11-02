@@ -9,6 +9,7 @@ import { memberOverview, memberProgress, memberTaskStatuses, memberTime } from '
 import { officeOverview } from '../dashboard/officeOverview.ts'
 import type { OfficeShellProps } from './OfficeShell.tsx'
 import { AddOfficeMemberDialog } from './AddOfficeMemberDialog.tsx'
+import { SponsorCredit } from '../components/SponsorCredit.tsx'
 import '../components/RuntimeWorkspace.css'
 import './MemberOfficeShell.css'
 
@@ -45,7 +46,7 @@ export function MemberOfficeWorkspace({ dashboard, appearanceIds, scene, sceneAs
   const rounded = variant === 'rounded'
   const fixedScene = !rounded && !editing && !!sceneAspectRatio
   const office = officeOverview(dashboard)
-  const brand = <header className="member-brand-row"><a href={import.meta.env.BASE_URL} title="PixOffice 首页"><img src={`${import.meta.env.BASE_URL}brand/title.png`} alt="PixOffice" width={2172} height={724} /></a>
+  const brand = <header className="member-brand-row"><div className="member-brand-identity"><a href={import.meta.env.BASE_URL} title="PixOffice 首页"><img className="member-product-logo" src={`${import.meta.env.BASE_URL}brand/title.png`} alt="PixOffice" width={2172} height={724} /></a><SponsorCredit compact /></div>
     {layoutControl}<div className="member-office-control" ref={officeSwitcherRef} /><button type="button" className="member-icon-button member-drawer-close" title="收起成员侧栏" aria-label="收起成员侧栏" onClick={() => setDrawerOpen(false)}><PanelLeftClose size={18} /></button></header>
 
   useEffect(() => { if (detailScroll.current) detailScroll.current.scrollTop = 0 }, [employee?.id, dashboard?.conversationId])

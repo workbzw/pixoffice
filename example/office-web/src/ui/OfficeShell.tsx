@@ -4,6 +4,7 @@ import { Blocks, Braces, Download, FileJson, Globe, House, ListTodo, Plug, Slide
 import type { DashboardAction, DashboardSnapshot, DashboardTask, OfficeDataSource, OfficeMemberInput } from '@pixoffice/protocol/dashboard'
 import { dashboardMetrics } from '../dashboard/selectors.ts'
 import { CharacterAvatar } from '../components/CharacterArtwork.tsx'
+import { SponsorCredit } from '../components/SponsorCredit.tsx'
 import type { ScenePanel } from '../components/SceneControlPanel.tsx'
 import '../components/RuntimeWorkspace.css'
 
@@ -73,7 +74,7 @@ export function OfficeShell({ connection, dashboard, dashboardError, sceneLinkEr
 
   return <div className={`runtime-workspace ${editing ? 'map-editing' : ''}`}>
     <aside className="runtime-sidebar">
-      <div className="runtime-brand-row"><a className="runtime-brand" href={import.meta.env.BASE_URL} title="返回官网"><img className="runtime-brand-title" src={`${import.meta.env.BASE_URL}brand/title.png`} width={2172} height={724} alt="PixOffice 官网" /></a>{layoutControl}</div>
+      <div className="runtime-brand-row"><div className="runtime-brand-identity"><a className="runtime-brand" href={import.meta.env.BASE_URL} title="返回官网"><img className="runtime-brand-title" src={`${import.meta.env.BASE_URL}brand/title.png`} width={2172} height={724} alt="PixOffice 官网" /></a><SponsorCredit compact /></div>{layoutControl}</div>
       <nav aria-label="主导航" className="runtime-nav">
         {nav.map(item => <button key={item.id} type="button" disabled={!hasOffice && ['controls', 'plugins', 'protocol'].includes(item.id)} className={section === item.id ? 'selected' : ''} aria-current={section === item.id ? 'page' : undefined} onClick={() => setSection(item.id)}><item.icon size={17} strokeWidth={1.8} /><span>{item.label}</span>{item.count !== undefined && item.count > 0 && <small>{item.count}</small>}</button>)}
         <a href={`${import.meta.env.BASE_URL}minimal/`}><Blocks size={17} strokeWidth={1.8} /><span>最小装配</span></a>

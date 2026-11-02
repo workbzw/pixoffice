@@ -1,0 +1,4 @@
+.sponsor-credit { --sponsor-logo-width: 136px; --sponsor-label-size: 11px; display: inline-flex; align-items: center; flex: 0 0 auto; gap: 12px; max-width: 100%; color: #6b776f; font-family: system-ui, sans-serif; letter-spacing: 0; }
+.sponsor-credit-label { flex: 0 0 auto; font-size: var(--sponsor-label-size); line-height: 1.4; white-space: nowrap; }
+.sponsor-credit > img { display: block; flex: 0 1 auto; width: var(--sponsor-logo-width); min-width: 0; max-width: 100%; height: auto; object-fit: contain; }
+.sponsor-credit-compact { --sponsor-logo-width: 80px; --sponsor-label-size: 10px; gap: 5px; }

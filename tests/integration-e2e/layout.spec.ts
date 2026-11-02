@@ -20,7 +20,54 @@ test.beforeEach(async ({ page }, testInfo) => {
 })
 test.afterEach(async () => { await app.close(); expect(errors).toEqual([]) })
 
+test('homepage sponsorship remains visible and translated without overlapping scene navigation', async ({ page }, testInfo) => {
+  for (const locale of ['zh', 'en']) {
+    await page.goto(`${url}/?lang=${locale}`)
+    const credit = page.getByRole('group', { name: locale === 'zh' ? '由 KunlunMeta 赞助支持' : 'Sponsored by KunlunMeta', exact: true })
+    for (const width of [1440, 800, 390, 320]) {
+      await page.setViewportSize({ width, height: 900 })
+      await expect(credit).toBeVisible()
+      await expect(credit.getByRole('img', { name: 'KunlunMeta', exact: true })).toHaveJSProperty('naturalWidth', 2593)
+      const bounds = (await credit.boundingBox())!, heading = (await page.locator('#scenes-title').boundingBox())!
+      expect(bounds.x).toBeGreaterThanOrEqual(0); expect(bounds.x + bounds.width).toBeLessThanOrEqual(width)
+      expect(bounds.y + bounds.height).toBeLessThan(900)
+      expect(bounds.x >= heading.x + heading.width || bounds.y >= heading.y + heading.height).toBe(true)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      if (width === 1440 || width === 390) await testInfo.attach(`sponsorship-home-${locale}-${width}`, { body: await page.screenshot(), contentType: 'image/png' })
+    }
+    await expect(page.locator('.site-promotion-link')).toBeVisible()
+  }
+})
+
 for (const layoutId of ['classic', 'members', 'rounded'] as const) {
+  test(`sponsorship fits the ${layoutId} office brand area`, async ({ page }, testInfo) => {
+    await backend.post({ type: 'offices.initialize', offices: [office()], layoutId })
+    await page.goto(`${url}/office/`)
+    const credit = page.getByRole('group', { name: '由 KunlunMeta 赞助支持', exact: true })
+    for (const size of [{ width: 1440, height: 900 }, { width: 1100, height: 650 }]) {
+      await page.setViewportSize(size)
+      await expect(credit).toBeVisible()
+      const logo = credit.getByRole('img', { name: 'KunlunMeta', exact: true })
+      await expect(logo).toHaveJSProperty('naturalWidth', 2593)
+      const geometry = await credit.evaluate(element => {
+        const box = element.getBoundingClientRect(), parent = element.closest('.member-brand-row, .runtime-brand-row')!.getBoundingClientRect()
+        return { left: box.left, right: box.right, top: box.top, bottom: box.bottom, parentLeft: parent.left, parentRight: parent.right, parentTop: parent.top, parentBottom: parent.bottom }
+      })
+      expect(geometry.left).toBeGreaterThanOrEqual(geometry.parentLeft)
+      expect(geometry.right).toBeLessThanOrEqual(geometry.parentRight)
+      expect(geometry.top).toBeGreaterThanOrEqual(geometry.parentTop)
+      expect(geometry.bottom).toBeLessThanOrEqual(geometry.parentBottom)
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true)
+      await testInfo.attach(`sponsorship-office-${layoutId}-${size.width}`, { body: await page.screenshot(), contentType: 'image/png' })
+    }
+    if (layoutId !== 'classic') {
+      await page.setViewportSize({ width: 390, height: 844 })
+      if (layoutId === 'members') await page.getByRole('button', { name: '展开成员侧栏', exact: true }).click()
+      await expect(credit).toBeVisible()
+      await testInfo.attach(`sponsorship-office-${layoutId}-390`, { body: await page.screenshot(), contentType: 'image/png' })
+    }
+  })
+
   test(`chat composer only expands the transcript in the ${layoutId} layout`, async ({ page }) => {
     const state = office(), other = structuredClone(state.conversations[0])
     other.id = 'review'; other.title = '复盘会话'; state.conversations.push(other)

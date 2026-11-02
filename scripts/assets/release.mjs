@@ -3,7 +3,7 @@ import path from 'node:path'
 import { readAssetCatalogFiles } from './export-pack.mjs'
 
 const shared = ['LICENSE.txt', 'THIRD_PARTY_NOTICES.txt', 'pixoffice-config.js']
-const branding = ['brand/logo.png', 'brand/title.png', 'site/icon.png', 'site/wordmark.webp',
+const branding = ['brand/logo.png', 'brand/title.png', 'brand/kunlunmeta.png', 'site/icon.png', 'site/wordmark.webp',
   'site/office-scene.webp', 'site/office-preview.webp', 'site/classroom-preview.webp', 'site/farm-preview.webp', 'site/civic-preview.webp', 'site/collaboration-preview.webp', 'site/dispatch-preview.webp']
 
 /** Publish current catalog entries, never the contents of an old generated directory. */

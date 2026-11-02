@@ -6,6 +6,6 @@
 .office-layout-options button span { flex: 1; }
 .office-layout-options button:hover, .office-layout-options button[aria-pressed=true] { background: #edf5f0; color: #3e7659; }
 .runtime-brand-row { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
-.runtime-brand-row .runtime-brand { flex: 1; min-width: 0; }
+.runtime-brand-row .runtime-brand-identity { flex: 1; min-width: 0; }
 .runtime-brand-row .runtime-brand-title { width: 146px; }
-@media (max-width: 620px) { .runtime-brand-row { justify-content: flex-end; } .runtime-brand-row .runtime-brand { display: none; } }
+@media (max-width: 620px) { .runtime-brand-row { justify-content: flex-end; } .runtime-brand-row .runtime-brand-identity { display: none; } }
